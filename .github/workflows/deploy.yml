@@ -149,8 +149,8 @@ jobs:
               DC_CMD="docker compose"
             fi
 
-            # 直接依据 docker-compose.yml 定义拉取镜像并重新部署
-            $DC_CMD pull
+            # 仅拉取业务镜像，postgres 使用现有版本即可
+            # $DC_CMD pull backend admin_frontend frontend
             $DC_CMD up -d
 
             # 清理未使用的镜像

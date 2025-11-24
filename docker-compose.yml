@@ -23,6 +23,7 @@ services:
   # Backend 服务
   backend:
     image: ghcr.io/mbt1909432/backend_frontend_paper_workflow-backend:latest  # ← 改这里
+    pull_policy: always
     container_name: academic_workflow_backend
     environment:
       # 数据库配置
@@ -77,6 +78,7 @@ services:
   # Frontend 服务
   frontend:
     image: ghcr.io/mbt1909432/backend_frontend_paper_workflow-frontend:latest  # ← 改这里
+    pull_policy: always
     container_name: academic_workflow_frontend
     environment:
       - VITE_API_BASE_URL=${VITE_API_BASE_URL:-/api/v1}  # ← 环境变量移到这里
@@ -91,6 +93,7 @@ services:
   # Admin Frontend 服务
   admin_frontend:
     image: ghcr.io/mbt1909432/backend_frontend_paper_workflow-admin-frontend:latest  # ← 改这里
+    pull_policy: always
     container_name: academic_workflow_admin_frontend
     environment:
       - VITE_API_BASE_URL=${VITE_API_BASE_URL:-/api/v1}  # ← 环境变量移到这里
