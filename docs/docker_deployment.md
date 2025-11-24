@@ -315,6 +315,17 @@ VITE_API_BASE_URL=http://backend:8000/api/v1
 VITE_API_BASE_URL=http://backend:8000/api/v1
 ```
 
+> ⚠️ **说明**：所有 `VITE_` 前缀变量在前端构建阶段就会被写入静态资源，运行中的容器修改这些变量不会生效，如需变更必须重新构建镜像。
+
+## `.env` 变量使用范围说明
+
+| 变量分类 | 示例 | docker-compose 是否会读取 | 说明 |
+| --- | --- | --- | --- |
+| Compose 运行时变量 | `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `POSTGRES_PORT`, `BACKEND_PORT`, `FRONTEND_PORT`, `ADMIN_FRONTEND_PORT`, `OUTPUT_DIR`, `OPENAI_*`, `ANTHROPIC_*`, `SUPER_ADMIN_*` 等 | ✅ | `docker-compose` 在启动容器时读取 `.env` 并把这些值通过 `${VAR}` 注入，对数据库、后端和端口映射即时生效。 |
+| 前端构建变量 | `VITE_API_BASE_URL`（以及任何 `VITE_` 前缀变量） | ❌（运行期无效） | 只会在 **构建镜像** 时由 Vite 读取并写入静态资源，运行中的容器即使通过 compose 设置也不会重新生效，必须重新 `docker build` 对应前端镜像才会更新。 |
+
+> ✅ 小结：`.env` 中的大部分变量（数据库、后端、端口、API Key 等）可以直接通过 `docker-compose up -d` 生效；只有 `VITE_` 相关变量需要重新构建前端镜像。
+
 ## 网络配置
 
 所有服务在同一个 Docker 网络 `academic_workflow_network` 中，可以通过服务名互相访问：

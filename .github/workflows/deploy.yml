@@ -135,13 +135,6 @@ jobs:
             # 登录到容器 registry
             echo ${{ secrets.GITHUB_TOKEN }} | docker login "$REGISTRY_URL" -u ${{ github.actor }} --password-stdin
 
-            # 拉取所需组件镜像
-            for component in ${{ env.IMAGE_COMPONENTS }}; do
-              image="${REGISTRY_URL}/${IMAGE_BASE}-${component}:latest"
-              echo "Pulling $image"
-              docker pull "$image"
-            done
-
             # 自动兼容 docker compose / docker-compose 两种命令入口
             if command -v docker-compose >/dev/null 2>&1; then
               DC_CMD="docker-compose"
@@ -149,18 +142,10 @@ jobs:
               DC_CMD="docker compose"
             fi
 
-            # 停止并删除旧容器
-            $DC_CMD down || true
-
-            # 更新 docker-compose.yml 中的镜像标签
-            for component in ${{ env.IMAGE_COMPONENTS }}; do
-              image="${REGISTRY_URL}/${IMAGE_BASE}-${component}:latest"
-              sed -i "s|image:.*${component}.*|image: ${image}|g" docker-compose.yml || true
-            done
-
-            # 启动新容器
+            # 直接依据 docker-compose.yml 定义拉取镜像并重新部署
+            $DC_CMD pull
             $DC_CMD up -d
 
             # 清理未使用的镜像
-            docker image prune -f 
+            docker image prune -f
 
