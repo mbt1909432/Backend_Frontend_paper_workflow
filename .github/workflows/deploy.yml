@@ -151,6 +151,19 @@ jobs:
 
             # 仅拉取业务镜像，postgres 使用现有版本即可
             # $DC_CMD pull backend admin_frontend frontend
+
+            # 确保宿主机上的输出目录存在且对容器用户 (uid 1000) 可写
+            HOST_OUTPUT_DIR="${OUTPUT_DIR:-./output}"
+            mkdir -p "$HOST_OUTPUT_DIR"
+            if chown -R 1000:1000 "$HOST_OUTPUT_DIR" 2>/dev/null; then
+              echo "Adjusted ownership for $HOST_OUTPUT_DIR"
+            elif command -v sudo >/dev/null 2>&1; then
+              sudo chown -R 1000:1000 "$HOST_OUTPUT_DIR" || true
+            else
+              echo "Warning: unable to change ownership of $HOST_OUTPUT_DIR"
+            fi
+            chmod 775 "$HOST_OUTPUT_DIR" || true
+
             $DC_CMD up -d
 
             # 清理未使用的镜像
