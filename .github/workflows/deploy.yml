@@ -18,6 +18,9 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # 构建阶段生成统一小写的镜像前缀，供部署阶段直接复用
+    outputs:
+      image_name_base_lower: ${{ steps.image_name.outputs.image_name_base_lower }}
     strategy:
       matrix:
         include:
@@ -46,6 +49,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Prepare image metadata
+        id: image_name
+        shell: bash
+        run: |
+          echo "image_name_base_lower=${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -60,7 +69,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_BASE }}-${{ matrix.tag_suffix }}
+          images: ${{ env.REGISTRY }}/${{ steps.image_name.outputs.image_name_base_lower }}-${{ matrix.tag_suffix }}
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -84,38 +93,72 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    # 这里提前设置部署目录与镜像前缀，减少 SSH 脚本中的硬编码
+    env:
+      DEPLOY_PATH: ${{ secrets.DEPLOY_PATH != '' && secrets.DEPLOY_PATH || '/opt/academic-workflow' }}
+      IMAGE_NAME_BASE_LOWER: ${{ needs.build.outputs.image_name_base_lower }}
     steps:
-      - name: Deploy to server
-        uses: appleboy/ssh-action@v1.0.0
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Upload docker-compose file
+        # 先将本地 docker-compose.yml 同步到服务器，确保配置与仓库一致
+        uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT || 22 }}
+          source: "docker-compose.yml"
+          target: ${{ env.DEPLOY_PATH }}
+
+      - name: Deploy to server
+        uses: appleboy/ssh-action@v1.0.0
+        env:
+          REGISTRY: ${{ env.REGISTRY }}
+          DEPLOY_PATH: ${{ env.DEPLOY_PATH }}
+          IMAGE_NAME_BASE_LOWER: ${{ env.IMAGE_NAME_BASE_LOWER }}
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          envs: REGISTRY,DEPLOY_PATH,IMAGE_NAME_BASE_LOWER
           script: |
-            cd ${{ secrets.DEPLOY_PATH || '/opt/academic-workflow' }}
+            WORKDIR="${DEPLOY_PATH:-/opt/academic-workflow}"
+            cd "$WORKDIR"
+
+            IMAGE_BASE="${IMAGE_NAME_BASE_LOWER:-${GITHUB_REPOSITORY,,}}"
+            REGISTRY_URL="${REGISTRY:-ghcr.io}"
 
             # 登录到容器 registry
-            echo ${{ secrets.GITHUB_TOKEN }} | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
+            echo ${{ secrets.GITHUB_TOKEN }} | docker login "$REGISTRY_URL" -u ${{ github.actor }} --password-stdin
 
             # 拉取所需组件镜像
             for component in ${{ env.IMAGE_COMPONENTS }}; do
-              image="${{ env.REGISTRY }}/${{ env.IMAGE_NAME_BASE }}-${component}:latest"
+              image="${REGISTRY_URL}/${IMAGE_BASE}-${component}:latest"
               echo "Pulling $image"
               docker pull "$image"
             done
 
+            # 自动兼容 docker compose / docker-compose 两种命令入口
+            if command -v docker-compose >/dev/null 2>&1; then
+              DC_CMD="docker-compose"
+            else
+              DC_CMD="docker compose"
+            fi
+
             # 停止并删除旧容器
-            docker-compose down || true
+            $DC_CMD down || true
 
             # 更新 docker-compose.yml 中的镜像标签
             for component in ${{ env.IMAGE_COMPONENTS }}; do
-              image="${{ env.REGISTRY }}/${{ env.IMAGE_NAME_BASE }}-${component}:latest"
+              image="${REGISTRY_URL}/${IMAGE_BASE}-${component}:latest"
               sed -i "s|image:.*${component}.*|image: ${image}|g" docker-compose.yml || true
             done
 
             # 启动新容器
-            docker-compose up -d
+            $DC_CMD up -d
 
             # 清理未使用的镜像
             docker image prune -f
