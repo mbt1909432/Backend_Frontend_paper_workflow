@@ -28,25 +28,27 @@ jobs:
           - component: backend
             dockerfile: Dockerfile.backend
             tag_suffix: backend
+            needs_api_base: false
 #          - component: backend-cn
 #            dockerfile: Dockerfile.backend.cn
 #            tag_suffix: backend-cn
+#            needs_api_base: false
           - component: frontend
             dockerfile: Dockerfile.frontend
             tag_suffix: frontend
-            build_args: |
-              VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}
+            needs_api_base: true
 #          - component: frontend-cn
 #            dockerfile: Dockerfile.frontend.cn
 #            tag_suffix: frontend-cn
+#            needs_api_base: true
           - component: admin-frontend
             dockerfile: Dockerfile.admin_frontend
             tag_suffix: admin-frontend
-            build_args: |
-              VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}
+            needs_api_base: true
 #          - component: admin-frontend-cn
 #            dockerfile: Dockerfile.admin_frontend.cn
 #            tag_suffix: admin-frontend-cn
+#            needs_api_base: true
     permissions:
       contents: read
       packages: write
@@ -88,7 +90,7 @@ jobs:
         with:
           context: .
           file: ${{ matrix.dockerfile }}
-          build-args: ${{ matrix.build_args || '' }}
+          build-args: ${{ matrix.needs_api_base && format('VITE_API_BASE_URL={0}', secrets.VITE_API_BASE_URL) || '' }}
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
