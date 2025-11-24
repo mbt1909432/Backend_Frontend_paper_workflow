@@ -24,9 +24,7 @@ services:
 
   # Backend 服务
   backend:
-    build:
-      context: .
-      dockerfile: Dockerfile.backend
+    image: ghcr.io/mbt1909432/backend_frontend_paper_workflow-backend:latest  # ← 改这里
     container_name: academic_workflow_backend
     environment:
       # 数据库配置
@@ -80,12 +78,10 @@ services:
 
   # Frontend 服务
   frontend:
-    build:
-      context: .
-      dockerfile: Dockerfile.frontend
-      args:
-        - VITE_API_BASE_URL=${VITE_API_BASE_URL:-/api/v1}
+    image: ghcr.io/mbt1909432/backend_frontend_paper_workflow-frontend:latest  # ← 改这里
     container_name: academic_workflow_frontend
+    environment:
+      - VITE_API_BASE_URL=${VITE_API_BASE_URL:-/api/v1}  # ← 环境变量移到这里
     ports:
       - "${FRONTEND_PORT:-3000}:80"
     depends_on:
@@ -96,12 +92,10 @@ services:
 
   # Admin Frontend 服务
   admin_frontend:
-    build:
-      context: .
-      dockerfile: Dockerfile.admin_frontend
-      args:
-        - VITE_API_BASE_URL=${VITE_API_BASE_URL:-/api/v1}
+    image: ghcr.io/mbt1909432/backend_frontend_paper_workflow-admin-frontend:latest  # ← 改这里
     container_name: academic_workflow_admin_frontend
+    environment:
+      - VITE_API_BASE_URL=${VITE_API_BASE_URL:-/api/v1}  # ← 环境变量移到这里
     ports:
       - "${ADMIN_FRONTEND_PORT:-3001}:80"
     depends_on:
@@ -116,4 +110,3 @@ networks:
 
 volumes:
   postgres_data:
-
