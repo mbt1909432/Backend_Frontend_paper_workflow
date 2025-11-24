@@ -17,8 +17,8 @@ RUN npm config set registry https://registry.npmmirror.com
 # 复制 package 文件
 COPY admin_frontend/package*.json ./
 
-# 安装依赖
-RUN npm ci
+# 安装依赖（无锁文件使用 npm install）
+RUN npm install
 
 # 复制源代码
 COPY admin_frontend/ .
