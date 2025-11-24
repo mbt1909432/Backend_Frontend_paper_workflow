@@ -12,11 +12,33 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  IMAGE_NAME_BASE: ${{ github.repository }}
+  IMAGE_COMPONENTS: backend backend-cn frontend frontend-cn admin-frontend admin-frontend-cn
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - component: backend
+            dockerfile: Dockerfile.backend
+            tag_suffix: backend
+#          - component: backend-cn
+#            dockerfile: Dockerfile.backend.cn
+#            tag_suffix: backend-cn
+          - component: frontend
+            dockerfile: Dockerfile.frontend
+            tag_suffix: frontend
+#          - component: frontend-cn
+#            dockerfile: Dockerfile.frontend.cn
+#            tag_suffix: frontend-cn
+          - component: admin-frontend
+            dockerfile: Dockerfile.admin_frontend
+            tag_suffix: admin-frontend
+#          - component: admin-frontend-cn
+#            dockerfile: Dockerfile.admin_frontend.cn
+#            tag_suffix: admin-frontend-cn
     permissions:
       contents: read
       packages: write
@@ -38,7 +60,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_BASE }}-${{ matrix.tag_suffix }}
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -51,6 +73,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
+          file: ${{ matrix.dockerfile }}
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -75,14 +98,21 @@ jobs:
             # 登录到容器 registry
             echo ${{ secrets.GITHUB_TOKEN }} | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
 
-            # 拉取最新镜像
-            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            # 拉取所需组件镜像
+            for component in ${{ env.IMAGE_COMPONENTS }}; do
+              image="${{ env.REGISTRY }}/${{ env.IMAGE_NAME_BASE }}-${component}:latest"
+              echo "Pulling $image"
+              docker pull "$image"
+            done
 
             # 停止并删除旧容器
             docker-compose down || true
 
             # 更新 docker-compose.yml 中的镜像标签
-            sed -i "s|image:.*|image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest|g" docker-compose.yml || true
+            for component in ${{ env.IMAGE_COMPONENTS }}; do
+              image="${{ env.REGISTRY }}/${{ env.IMAGE_NAME_BASE }}-${component}:latest"
+              sed -i "s|image:.*${component}.*|image: ${image}|g" docker-compose.yml || true
+            done
 
             # 启动新容器
             docker-compose up -d
