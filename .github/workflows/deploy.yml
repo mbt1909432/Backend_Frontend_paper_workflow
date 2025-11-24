@@ -34,12 +34,16 @@ jobs:
           - component: frontend
             dockerfile: Dockerfile.frontend
             tag_suffix: frontend
+            build_args: |
+              VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}
 #          - component: frontend-cn
 #            dockerfile: Dockerfile.frontend.cn
 #            tag_suffix: frontend-cn
           - component: admin-frontend
             dockerfile: Dockerfile.admin_frontend
             tag_suffix: admin-frontend
+            build_args: |
+              VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}
 #          - component: admin-frontend-cn
 #            dockerfile: Dockerfile.admin_frontend.cn
 #            tag_suffix: admin-frontend-cn
@@ -84,6 +88,7 @@ jobs:
         with:
           context: .
           file: ${{ matrix.dockerfile }}
+          build-args: ${{ matrix.build_args || '' }}
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
