@@ -13,8 +13,8 @@ RUN npm install
 # 复制源代码
 COPY admin_frontend/ .
 
-# 构建参数：API 地址
-ARG VITE_API_BASE_URL=http://47.115.133.193:4000/api/v1
+# 构建参数：API 地址 47.86.163.244
+ARG VITE_API_BASE_URL=http://47.86.163.244:4000/api/v1
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 
 # 构建应用

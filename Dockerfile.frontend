@@ -14,7 +14,7 @@ RUN npm install
 COPY frontend/ .
 
 # 构建参数：API 地址 不知道为什么先写死吧bbbbbbbbbbbbbbbb
-ARG VITE_API_BASE_URL=http://47.115.133.193:3999/api/v1
+ARG VITE_API_BASE_URL=http://47.86.163.244:3999/api/v1
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 
 # 构建应用
