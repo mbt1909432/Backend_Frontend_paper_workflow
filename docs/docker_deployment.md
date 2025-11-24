@@ -189,6 +189,30 @@ docker-compose -f docker-compose.cn.yml down
 docker-compose -f docker-compose.cn.yml down -v
 ```
 
+## GitHub Actions 自动部署
+
+仓库提供 `.github/workflows/deploy.yml`，当代码推送到 `main` 或 `master` 分支时会自动完成以下步骤：
+
+1. Checkout 项目并使用 Docker Buildx 构建 `backend`、`frontend`、`admin-frontend` 三个镜像。
+2. 将镜像推送到 GitHub Container Registry（`ghcr.io/<org>/<repo>-<component>`）。
+3. 通过 SSH 登录部署服务器，同步仓库中的 `docker-compose.yml`。
+4. 在服务器上执行 `docker compose pull && docker compose up -d`，拉取最新镜像并以最小停机时间重启服务。
+
+> 如果服务器只安装了旧版 `docker-compose`，脚本会自动回退到 `docker-compose` 命令。
+
+### pull_policy: always 的使用
+
+如果希望在任何场景下都强制从远程拉取最新镜像，可以在 `docker-compose.yml` 的服务定义内增加 `pull_policy: always`：
+
+```
+services:
+  backend:
+    image: ghcr.io/<org>/<repo>-backend:latest
+    pull_policy: always
+```
+
+这样即使手动执行 `docker compose up -d`，也会在启动前自动重新拉取镜像。与工作流中的显式 `docker compose pull` 结合使用，可以确保线上环境始终运行最新镜像。
+
 ## 服务说明
 
 ### 1. PostgreSQL 数据库
