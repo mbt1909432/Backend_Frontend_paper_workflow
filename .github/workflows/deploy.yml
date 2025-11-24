@@ -13,7 +13,8 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME_BASE: ${{ github.repository }}
-  IMAGE_COMPONENTS: backend backend-cn frontend frontend-cn admin-frontend admin-frontend-cn
+  # 目前仅构建 backend/frontend/admin-frontend 三个组件，避免拉取不存在的 *-cn 镜像
+  IMAGE_COMPONENTS: backend frontend admin-frontend
 
 jobs:
   build:
