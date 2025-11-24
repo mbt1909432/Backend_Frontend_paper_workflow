@@ -299,7 +299,7 @@ Application Scenarios:
     async def generate_overview(
         self,
         user_document: str,
-        temperature: float = 0.7,
+        temperature: Optional[float] = 0.7,
         max_tokens: int = 4000,
         model: Optional[str] = None
     ) -> Dict[str, Any]:
@@ -382,7 +382,7 @@ Application Scenarios:
     async def generate_overview_stream(
         self,
         user_document: str,
-        temperature: float = 0.7,
+        temperature: Optional[float] = 0.7,
         max_tokens: int = 4000,
         model: Optional[str] = None
     ):

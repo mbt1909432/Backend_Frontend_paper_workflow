@@ -1,0 +1,53 @@
+# Frontend Dockerfile - 多阶段构建（使用国内镜像）
+# 推荐：配置 Docker daemon 镜像加速器（见 docs/docker_mirror_setup.md）
+# 阶段1: 构建阶段
+# 如果必须直接在 Dockerfile 中指定镜像源，可以尝试：
+# - 1Panel 镜像: docker.1panel.live/library/node:18-alpine
+# - 毫秒镜像: docker.1ms.run/library/node:18-alpine
+# - DaoCloud: docker.m.daocloud.io/library/node:18-alpine
+# - Docker Proxy: dockerproxy.net/library/node:18-alpine
+# - 阿里云: registry.cn-hangzhou.aliyuncs.com/library/node:18-alpine (需注册)
+FROM node:18-alpine AS builder
+
+WORKDIR /app
+
+# 配置 npm 使用国内镜像源（淘宝镜像）
+RUN npm config set registry https://registry.npmmirror.com
+
+# 复制 package 文件
+COPY frontend/package*.json ./
+
+# 安装依赖
+RUN npm ci
+
+# 复制源代码
+COPY frontend/ .
+
+# 构建参数：API 地址
+ARG VITE_API_BASE_URL=http://backend:8000/api/v1
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+
+# 构建应用
+RUN npm run build
+
+# 阶段2: 生产阶段 - 使用 Nginx（国内镜像）
+# 如果必须直接在 Dockerfile 中指定镜像源，可以尝试：
+# - 1Panel 镜像: docker.1panel.live/library/nginx:alpine
+# - 毫秒镜像: docker.1ms.run/library/nginx:alpine
+# - DaoCloud: docker.m.daocloud.io/library/nginx:alpine
+# - Docker Proxy: dockerproxy.net/library/nginx:alpine
+# - 阿里云: registry.cn-hangzhou.aliyuncs.com/library/nginx:alpine (需注册)
+FROM nginx:alpine
+
+# 复制构建产物
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# 复制 Nginx 配置
+COPY nginx.frontend.conf /etc/nginx/conf.d/default.conf
+
+# 暴露端口
+EXPOSE 80
+
+# 启动 Nginx
+CMD ["nginx", "-g", "daemon off;"]
+

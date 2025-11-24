@@ -232,7 +232,7 @@ requirements_checklist.md
         paper_overview: str,
         latex_content: Optional[str],
         user_original_input: Optional[str],
-        temperature: float,
+        temperature: Optional[float],
         max_tokens: int,
         model: Optional[str],
         attempt_number: int = 1
@@ -244,7 +244,7 @@ requirements_checklist.md
             paper_overview: 从 Paper Overview Agent 得到的文本内容
             latex_content: 从 LaTeX Paper Generator Agent 得到的 LaTeX 内容
             user_original_input: 用户原始输入
-            temperature: 温度参数
+            temperature: 温度参数（如果为 None，使用默认值 0.7）
             max_tokens: 最大token数
             model: 模型名称
             attempt_number: 当前尝试次数
@@ -252,6 +252,10 @@ requirements_checklist.md
         Returns:
             成功时返回结果字典，失败时返回 None
         """
+        # 如果 temperature 为 None，使用默认值 0.7
+        if temperature is None:
+            temperature = 0.7
+        
         # 重试时降低 temperature 以提高稳定性
         adjusted_temperature = max(0.3, temperature - (attempt_number - 1) * 0.1)
         
@@ -326,7 +330,7 @@ Please generate a comprehensive requirement checklist based on the paper overvie
         paper_overview: str,
         latex_content: Optional[str] = None,
         user_original_input: Optional[str] = None,
-        temperature: float = 0.7,
+        temperature: Optional[float] = 0.7,
         max_tokens: int = 4000,
         model: Optional[str] = None
     ) -> Dict[str, Any]:
@@ -396,7 +400,7 @@ Please generate a comprehensive requirement checklist based on the paper overvie
         paper_overview: str,
         latex_content: Optional[str] = None,
         user_original_input: Optional[str] = None,
-        temperature: float = 0.7,
+        temperature: Optional[float] = 0.7,
         max_tokens: int = 4000,
         model: Optional[str] = None
     ):

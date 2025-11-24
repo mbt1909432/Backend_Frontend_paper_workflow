@@ -393,7 +393,7 @@ SKIPPED
         paper_overview: str,
         user_document: Optional[str],
         user_info: Optional[str],
-        temperature: float,
+        temperature: Optional[float],
         max_tokens: int,
         model: Optional[str],
         attempt_number: int = 1
@@ -405,7 +405,7 @@ SKIPPED
             paper_overview: 从 Paper Overview Agent 得到的文本内容
             user_document: 从步骤0得到的合并文档内容
             user_info: 用户提供的额外信息
-            temperature: 温度参数
+            temperature: 温度参数（如果为 None，使用默认值 0.7）
             max_tokens: 最大token数
             model: 模型名称
             attempt_number: 当前尝试次数
@@ -413,6 +413,10 @@ SKIPPED
         Returns:
             成功时返回结果字典，失败时返回 None
         """
+        # 如果 temperature 为 None，使用默认值 0.7
+        if temperature is None:
+            temperature = 0.7
+        
         # 重试时降低 temperature 以提高稳定性
         adjusted_temperature = max(0.3, temperature - (attempt_number - 1) * 0.1)
         
@@ -505,7 +509,7 @@ Please generate a complete LaTeX paper with all required sections filled with de
         user_info: Optional[str] = None,
         has_outline: bool = False,
         has_existing_tex: bool = False,
-        temperature: float = 0.7,
+        temperature: Optional[float] = 0.7,
         max_tokens: int = 16000,
         model: Optional[str] = None
     ) -> Dict[str, Any]:
@@ -607,7 +611,7 @@ Please generate a complete LaTeX paper with all required sections filled with de
         user_info: Optional[str] = None,
         has_outline: bool = False,
         has_existing_tex: bool = False,
-        temperature: float = 0.7,
+        temperature: Optional[float] = 0.7,
         max_tokens: int = 16000,
         model: Optional[str] = None
     ):

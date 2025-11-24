@@ -154,7 +154,7 @@ export interface PaperGenerationWorkflowResponse {
 }
 
 export interface WorkflowProgressChunk {
-  type: 'progress' | 'log' | 'result';
+  type: 'progress' | 'log' | 'result' | 'error';
   step?: number;
   step_name?: string;
   message?: string;

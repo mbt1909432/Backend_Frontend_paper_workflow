@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_BASE_URL = '/api/v1';
+// 支持环境变量配置 API 地址，默认使用相对路径（适用于同域部署）
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
 
 // 创建 axios 实例
 const apiClient = axios.create({

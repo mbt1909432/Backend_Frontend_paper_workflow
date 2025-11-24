@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { workflowApi, workflowTasksApi, authApi } from '../services/api';
 import { useTaskContext } from '../contexts/TaskContext';
-import type { PaperGenerationWorkflowRequest, PaperGenerationWorkflowResponse, WorkflowProgressChunk, WorkflowTask, TaskStatus } from '../types';
+import type { PaperGenerationWorkflowResponse, WorkflowProgressChunk, WorkflowTask, TaskStatus } from '../types';
 
 // localStorage 键名
 const TASKS_STORAGE_KEY = 'workflow_tasks';
@@ -30,37 +30,37 @@ interface SerializableTask {
   logs: string[];
 }
 
-// 将任务转换为可序列化格式
-function serializeTask(task: WorkflowTask): SerializableTask {
-  return {
-    id: task.id,
-    name: task.name,
-    status: task.status,
-    createdAt: task.createdAt.toISOString(),
-    updatedAt: task.updatedAt.toISOString(),
-    document: task.document,
-    userInfo: task.userInfo,
-    sessionId: task.sessionId,
-    pdfFileInfo: task.pdfFile ? {
-      name: task.pdfFile.name,
-      size: task.pdfFile.size,
-      type: task.pdfFile.type,
-    } : null,
-    imageFilesInfo: task.imageFiles.map(file => ({
-      name: file.name,
-      size: file.size,
-      type: file.type,
-    })),
-    hasOutline: task.hasOutline,
-    hasExistingTex: task.hasExistingTex,
-    temperature: task.temperature,
-    maxTokens: task.maxTokens,
-    response: task.response,
-    error: task.error,
-    currentStep: task.currentStep,
-    logs: task.logs,
-  };
-}
+// 将任务转换为可序列化格式（当前未使用，保留以备将来使用）
+// function serializeTask(task: WorkflowTask): SerializableTask {
+//   return {
+//     id: task.id,
+//     name: task.name,
+//     status: task.status,
+//     createdAt: task.createdAt.toISOString(),
+//     updatedAt: task.updatedAt.toISOString(),
+//     document: task.document,
+//     userInfo: task.userInfo,
+//     sessionId: task.sessionId,
+//     pdfFileInfo: task.pdfFile ? {
+//       name: task.pdfFile.name,
+//       size: task.pdfFile.size,
+//       type: task.pdfFile.type,
+//     } : null,
+//     imageFilesInfo: task.imageFiles.map(file => ({
+//       name: file.name,
+//       size: file.size,
+//       type: file.type,
+//     })),
+//     hasOutline: task.hasOutline,
+//     hasExistingTex: task.hasExistingTex,
+//     temperature: task.temperature,
+//     maxTokens: task.maxTokens,
+//     response: task.response,
+//     error: task.error,
+//     currentStep: task.currentStep,
+//     logs: task.logs,
+//   };
+// }
 
 // 从序列化格式恢复任务（File 对象无法恢复，设为 null）
 function deserializeTask(serialized: SerializableTask): WorkflowTask {
@@ -86,15 +86,15 @@ function deserializeTask(serialized: SerializableTask): WorkflowTask {
   };
 }
 
-// 保存任务到 localStorage
-function saveTasksToStorage(tasks: WorkflowTask[]): void {
-  try {
-    const serialized = tasks.map(serializeTask);
-    localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(serialized));
-  } catch (error) {
-    console.error('保存任务到 localStorage 失败:', error);
-  }
-}
+// 保存任务到 localStorage（当前未使用，保留以备将来使用）
+// function saveTasksToStorage(tasks: WorkflowTask[]): void {
+//   try {
+//     const serialized = tasks.map(serializeTask);
+//     localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(serialized));
+//   } catch (error) {
+//     console.error('保存任务到 localStorage 失败:', error);
+//   }
+// }
 
 // 从 localStorage 加载任务
 function loadTasksFromStorage(): WorkflowTask[] {
@@ -441,10 +441,10 @@ function Workflow() {
   };
 
   // 处理页面切换（直接切换，不影响正在运行的任务）
-  const handlePageSwitch = (path: string, e: React.MouseEvent) => {
-    // 直接允许页面切换，不检查运行中的任务（支持并发执行）
-    // 让 Link 正常导航
-  };
+  // const handlePageSwitch = (_path: string, _e: React.MouseEvent) => {
+  //   // 直接允许页面切换，不检查运行中的任务（支持并发执行）
+  //   // 让 Link 正常导航
+  // };
 
   // 确认删除任务
   const confirmDeleteTask = async () => {
@@ -636,7 +636,7 @@ function Workflow() {
   };
 
   // 更新任务的防抖定时器
-  const updateTimersRef = useRef<Map<string, NodeJS.Timeout>>(new Map());
+  const updateTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
   // 更新任务（带防抖，避免频繁调用 API）
   const updateTask = useCallback(async (taskId: string, updates: Partial<WorkflowTask>, immediate: boolean = false) => {
@@ -767,7 +767,7 @@ function Workflow() {
     try {
       await workflowApi.executeStream(
         {
-          document: task.document || undefined,
+          document: task.document,
           pdfFile: task.pdfFile || undefined,
           imageFiles: task.imageFiles.length > 0 ? task.imageFiles : undefined,
           session_id: sessionId,

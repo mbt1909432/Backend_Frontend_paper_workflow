@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
-import { tokenUsageApi, TokenUsageResponse, TokenUsageDetail } from '../services/api';
+import { tokenUsageApi, TokenUsageResponse } from '../services/api';
 import './TokenUsage.css';
 
 function TokenUsage() {
   const [summary, setSummary] = useState<TokenUsageResponse | null>(null);
-  const [allRecords, setAllRecords] = useState<TokenUsageDetail[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [days, setDays] = useState(30);
@@ -22,8 +21,8 @@ function TokenUsage() {
       setSummary(summaryData);
       
       if (showAll) {
-        const allData = await tokenUsageApi.getAll(100, 0);
-        setAllRecords(allData);
+        // 如果需要显示所有记录，可以在这里处理
+        await tokenUsageApi.getAll(100, 0);
       }
     } catch (err: any) {
       setError(err.response?.data?.detail || '加载 token 使用统计失败');

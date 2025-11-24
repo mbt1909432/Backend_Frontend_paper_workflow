@@ -1,12 +1,11 @@
 import { BrowserRouter as Router, Routes, Route, Link, useLocation, Navigate, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
-// 以下组件已隐藏（注释掉）
-// import AgentChat from './components/AgentChat';
-// import PaperOverview from './components/PaperOverview';
-// import LaTeXPaper from './components/LaTeXPaper';
-// import RequirementChecklist from './components/RequirementChecklist';
+import AgentChat from './components/AgentChat';
+import PaperOverview from './components/PaperOverview';
+import LaTeXPaper from './components/LaTeXPaper';
+import RequirementChecklist from './components/RequirementChecklist';
 import Workflow from './components/Workflow';
-// import PDFProcessor from './components/PDFProcessor';
+import PDFProcessor from './components/PDFProcessor';
 import SessionManager from './components/SessionManager';
 import TokenUsage from './components/TokenUsage';
 import Login from './components/Login';
@@ -37,43 +36,42 @@ function App() {
                   isAuthenticated() ? <Home /> : <Navigate to="/login" replace />
                 }
               />
-              {/* 以下路由已隐藏（注释掉） */}
-              {/* <Route
+              <Route
                 path="/agent"
                 element={
                   isAuthenticated() ? <AgentChat /> : <Navigate to="/login" replace />
                 }
-              /> */}
-              {/* <Route
+              />
+              <Route
                 path="/paper-overview"
                 element={
                   isAuthenticated() ? <PaperOverview /> : <Navigate to="/login" replace />
                 }
-              /> */}
-              {/* <Route
+              />
+              <Route
                 path="/latex-paper"
                 element={
                   isAuthenticated() ? <LaTeXPaper /> : <Navigate to="/login" replace />
                 }
-              /> */}
-              {/* <Route
+              />
+              <Route
                 path="/requirement-checklist"
                 element={
                   isAuthenticated() ? <RequirementChecklist /> : <Navigate to="/login" replace />
                 }
-              /> */}
+              />
               <Route
                 path="/workflow"
                 element={
                   isAuthenticated() ? <Workflow /> : <Navigate to="/login" replace />
                 }
               />
-              {/* <Route
+              <Route
                 path="/pdf-processor"
                 element={
                   isAuthenticated() ? <PDFProcessor /> : <Navigate to="/login" replace />
                 }
-              /> */}
+              />
               <Route
                 path="/sessions"
                 element={
@@ -103,15 +101,15 @@ function NavBar() {
   } | null>(null);
 
   const navItems = [
+    { path: '/', label: '首页' },
     { path: '/workflow', label: '论文生成工作流' },
+    { path: '/agent', label: '通用对话 Agent' },
+    { path: '/paper-overview', label: '论文概览生成' },
+    { path: '/latex-paper', label: 'LaTeX 论文生成' },
+    { path: '/requirement-checklist', label: '需求清单生成' },
+    { path: '/pdf-processor', label: 'PDF 文字提取' },
     { path: '/sessions', label: 'Session 管理' },
     { path: '/token-usage', label: 'Token 使用统计' },
-    // 以下功能已隐藏（注释掉）
-    // { path: '/agent', label: '通用对话 Agent' },
-    // { path: '/pdf-processor', label: 'PDF 文字提取' },
-    // { path: '/paper-overview', label: '论文概览生成' },
-    // { path: '/latex-paper', label: 'LaTeX 论文生成' },
-    // { path: '/requirement-checklist', label: '需求清单生成' },
   ];
 
   const handleLogout = () => {

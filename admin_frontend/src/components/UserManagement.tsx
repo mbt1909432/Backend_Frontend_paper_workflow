@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { userApi, User, CreateUserRequest, UpdateUserRequest, UpdateMaxConcurrentWorkflowsRequest } from '../services/api';
+import { userApi, User, CreateUserRequest, UpdateUserRequest } from '../services/api';
 import './UserManagement.css';
 
 function UserManagement() {

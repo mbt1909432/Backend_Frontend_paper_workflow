@@ -4,6 +4,7 @@ from app.config.settings import settings
 from app.api.v1.router import api_router
 from app.utils.logger import logger
 from app.db.database import engine, Base
+from app.utils.provider_health import check_llm_connectivity
 
 
 # 创建 FastAPI 应用
@@ -42,6 +43,14 @@ async def startup_event():
     except Exception as e:
         logger.error(f"Failed to create database tables: {e}")
         raise
+    
+    # 启动时检查 LLM 服务可用性
+    provider_status = await check_llm_connectivity()
+    for provider, status in provider_status.items():
+        logger.info(f"{provider.capitalize()} status -> {status['status']}: {status['detail']}")
+    
+    # 缓存检查结果，便于后续健康检查接口读取
+    app.state.provider_health = provider_status
 
 
 @app.on_event("shutdown")

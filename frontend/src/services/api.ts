@@ -15,7 +15,8 @@ import type {
   PDFProcessResponse,
 } from '../types';
 
-const API_BASE_URL = '/api/v1';
+// 支持环境变量配置 API 地址，默认使用相对路径（适用于同域部署）
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
 
 // 获取认证头的辅助函数
 function getAuthHeaders(): HeadersInit {

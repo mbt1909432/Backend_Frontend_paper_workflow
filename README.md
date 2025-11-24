@@ -108,7 +108,11 @@ npm run dev
 - 自定义温度参数和最大 Token 数
 - 查看 Token 使用情况
 
-详细使用说明请参考 [frontend/README.md](frontend/README.md)
+详细使用说明请参考 [frontend/README.md](frontend/README.md)。
+
+## GitHub Actions：输出目录自动同步
+
+如果需要在构建后自动把 `output/` 内容推送到服务器供 docker-compose 挂载，参考 `docs/sync-output-workflow.md` 中的工作流说明并配置仓库机密即可。
 
 ## API 端点
 
