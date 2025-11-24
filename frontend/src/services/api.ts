@@ -13,6 +13,7 @@ import type {
   StreamChunk,
   PDFProcessRequest,
   PDFProcessResponse,
+  SessionSearchResponse,
 } from '../types';
 
 // 支持环境变量配置 API 地址，默认使用相对路径（适用于同域部署）
@@ -575,6 +576,33 @@ export const workflowApi = {
       uploaded_files: Array<{ name: string; size: number }>;
       generated_files: Record<string, { content: string | null; size: number; is_binary?: boolean }>;
     }>(`/workflow/session?session_id=${encodedSessionId}`);
+    return response.data;
+  },
+
+  // 搜索 session 文本文件
+  async searchSessionFiles(
+    sessionId: string,
+    keyword: string,
+    options?: { caseSensitive?: boolean; maxResults?: number }
+  ): Promise<SessionSearchResponse> {
+    if (!keyword.trim()) {
+      throw new Error('搜索关键字不能为空');
+    }
+
+    const params = new URLSearchParams({
+      session_id: sessionId,
+      keyword,
+    });
+
+    if (options?.caseSensitive !== undefined) {
+      params.append('case_sensitive', options.caseSensitive ? 'true' : 'false');
+    }
+
+    if (options?.maxResults !== undefined) {
+      params.append('max_results', String(options.maxResults));
+    }
+
+    const response = await apiClient.get<SessionSearchResponse>(`/workflow/session/search?${params.toString()}`);
     return response.data;
   },
 

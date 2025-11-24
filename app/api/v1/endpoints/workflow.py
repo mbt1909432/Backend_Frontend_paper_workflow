@@ -17,7 +17,16 @@ from app.db.database import get_db
 from app.db.models import User, Task
 from app.core.agents.vision_agent import VisionAgent
 from app.utils.pdf_converter import pdf_to_pngs
-from app.utils.file_manager import save_uploaded_file, create_session_folder, delete_session_folder, list_all_sessions, get_session_details, get_session_folder_path
+from app.utils.file_manager import (
+    save_uploaded_file,
+    create_session_folder,
+    delete_session_folder,
+    list_all_sessions,
+    get_session_details,
+    get_session_folder_path,
+    search_session_text_files,
+    search_all_sessions_text_files,
+)
 from app.utils.logger import logger
 from app.utils.token_tracker import record_usage_from_dict, settle_token_usage
 import tempfile
@@ -26,6 +35,7 @@ from typing import Tuple
 
 
 router = APIRouter()
+GLOBAL_SESSION_ID = "__all__"
 
 
 @router.post("/execute", response_model=PaperGenerationWorkflowResponse)
@@ -1242,6 +1252,93 @@ async def get_session_details_endpoint(
     except Exception as e:
         logger.error(f"Error getting session details for {session_id}: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error getting session details: {str(e)}")
+
+
+@router.get("/session/search")
+async def search_session_files_endpoint(
+    keyword: str,
+    session_id: Optional[str] = None,
+    case_sensitive: bool = False,
+    max_results: int = 200,
+    current_user: User = Depends(get_current_backend_user),
+    db: Session = Depends(get_db),
+):
+    """
+    在指定 session 的文本文件中搜索关键字（仅限 generated 与 uploaded 文件夹）
+
+    Args:
+        session_id: session ID（可能包含用户名路径，如 "username/session_xxx"）
+        keyword: 要搜索的关键字
+        case_sensitive: 是否区分大小写
+        max_results: 返回的最大匹配数量
+    """
+    try:
+        if not keyword or not keyword.strip():
+            raise HTTPException(status_code=400, detail="keyword is required")
+
+        if max_results <= 0:
+            raise HTTPException(status_code=400, detail="max_results must be greater than 0")
+
+        is_global_search = (session_id is None) or (session_id == GLOBAL_SESSION_ID)
+
+        loop = asyncio.get_event_loop()
+
+        if is_global_search:
+            username_scope = None if current_user.is_admin else current_user.username
+            try:
+                search_result = await loop.run_in_executor(
+                    None,
+                    lambda: search_all_sessions_text_files(
+                        keyword=keyword,
+                        username=username_scope,
+                        case_sensitive=case_sensitive,
+                        max_results=max_results,
+                    )
+                )
+            except ValueError as ve:
+                raise HTTPException(status_code=400, detail=str(ve))
+            return search_result
+
+        # 单 session 搜索仍需校验权限
+        if not current_user.is_admin:
+            if '/' in session_id:
+                parts = session_id.split('/', 1)
+                session_username = parts[0]
+                if session_username != current_user.username:
+                    raise HTTPException(
+                        status_code=403,
+                        detail="无权搜索其他用户的 session"
+                    )
+            username = current_user.username
+        else:
+            username = None
+
+        try:
+            search_result = await loop.run_in_executor(
+                None,
+                lambda: search_session_text_files(
+                    session_id=session_id,
+                    keyword=keyword,
+                    username=username,
+                    case_sensitive=case_sensitive,
+                    max_results=max_results,
+                )
+            )
+        except ValueError as ve:
+            raise HTTPException(status_code=400, detail=str(ve))
+
+        if search_result is None:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Session {session_id} not found"
+            )
+
+        return search_result
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error searching session {session_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error searching session files: {str(e)}")
 
 
 @router.get("/session/download")

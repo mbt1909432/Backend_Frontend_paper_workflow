@@ -484,3 +484,200 @@ def get_session_details(session_id: str, username: Optional[str] = None) -> Opti
         logger.error(f"Traceback: {traceback.format_exc()}")
         return None
 
+
+def search_session_text_files(
+    session_id: str,
+    keyword: str,
+    username: Optional[str] = None,
+    *,
+    case_sensitive: bool = False,
+    max_results: int = 200
+) -> Optional[Dict[str, Any]]:
+    """
+    在指定 session 的文本文件中搜索关键字
+
+    仅搜索 .tex/.md/.txt 文件，范围限定在 uploaded 与 generated 文件夹。
+
+    Returns:
+        包含匹配结果的字典，如果 session 不存在则返回 None
+    """
+    try:
+        if not keyword or not keyword.strip():
+            raise ValueError("keyword is required for session search")
+
+        if max_results <= 0:
+            raise ValueError("max_results must be greater than 0")
+
+        max_results = min(max_results, 1000)  # 避免一次返回过多结果
+        session_folder = get_session_folder_path(session_id, username)
+        if not session_folder:
+            return None
+
+        search_dirs = []
+        for folder_name in ("generated", "uploaded"):
+            folder_path = session_folder / folder_name
+            if folder_path.exists():
+                search_dirs.append((folder_name, folder_path))
+
+        normalized_session_id = session_id if "/" in session_id or not username else f"{username}/{session_id}"
+        if not search_dirs:
+            return {
+                "session_id": normalized_session_id,
+                "keyword": keyword,
+                "case_sensitive": case_sensitive,
+                "matches": [],
+                "match_count": 0,
+                "matches_returned": 0,
+                "truncated": False,
+                "max_results": max_results,
+            }
+
+        allowed_extensions = {".tex", ".md", ".txt"}
+        normalized_keyword = keyword if case_sensitive else keyword.lower()
+        matches = []
+        match_count = 0
+        truncated = False
+
+        for folder_label, folder_path in search_dirs:
+            for file_path in folder_path.rglob("*"):
+                if not file_path.is_file() or file_path.suffix.lower() not in allowed_extensions:
+                    continue
+
+                try:
+                    with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+                        for line_number, line in enumerate(f, start=1):
+                            target_line = line if case_sensitive else line.lower()
+                            if normalized_keyword in target_line:
+                                match_count += 1
+                                if len(matches) < max_results:
+                                    matches.append({
+                                        "file_name": file_path.name,
+                                        "folder": folder_label,
+                                        "relative_path": str(file_path.relative_to(session_folder)),
+                                        "line_number": line_number,
+                                        "line_content": line.rstrip("\n"),
+                                    })
+                                else:
+                                    truncated = True
+                                    break
+                        if truncated:
+                            break
+                except Exception as file_error:
+                    logger.warning(f"Failed to search file {file_path}: {file_error}")
+
+                if truncated:
+                    break
+            if truncated:
+                break
+
+        matches_returned = len(matches)
+        return {
+            "session_id": normalized_session_id,
+            "keyword": keyword,
+            "case_sensitive": case_sensitive,
+            "matches": matches,
+            "match_count": match_count,
+            "matches_returned": matches_returned,
+            "truncated": truncated,
+            "max_results": max_results,
+            "search_scope": "single",
+            "scanned_sessions": 1,
+        }
+    except Exception as e:
+        logger.error(f"Failed to search session files for {session_id}: {str(e)}")
+        import traceback
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        raise
+
+
+def search_all_sessions_text_files(
+    keyword: str,
+    username: Optional[str] = None,
+    *,
+    case_sensitive: bool = False,
+    max_results: int = 200
+) -> Dict[str, Any]:
+    """
+    在可访问的所有 session 中搜索关键字
+    """
+    try:
+        if not keyword or not keyword.strip():
+            raise ValueError("keyword is required for session search")
+
+        if max_results <= 0:
+            raise ValueError("max_results must be greater than 0")
+
+        max_results = min(max_results, 1000)
+
+        accessible_sessions = list_all_sessions(username)
+        if not accessible_sessions:
+            return {
+                "session_id": "__all__",
+                "keyword": keyword,
+                "case_sensitive": case_sensitive,
+                "matches": [],
+                "match_count": 0,
+                "matches_returned": 0,
+                "truncated": False,
+                "max_results": max_results,
+                "search_scope": "all",
+                "scanned_sessions": 0,
+            }
+
+        matches: list[Dict[str, Any]] = []
+        match_count = 0
+        truncated = False
+        scanned_sessions = 0
+
+        for session_meta in accessible_sessions:
+            session_id = session_meta.get("session_id")
+            if not session_id:
+                continue
+
+            # 如果 session_id 不包含用户名，但调用者提供了 username，则传递 username，保持兼容
+            session_username = username if (username and '/' not in session_id) else None
+
+            session_result = search_session_text_files(
+                session_id=session_id,
+                keyword=keyword,
+                username=session_username,
+                case_sensitive=case_sensitive,
+                max_results=max_results,
+            )
+
+            if session_result is None:
+                continue
+
+            scanned_sessions += 1
+            match_count += session_result.get("match_count", 0)
+            truncated = truncated or session_result.get("truncated", False)
+
+            for match in session_result.get("matches", []):
+                if len(matches) >= max_results:
+                    truncated = True
+                    break
+                match_with_session = dict(match)
+                match_with_session["session_id"] = session_result["session_id"]
+                matches.append(match_with_session)
+
+            if len(matches) >= max_results:
+                break
+
+        return {
+            "session_id": "__all__",
+            "keyword": keyword,
+            "case_sensitive": case_sensitive,
+            "matches": matches,
+            "match_count": match_count,
+            "matches_returned": len(matches),
+            "truncated": truncated,
+            "max_results": max_results,
+            "search_scope": "all",
+            "scanned_sessions": scanned_sessions,
+        }
+    except Exception as e:
+        logger.error(f"Failed to search across sessions: {str(e)}")
+        import traceback
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        raise
+

@@ -163,6 +163,28 @@ export interface WorkflowProgressChunk {
   result?: PaperGenerationWorkflowResponse;
 }
 
+export interface SessionSearchMatch {
+  file_name: string;
+  folder: 'generated' | 'uploaded';
+  relative_path: string;
+  line_number: number;
+  line_content: string;
+  session_id?: string;
+}
+
+export interface SessionSearchResponse {
+  session_id: string;
+  keyword: string;
+  case_sensitive: boolean;
+  matches: SessionSearchMatch[];
+  match_count: number;
+  matches_returned: number;
+  truncated: boolean;
+  max_results: number;
+  search_scope?: 'single' | 'all';
+  scanned_sessions?: number;
+}
+
 // PDF 处理 API 类型定义
 export interface PDFProcessRequest {
   text_prompt?: string;
