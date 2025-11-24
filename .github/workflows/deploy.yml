@@ -162,5 +162,5 @@ jobs:
             $DC_CMD up -d
 
             # 清理未使用的镜像
-            docker image prune -f
+            docker image prune -f 
 

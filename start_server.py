@@ -3,7 +3,7 @@
 """
 import uvicorn
 from app.config.settings import settings
-
+print("")
 if __name__ == "__main__":
     uvicorn.run(
         "app.main:app",
