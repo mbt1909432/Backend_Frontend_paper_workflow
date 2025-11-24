@@ -1,0 +1,140 @@
+.token-usage-container {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.token-usage-card {
+  background: var(--color-bg-secondary, #ffffff);
+  border-radius: 8px;
+  padding: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.token-usage-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.token-usage-header h1 {
+  margin: 0;
+  color: var(--color-text-primary, #333);
+}
+
+.token-usage-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.token-usage-summary {
+  margin-bottom: 2rem;
+}
+
+.token-usage-summary h2 {
+  margin-bottom: 1rem;
+  color: var(--color-text-primary, #333);
+  font-size: 1.25rem;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.summary-item {
+  background: var(--color-bg-primary, #f5f5f5);
+  padding: 1.5rem;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.summary-label {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary, #666);
+  margin-bottom: 0.5rem;
+}
+
+.summary-value {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--color-text-primary, #333);
+}
+
+.token-usage-section {
+  margin-bottom: 2rem;
+}
+
+.token-usage-section h2 {
+  margin-bottom: 1rem;
+  color: var(--color-text-primary, #333);
+  font-size: 1.25rem;
+}
+
+.token-usage-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--color-bg-primary, #ffffff);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.token-usage-table thead {
+  background: var(--color-bg-tertiary, #f0f0f0);
+}
+
+.token-usage-table th {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: var(--color-text-primary, #333);
+  border-bottom: 2px solid var(--color-border-light, #e0e0e0);
+}
+
+.token-usage-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--color-border-light, #e0e0e0);
+  color: var(--color-text-primary, #333);
+}
+
+.token-usage-table tbody tr:hover {
+  background: var(--color-bg-secondary, #f9f9f9);
+}
+
+.token-usage-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+@media (max-width: 768px) {
+  .token-usage-container {
+    padding: 1rem;
+  }
+
+  .token-usage-card {
+    padding: 1rem;
+  }
+
+  .token-usage-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .token-usage-table {
+    font-size: 0.875rem;
+  }
+
+  .token-usage-table th,
+  .token-usage-table td {
+    padding: 0.5rem;
+  }
+}
+
