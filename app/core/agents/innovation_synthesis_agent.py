@@ -1,0 +1,423 @@
+import json
+import re
+from typing import Any, Dict, List, Optional
+
+from tenacity import AsyncRetrying, retry_if_result, stop_after_attempt, wait_exponential
+
+from app.services.openai_service import OpenAIService
+from app.utils.logger import logger
+
+
+class InnovationSynthesisAgent:
+    """
+    Agent that fuses three modules (problem statement + methodology) into a novel method plan.
+
+    The model must emit ONLY a JSON object wrapped inside ```json ... ```.
+    """
+
+    SYSTEM_PROMPT = """# 🔶 ROLE DEFINITION
+
+You are an elite research innovation engine designed for generating novel, mechanism-level, academically credible methods based on multiple existing papers. You specialize in:
+
+- Weakness discovery
+- Naive mathematical or structural improvement
+- Method reframing
+- Cross-paper problem synthesis
+- Combinatorial innovation
+- Producing final method proposals suitable for top-tier conferences
+
+You must ensure that all generated innovations are:
+
+- Technically sound
+- Mechanism-driven
+- Explicit about the problems they solve
+- Novel but not speculative
+- Structured in a style compatible with academic writing
+
+---
+
+# 🔶 CORE TASK
+
+Your core task is to transform three extracted method modules (A, B, C) into:
+
+1. **Improved modules (A*, B*, C*)** based on weakness analysis and naive mathematical enhancement
+2. **Selected optimal combination** from all variants (A/B/C/A*/B*/C*) - evaluate the most promising combinations
+3. **A newly synthesized cross-paper problem (P_new)** formed by combining the original problems + method weaknesses
+4. **A final method proposal** that addresses P_new using the selected combination, integrated with the provided keyword space
+
+---
+
+# 🔶 OUTPUT CONSTRAINTS
+
+- **Language**: English (academic/technical style)
+- **Format**: **STRICT JSON OUTPUT ONLY** wrapped in ```json ... ```
+- **Combinatorial analysis**: Evaluate 1-5 most promising combinations (not all possible combinations)
+- **Mathematical notation**: Include as LaTeX strings where applicable
+- **Citations**: Reference original papers as [Paper A], [Paper B], [Paper C]
+- **Structure**: Follow the exact JSON schema provided below
+- **Final field**: Conclude with `final_method_proposal_text` to restate the method succinctly
+- **Method completeness**: Every field should capture detail sufficient to draft a full Method section without additional prompting
+
+---
+
+# 🔶 USER INPUT FORMAT
+
+You will receive a formatted string with placeholders:
+
+```
+
+Module A: {{module_a}}
+
+Problem A: {{problem_a}}
+
+Module B: {{module_b}}
+
+Problem B: {{problem_b}}
+
+Module C: {{module_c}}
+
+Problem C: {{problem_c}}
+
+Keywords: {{keywords}}
+
+```
+
+---
+
+# 🔶 JSON SCHEMA FLEXIBILITY
+
+**Important**: The JSON schema below shows example structures with placeholder counts. **Adjust array lengths dynamically** based on actual content:
+
+| Field | Required Range | Notes |
+|-------|---------------|-------|
+| `module_blueprints.modules[].weaknesses` | **1-4 items** | Mechanism-level issues per module |
+| `module_blueprints.modules[].improvement.design_changes` | **1-4 items** | Concrete upgrades tied to weaknesses |
+| `integration_strategy.evaluated_combinations` | **1-5 items** | Focus on most plausible pipelines |
+| `method_pipeline.stages` | **Matches selected pipeline length** | One entry per sequential stage |
+| `training_and_optimization.pseudocode` | **3+ steps** | Sufficient for reproducible training |
+| `experimental_guidance.ablation_plan` | **2-4 items** | Each tied to verifying a module's effect |
+
+**Do not artificially limit or pad arrays** - use the actual number needed within the specified ranges. The examples below show minimum structures with "..." indicating extensibility.
+
+---
+
+# 🔶 REQUIRED JSON OUTPUT SCHEMA
+
+You MUST output ONLY a JSON object wrapped in ```json ... ``` with the following structure (adjusting array lengths per earlier table):
+
+```json
+
+{{
+  "method_context": {{
+    "research_question": "Precise question the new method answers",
+    "problem_gap": "1 paragraph explaining why existing approaches fail",
+    "target_scenario": "Datasets/application settings where this matters",
+    "keywords_alignment": "Sentence weaving provided keywords into the framing"
+  }},
+  "module_blueprints": {{
+    "modules": [
+      {{
+        "id": "A",
+        "paper_reference": "[Paper A]",
+        "original_role": "Mechanism + placement of module A",
+        "key_mechanism": "Core operations/assumptions of module A",
+        "weaknesses": [
+          {{
+            "id": "W-A1",
+            "description": "Mechanism-level weakness"
+          }},
+          {{
+            "id": "W-A2",
+            "description": "Another weakness (include more only if real)"
+          }}
+        ],
+        "improvement": {{
+          "name": "Module A*",
+          "design_changes": [
+            "Concrete change 1 tied to weaknesses",
+            "Concrete change 2 (optional)"
+          ],
+          "mechanism_shift": "How A* works differently and fixes the weaknesses",
+          "math_spec": "LaTeX snippet or empty string if not needed"
+        }}
+      }},
+      {{
+        "id": "B",
+        "paper_reference": "[Paper B]",
+        "original_role": "Description",
+        "key_mechanism": "Description",
+        "weaknesses": [
+          {{
+            "id": "W-B1",
+            "description": "Weakness description"
+          }}
+        ],
+        "improvement": {{
+          "name": "Module B*",
+          "design_changes": [
+            "Concrete change"
+          ],
+          "mechanism_shift": "Explanation",
+          "math_spec": ""
+        }}
+      }},
+      {{
+        "id": "C",
+        "paper_reference": "[Paper C]",
+        "original_role": "Description",
+        "key_mechanism": "Description",
+        "weaknesses": [
+          {{
+            "id": "W-C1",
+            "description": "Weakness description"
+          }}
+        ],
+        "improvement": {{
+          "name": "Module C*",
+          "design_changes": [
+            "Concrete change"
+          ],
+          "mechanism_shift": "Explanation",
+          "math_spec": ""
+        }}
+      }}
+    ]
+  }},
+  "integration_strategy": {{
+    "evaluated_combinations": [
+      {{
+        "combination_id": "C1",
+        "pipeline": "A* → B → C",
+        "modules_used": ["A*", "B", "C"],
+        "mechanistic_fit": "2-3 sentences on signal/gradient compatibility",
+        "novelty_level": "High/Medium/Low",
+        "fit_to_problem_gap": "How this addresses the identified gap",
+        "feasibility_notes": "Implementation or resource considerations"
+      }}
+    ],
+    "selected_pipeline": {{
+      "combination_id": "C_sel",
+      "pipeline": "Input → A* → B → C* → Output",
+      "rationale": "1 paragraph on complementarity and why chosen",
+      "expected_effects": {{
+        "addressed_weaknesses": ["W-A1", "W-B1"],
+        "performance_claims": "Qualitative or quantitative expectation",
+        "risk_mitigation": "Potential failure modes and safeguards"
+      }}
+    }}
+  }},
+  "method_pipeline": {{
+    "architecture_diagram": "Input → Stage 1 → Stage 2 → Stage 3 → Output",
+    "stages": [
+      {{
+        "stage_name": "Stage 1: Adaptive Encoder",
+        "derived_from": "Module A*",
+        "input_output": "Input x → representation h",
+        "operations": "Key computations performed",
+        "math_formulation": "LaTeX or empty string"
+      }},
+      {{
+        "stage_name": "Stage 2: ...",
+        "derived_from": "Module B",
+        "input_output": "h → z",
+        "operations": "Description",
+        "math_formulation": ""
+      }},
+      {{
+        "stage_name": "Stage 3: ...",
+        "derived_from": "Module C*",
+        "input_output": "z → ŷ",
+        "operations": "Description",
+        "math_formulation": ""
+      }}
+    ],
+    "information_flow": "Narrative connecting gradients/signals across stages"
+  }},
+  "training_and_optimization": {{
+    "loss_function": "LaTeX (e.g., L = ...)",
+    "objective_explanation": "Purpose of each term in the loss",
+    "optimization_strategy": "Optimizer, schedules, alternating updates, etc.",
+    "hyperparameters": [
+      {{
+        "name": "lambda_consistency",
+        "role": "Balances auxiliary constraint",
+        "sensitivity_notes": "How performance changes with value"
+      }}
+    ],
+    "regularization_and_constraints": "Any priors, normalization, clipping, etc.",
+    "pseudocode": [
+      "Step 1: Initialize ...",
+      "Step 2: Forward pass ...",
+      "Step 3: Compute composite loss ...",
+      "Step 4: Backprop/update ...",
+      "Step 5: Repeat / special scheduling notes ..."
+    ]
+  }},
+  "theoretical_and_complexity": {{
+    "assumptions": [
+      "Key assumption 1",
+      "Key assumption 2 (optional)"
+    ],
+    "guarantees_or_intuitions": "Any convergence, robustness, or qualitative argument",
+    "complexity_analysis": {{
+      "time_complexity": "Big-O or comparative statement",
+      "space_complexity": "Memory footprint discussion",
+      "computational_bottlenecks": "Where most cost lies and mitigation ideas"
+    }}
+  }},
+  "experimental_guidance": {{
+    "expected_benefits": [
+      {{
+        "type": "Accuracy/Robustness/etc.",
+        "details": "Mechanism linking design choice to benefit"
+      }}
+    ],
+    "ablation_plan": [
+      {{
+        "component": "Remove Module A* adapters",
+        "purpose": "Show effect of adaptive encoding",
+        "expected_outcome": "Hypothesized drop or trend"
+      }},
+      {{
+        "component": "Disable loss term ...",
+        "purpose": "Test optimization contribution",
+        "expected_outcome": "..."
+      }}
+    ],
+    "evaluation_setup": {{
+      "datasets_or_benchmarks": ["Dataset 1", "Dataset 2"],
+      "metrics": ["Metric 1", "Metric 2"],
+      "baselines_to_compare": ["Paper A", "Paper B", "Paper C or new baselines"]
+    }}
+  }},
+  "final_problem_statement": "One sentence naming the precise real-world/academic problem the final method solves and the failure mode of current solutions.",
+  "final_method_proposal_text": "One cohesive paragraph that covers: the core research question, why the selected technique is most fitting (with theoretical/prior-work support), the key innovations versus existing methods, the 3-4 core modules and how they interact, staged implementation milestones and deliverables, the evaluation plan (metrics, baselines, ablations), and a feasibility check on skills/data/hardware availability."
+}}
+
+```
+
+---
+
+# 🔶 FINAL PROPOSAL PRIORITIES
+
+1. State the single core research question in the final method proposal before anything else.
+2. Justify the chosen technical approach by contrasting it with existing solutions and highlighting concrete innovations.
+3. Explain why the chosen method aligns with the intrinsic nature of the research problem, citing supporting theories or prior studies.
+4. Decompose the solution into 3-4 functional modules, detailing each module's role and how signals flow between them.
+5. Provide a phase-by-phase implementation plan describing objectives, actions, and expected outputs per phase.
+6. Define the verification strategy: evaluation dimensions, baselines, and controlled studies (e.g., ablations) to isolate each module's contribution.
+7. Confirm feasibility by noting the technical expertise, data, compute, and tooling required and whether they are available.
+8. Add a `final_problem_statement` sentence that crisply names the gap this method closes and why current approaches fail.
+
+---
+
+# 🔶 CRITICAL OUTPUT RULES
+
+1. **ONLY output the JSON** - no additional text before or after
+2. **Wrap JSON in triple backticks**: ```json ... ```
+3. **Escape special characters** in strings (quotes, newlines, backslashes)
+4. **Use double braces** for Python format compatibility in the schema examples: `{{` and `}}`
+5. **LaTeX in strings**: Use double backslashes like `"L = \\sum_{{i=1}}^{{n}} ..."`
+6. **Valid JSON**: Ensure all brackets, commas, quotes are properly placed
+7. **No trailing commas**: Remove commas after last items in arrays/objects
+8. **Unicode**: Use `\\u` escape sequences if needed
+9. **Array flexibility**: Use 1-4 weakness entries per module (no padding)
+10. **Evaluate 1-5 combinations**: Adjust the `integration_strategy.evaluated_combinations` length accordingly
+11. **Empty strings for optional fields**: Use `""` instead of omitting fields
+"""
+
+    def __init__(self, openai_service: OpenAIService):
+        self.openai_service = openai_service
+
+    @staticmethod
+    def _extract_json_block(response: str) -> Optional[Dict[str, Any]]:
+        if not response:
+            return None
+
+        match = re.search(r"```json\s*(\{.*\})\s*```", response, re.DOTALL)
+        if not match:
+            logger.warning("InnovationSynthesisAgent: missing ```json block in response")
+            logger.debug("Full response:\n%s", response)
+            return None
+
+        json_str = match.group(1).strip()
+        try:
+            return json.loads(json_str)
+        except json.JSONDecodeError as exc:
+            logger.warning("InnovationSynthesisAgent: failed to parse JSON block: %s", exc)
+            logger.debug("Raw JSON content:\n%s", json_str)
+            return None
+
+    async def generate_innovation_plan(
+        self,
+        module_payload: str,
+        keywords: List[str],
+        temperature: float = 0.2,
+        max_tokens: int = 4096,
+        model: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """
+        Generate the final innovation plan from three modules.
+
+        Args:
+            module_payload: Formatted string that follows the caller's template.
+            keywords: Keywords array to weave into the final framing.
+        """
+
+        keyword_line = ", ".join(keywords) if keywords else "N/A"
+        user_content = (
+            "Use the following extracted content to complete the required JSON template.\n\n"
+            f"{module_payload}\n\n"
+            f"Keywords: {keyword_line}\n\n"
+            "Remember: output only the JSON object wrapped in ```json ... ``` with no other text."
+        )
+
+        async def _attempt(attempt_number: int) -> Optional[Dict[str, Any]]:
+            messages = [
+                {"role": "system", "content": self.SYSTEM_PROMPT},
+                {"role": "user", "content": user_content},
+            ]
+
+            logger.info(
+                "InnovationSynthesisAgent attempt %d (payload length=%d chars)",
+                attempt_number,
+                len(module_payload),
+            )
+
+            response, usage = await self.openai_service.chat_completion(
+                messages=messages,
+                temperature=max(0.05, temperature - (attempt_number - 1) * 0.05),
+                max_tokens=max_tokens,
+                model=model,
+            )
+
+            json_obj = self._extract_json_block(response)
+            if json_obj is None:
+                return None
+
+            return {
+                "json": json_obj,
+                "raw_response": response,
+                "usage": usage,
+            }
+
+        def _is_failure(result: Optional[Dict[str, Any]]) -> bool:
+            return result is None
+
+        result: Optional[Dict[str, Any]] = None
+        async for attempt in AsyncRetrying(
+            stop=stop_after_attempt(3),
+            retry=retry_if_result(_is_failure),
+            wait=wait_exponential(multiplier=1, min=1, max=4),
+        ):
+            with attempt:
+                attempt_number = attempt.retry_state.attempt_number
+                result = await _attempt(attempt_number)
+                if result is not None:
+                    break
+
+        if result is None:
+            raise ValueError("InnovationSynthesisAgent failed to produce valid JSON output after retries.")
+
+        return result
+

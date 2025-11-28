@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.config.settings import settings
+from app.config.settings import settings, proxy_manager
 from app.api.v1.router import api_router
 from app.utils.logger import logger
 from app.db.database import engine, Base
@@ -44,6 +44,17 @@ async def startup_event():
         logger.error(f"Failed to create database tables: {e}")
         raise
     
+    # 启动时检查代理可用性
+    logger.info("Checking proxy availability...")
+    proxy_available = await proxy_manager.is_proxy_available(force_check=True)
+    if proxy_available:
+        logger.info(f"✓ Proxy enabled and available: {settings.proxy_url}")
+    else:
+        if settings.proxy_enabled:
+            logger.warning(f"✗ Proxy enabled but not available: {settings.proxy_url}")
+        else:
+            logger.info("✓ Proxy disabled")
+    
     # 启动时检查 LLM 服务可用性
     provider_status = await check_llm_connectivity()
     for provider, status in provider_status.items():
@@ -51,6 +62,7 @@ async def startup_event():
     
     # 缓存检查结果，便于后续健康检查接口读取
     app.state.provider_health = provider_status
+    app.state.proxy_available = proxy_available
 
 
 @app.on_event("shutdown")

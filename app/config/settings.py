@@ -1,6 +1,9 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field
 from typing import Optional
+import asyncio
+import aiohttp
+import logging
 
 
 class Settings(BaseSettings):
@@ -37,6 +40,13 @@ class Settings(BaseSettings):
     
     # 文件输出配置
     output_dir: str = "output"  # 输出目录，用于保存生成的文件
+    
+    # 代理配置
+    proxy_enabled: bool = Field(default=True, description="是否启用代理")
+    proxy_url: str = Field(default="http://127.0.0.1:7890", description="代理服务器地址")
+    proxy_auto_detect: bool = Field(default=True, description="是否自动检测代理可用性")
+    proxy_timeout: int = Field(default=10, description="代理检测超时时间（秒）")
+    proxy_test_url: str = Field(default="https://www.google.com", description="用于测试代理的URL")
     
     # 数据库配置 - 支持 db_* 或 POSTGRES_* 环境变量名
     db_user: Optional[str] = Field(default="postgres")
@@ -87,6 +97,74 @@ class Settings(BaseSettings):
         return self.super_admin_password or self.admin_password or "admin123"
 
 
+class ProxyManager:
+    """代理管理器"""
+    
+    def __init__(self, settings: Settings):
+        self.settings = settings
+        self.logger = logging.getLogger(__name__)
+        self._proxy_available = None
+        self._last_check_time = 0
+        self._check_interval = 300  # 5分钟检查一次
+    
+    async def is_proxy_available(self, force_check: bool = False) -> bool:
+        """检查代理是否可用"""
+        import time
+        current_time = time.time()
+        
+        # 如果不强制检查且在检查间隔内，返回缓存结果
+        if not force_check and self._proxy_available is not None and (current_time - self._last_check_time) < self._check_interval:
+            return self._proxy_available
+        
+        if not self.settings.proxy_enabled:
+            self._proxy_available = False
+            return False
+        
+        try:
+            connector = aiohttp.TCPConnector()
+            timeout = aiohttp.ClientTimeout(total=self.settings.proxy_timeout)
+            
+            async with aiohttp.ClientSession(
+                connector=connector,
+                timeout=timeout
+            ) as session:
+                async with session.get(
+                    self.settings.proxy_test_url,
+                    proxy=self.settings.proxy_url
+                ) as response:
+                    self._proxy_available = response.status == 200
+                    self._last_check_time = current_time
+                    
+                    if self._proxy_available:
+                        self.logger.info(f"✓ 代理可用: {self.settings.proxy_url}")
+                    else:
+                        self.logger.warning(f"✗ 代理响应异常: {response.status}")
+                    
+                    return self._proxy_available
+                    
+        except Exception as e:
+            self._proxy_available = False
+            self._last_check_time = current_time
+            self.logger.warning(f"✗ 代理不可用: {self.settings.proxy_url} - {e}")
+            return False
+    
+    def get_proxy_dict(self) -> dict:
+        """获取代理配置字典（用于 requests 等库）"""
+        if self._proxy_available:
+            return {
+                'http': self.settings.proxy_url,
+                'https': self.settings.proxy_url
+            }
+        return {}
+    
+    def get_proxy_url(self) -> Optional[str]:
+        """获取代理URL（用于 aiohttp 等库）"""
+        return self.settings.proxy_url if self._proxy_available else None
+
+
 # 全局配置实例
 settings = Settings()
+
+# 全局代理管理器实例
+proxy_manager = ProxyManager(settings)
 

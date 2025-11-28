@@ -61,7 +61,8 @@ async def generate_latex_paper_stream(
     如果用户提供了大纲或存在现有的 .tex 文件，则跳过生成。
     """
     try:
-        stream = await agent.generate_latex_paper_stream(
+        # 该方法本身就是一个 async generator，不能再 await
+        stream = agent.generate_latex_paper_stream(
             paper_overview=request.paper_overview,
             user_info=request.user_info,
             has_outline=request.has_outline,

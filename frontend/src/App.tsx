@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Link, useLocation, Navigate, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import AgentChat from './components/AgentChat';
 import PaperOverview from './components/PaperOverview';
 import LaTeXPaper from './components/LaTeXPaper';
@@ -99,6 +99,7 @@ function NavBar() {
   const [switchConfirmInfo, setSwitchConfirmInfo] = useState<{
     targetPath: string;
   } | null>(null);
+  const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navItems = [
     { path: '/', label: '首页' },
@@ -118,9 +119,19 @@ function NavBar() {
     window.location.href = '/login';
   };
 
+  const toggleMobileMenu = () => {
+    setMobileMenuOpen((prev) => !prev);
+  };
+
+  useEffect(() => {
+    // Close menu automatically when route changes
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
+
   const handleNavClick = (path: string, e: React.MouseEvent) => {
     // 如果点击的是当前页面，直接返回
     if (path === location.pathname) {
+      setMobileMenuOpen(false);
       return;
     }
 
@@ -128,8 +139,10 @@ function NavBar() {
     if (hasRunningTask()) {
       e.preventDefault();
       setSwitchConfirmInfo({ targetPath: path });
+      return;
     }
     // 如果没有运行中的任务，让 Link 正常导航
+    setMobileMenuOpen(false);
   };
 
   const confirmSwitch = () => {
@@ -157,10 +170,24 @@ function NavBar() {
     <>
       <nav className="navbar">
         <div className="navbar-container">
-          <Link to="/" className="navbar-brand" onClick={(e) => handleNavClick('/', e)}>
-            <span className="brand-text">ResearchFlow</span>
-          </Link>
-          <div className="navbar-links">
+          <div className="navbar-header">
+            <Link to="/" className="navbar-brand" onClick={(e) => handleNavClick('/', e)}>
+              <span className="brand-text">ResearchFlow</span>
+            </Link>
+            <button
+              type="button"
+              className={`navbar-toggle ${isMobileMenuOpen ? 'open' : ''}`}
+              onClick={toggleMobileMenu}
+              aria-label="展开菜单"
+              aria-expanded={isMobileMenuOpen}
+            >
+              <span className="sr-only">展开或收起导航</span>
+              <span className="navbar-toggle-line" />
+              <span className="navbar-toggle-line" />
+              <span className="navbar-toggle-line" />
+            </button>
+          </div>
+          <div className={`navbar-links ${isMobileMenuOpen ? 'open' : ''}`}>
             {navItems.map((item) => (
               <Link
                 key={item.path}
