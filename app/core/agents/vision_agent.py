@@ -142,7 +142,7 @@ Extract and output ONLY the actual content from images. Do NOT add any:
         images: Union[str, Path, bytes, List[Union[str, Path, bytes]]],
         text_prompt: Optional[str] = None,
         temperature: float = 0.7,
-        max_tokens: int = 4096,
+        max_tokens: int = 44444,
         model: Optional[str] = None
     ) -> Dict[str, Any]:
         """
@@ -210,7 +210,7 @@ Extract and output ONLY the actual content from images. Do NOT add any:
         images: Union[str, Path, bytes, List[Union[str, Path, bytes]]],
         text_prompt: Optional[str] = None,
         temperature: float = 0.7,
-        max_tokens: int = 4096,
+        max_tokens: int = 44444,
         model: Optional[str] = None
     ):
         """

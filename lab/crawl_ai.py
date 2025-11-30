@@ -374,6 +374,8 @@ async def aggregate_trending_phrases_with_llm(phrases,
     except Exception as exc:
         print(f"热门算法聚合失败: {exc}")
         return None
+    finally:
+        await client.close()
 
 
 class ArxivCrawler:
@@ -385,9 +387,9 @@ class ArxivCrawler:
 
     def __init__(self,
                  base_url='https://arxiv.org/list/cs.AI/recent',
-                 max_papers=300,
-                 papers_per_page=50,
-                 use_proxy=True,
+                       max_papers=300,
+                       papers_per_page=50,
+                       use_proxy=True,
                  sleep_time=2,
                  fetch_details=True,
                  detail_sleep=1,
@@ -578,7 +580,7 @@ class ArxivCrawler:
 
         num_pages = (self.max_papers + self.papers_per_page - 1) // self.papers_per_page
         print(f"{'=' * 80}")
-        print(f"开始爬取 arXiv cs.AI 论文")
+        print("开始爬取 arXiv cs.AI 论文")
         print(f"目标: 前 {self.max_papers} 篇论文")
         print(f"预计爬取: {num_pages} 页")
         print(f"{'=' * 80}\n")

@@ -19,16 +19,16 @@ class Settings(BaseSettings):
     # OpenAI 配置
     openai_api_key: str
     openai_api_base: Optional[str] = None  # 自定义 API endpoint（用于模型转发商）
-    openai_model: str = "gpt-4"
+    openai_model: str = "claude-sonnet-4-20250514"
     openai_temperature: float = 0.7
-    openai_max_tokens: int = 2000
+    openai_max_tokens: int = 30000
     
     # Anthropic 配置
     anthropic_api_key: Optional[str] = None
     anthropic_api_base: Optional[str] = None  # 自定义 API endpoint（用于模型转发商）
     anthropic_model: str = "claude-sonnet-4-20250514"
     anthropic_temperature: float = 0.7
-    anthropic_max_tokens: int = 4096
+    anthropic_max_tokens: int = 30000
     
     # 服务器配置
     host: str = "0.0.0.0"
@@ -48,11 +48,35 @@ class Settings(BaseSettings):
     proxy_timeout: int = Field(default=10, description="代理检测超时时间（秒）")
     proxy_test_url: str = Field(default="https://www.google.com", description="用于测试代理的URL")
     
+    # arXiv 爬虫与调度配置
+    arxiv_base_url: str = Field(default="https://arxiv.org/list/cs.AI/recent", description="arXiv cs.AI 列表页")
+    arxiv_max_papers: int = Field(default=25, description="最大爬取论文数量")
+    arxiv_papers_per_page: int = Field(default=25, description="每页抓取的论文数")
+    arxiv_use_proxy: bool = Field(default=True, description="抓取是否使用代理")
+    arxiv_sleep_time: int = Field(default=2, description="翻页间隔秒数")
+    arxiv_fetch_details: bool = Field(default=True, description="是否抓取详情页")
+    arxiv_detail_sleep: int = Field(default=1, description="详情页抓取间隔秒数")
+    arxiv_existing_data_path: Optional[str] = Field(default=None, description="历史数据文件路径，用于去重")
+    arxiv_summarize_new: bool = Field(default=True, description="是否对新增论文执行 LLM 摘要")
+    arxiv_summary_model: Optional[str] = Field(default=None, description="用于摘要的模型名称，默认跟随 openai_model")
+    arxiv_summary_temperature: float = Field(default=0.3, description="摘要模型温度")
+    arxiv_summary_max_tokens: int = Field(default=512, description="摘要模型最大 tokens")
+    arxiv_summary_sleep: float = Field(default=0.0, description="摘要调用间歇秒数")
+    arxiv_summary_concurrency: int = Field(default=5, description="摘要调用最大并发")
+    arxiv_aggregate_hot: bool = Field(default=True, description="是否聚合热门算法词条")
+    arxiv_hot_model: Optional[str] = Field(default=None, description="聚合热门短语的模型")
+    arxiv_hot_temperature: float = Field(default=0.2, description="热门短语模型温度")
+    arxiv_hot_max_tokens: int = Field(default=512, description="热门短语模型最大 tokens")
+    arxiv_hot_top_k: int = Field(default=10, description="热门短语数量")
+    scheduler_enabled: bool = Field(default=True, description="是否启用 APScheduler")
+    scheduler_timezone: str = Field(default="Asia/Shanghai", description="调度器时区")
+    arxiv_cron: str = Field(default="0 3 1 * *", description="arXiv 同步 cron 表达式")
+    
     # 数据库配置 - 支持 db_* 或 POSTGRES_* 环境变量名
     db_user: Optional[str] = Field(default="postgres")
     db_password: Optional[str] = Field(default="postgres")
     db_host: Optional[str] = Field(default="localhost")
-    db_port: Optional[int] = Field(default=5432)
+    db_port: Optional[int] = Field(default=5434)
     db_name: Optional[str] = Field(default="academic_workflow")
     
     # 也支持 POSTGRES_* 格式的环境变量（通过别名）
@@ -167,4 +191,18 @@ settings = Settings()
 
 # 全局代理管理器实例
 proxy_manager = ProxyManager(settings)
+
+
+def reload_settings() -> Settings:
+    """Reload settings from environment (in-place) so existing references stay valid."""
+    global settings
+    new_settings = Settings()
+    for field_name, value in new_settings.model_dump().items():
+        setattr(settings, field_name, value)
+
+    # 重置代理管理器状态，使其使用新配置
+    proxy_manager.settings = settings
+    proxy_manager._proxy_available = None
+    proxy_manager._last_check_time = 0
+    return settings
 

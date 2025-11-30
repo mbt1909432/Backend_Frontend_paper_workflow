@@ -12,8 +12,10 @@ Query → Markdown 工作流的前两步（初版）：
 import json
 import random
 import asyncio
+import time
 from datetime import datetime
 from pathlib import Path
+import re
 from typing import Any, Dict, List, Optional
 
 from app.core.agents.query_rewrite_agent import QueryRewriteAgent
@@ -24,13 +26,24 @@ from app.core.workflows.postprocess_steps import (
     SessionStepInputs,
     run_innovation_synthesis_step,
     run_methodology_extraction_step,
+    _load_local_env_file,
 )
+from app.config.settings import settings
 from app.services.arxiv_service import search_and_download, ArxivPaperMetadata
 from app.services.anthropic_service import AnthropicService
 from app.services.openai_service import OpenAIService
 from app.utils.file_manager import create_session_folder, save_artifact
 from app.utils.logger import logger
 from app.utils.pdf_converter import pdf_to_pngs
+
+
+def _mask_secret(secret: Optional[str]) -> str:
+    """Mask long secrets before logging."""
+    if not secret:
+        return "None"
+    if len(secret) <= 8:
+        return f"{secret[:2]}***"
+    return f"{secret[:4]}...{secret[-4:]}"
 
 
 class QueryToMarkdownWorkflow:
@@ -53,6 +66,7 @@ class QueryToMarkdownWorkflow:
         innovation_agent: Optional[InnovationSynthesisAgent] = None,
         max_concurrent_pdfs: int = 2,
         max_concurrent_pages: int = 5,
+        max_pages_per_pdf: Optional[int] = 20,
     ):
         self.query_rewrite_agent = query_rewrite_agent
         self.vision_agent = vision_agent
@@ -60,6 +74,7 @@ class QueryToMarkdownWorkflow:
         self.innovation_agent = innovation_agent
         self.max_concurrent_pdfs = max_concurrent_pdfs
         self.max_concurrent_pages = max_concurrent_pages
+        self.max_pages_per_pdf = max_pages_per_pdf
 
     async def execute(
         self,
@@ -70,6 +85,9 @@ class QueryToMarkdownWorkflow:
         per_keyword_max_results: int = 10,
         per_keyword_recent_limit: int = 3,
         skip_dblp_check: bool = False,
+        innovation_keywords_override: Optional[List[str]] = None,
+        innovation_run_count: int = 1,
+        max_pages_per_pdf: Optional[int] = None,
     ) -> Dict[str, Any]:
         # 执行完整流程：
         # 1) QueryRewriteAgent 生成 4 条检索短句
@@ -85,6 +103,19 @@ class QueryToMarkdownWorkflow:
         logger.info("=" * 80)
         logger.info(f"Starting Query→Markdown Workflow (rewrite + arxiv) - Session: {session_id}")
         logger.info("=" * 80)
+
+        logger.info(
+            "Config: OpenAI key=%s base=%s model=%s",
+            _mask_secret(settings.openai_api_key),
+            settings.openai_api_base or "https://api.openai.com/v1",
+            settings.openai_model,
+        )
+        logger.info(
+            "Config: Anthropic key=%s base=%s model=%s",
+            _mask_secret(settings.anthropic_api_key),
+            settings.anthropic_api_base or "https://api.anthropic.com",
+            settings.anthropic_model,
+        )
 
         if target_paper_count < 3:
             logger.warning(
@@ -161,7 +192,6 @@ class QueryToMarkdownWorkflow:
             
             # 在关键词之间添加延迟（除了最后一个）
             if i < len(keywords) - 1:
-                import time
                 delay_seconds = 3  # 3秒延迟
                 logger.info(f"等待 {delay_seconds} 秒后处理下一个关键词...")
                 time.sleep(delay_seconds)
@@ -218,6 +248,12 @@ class QueryToMarkdownWorkflow:
 
         processed_root = session_folder / "processed"
         processed_root.mkdir(parents=True, exist_ok=True)
+
+        resolved_page_limit: Optional[int] = (
+            max_pages_per_pdf if max_pages_per_pdf is not None else self.max_pages_per_pdf
+        )
+        if resolved_page_limit is not None and resolved_page_limit <= 0:
+            resolved_page_limit = None
 
         async def process_single_paper(idx: int, paper: Dict[str, Any]) -> Dict[str, Any]:
             paper_id = paper.get("arxiv_id") or f"paper_{idx:02d}"
@@ -288,11 +324,40 @@ class QueryToMarkdownWorkflow:
                 return result
 
             logger.info("PDF %s converted to %d PNG pages", paper_id, len(png_paths))
-            result["page_count"] = len(png_paths)
+
+            def _page_sort_key(path: str) -> tuple[int, str]:
+                """
+                Extract numeric page index if present to keep OCR ordering consistent.
+                Falls back to lexical order to avoid crashes on unexpected filenames.
+                """
+                stem = Path(path).stem
+                match = re.search(r"_page_(\d+)", stem)
+                if match:
+                    return (int(match.group(1)), stem)
+                return (0, stem)
+
+            sorted_png_paths = sorted(png_paths, key=_page_sort_key)
+            if resolved_page_limit is not None:
+                limited_paths = sorted_png_paths[:resolved_page_limit]
+                if len(limited_paths) < len(sorted_png_paths):
+                    logger.info(
+                        "Limiting OCR for %s to first %d pages (total=%d)",
+                        paper_id,
+                        len(limited_paths),
+                        len(sorted_png_paths),
+                    )
+                sorted_png_paths = limited_paths
+
+            result["page_count"] = len(sorted_png_paths)
+            if not sorted_png_paths:
+                logger.error("No PNG pages selected for OCR for %s", paper_id)
+                paper["status"] = "failed"
+                result["status"] = "failed"
+                result["error"] = "No PNG pages selected for OCR"
+                return result
 
             # 页面级并发处理：使用 asyncio.gather 并发处理所有页面
             page_semaphore = asyncio.Semaphore(self.max_concurrent_pages)
-            sorted_png_paths = sorted(png_paths)
 
             async def process_single_page(page_idx: int, png_path: str) -> tuple[int, str, dict, Optional[str]]:
                 """
@@ -501,6 +566,27 @@ class QueryToMarkdownWorkflow:
                 paper["status"] = "failed"
                 continue
 
+            # 对 OCR 文本做一次简单清理：压缩多余空行 & 明显噪音行（例如只有 "\" 的行），避免生成的 Markdown 中出现成片空白
+            cleaned_lines: list[str] = []
+            prev_blank = False
+            for line in ocr_text.splitlines():
+                stripped = line.strip()
+
+                # 将「空行」和某些典型 OCR 噪音行统一视为空行，例如只包含 "\" 的行
+                is_blank_or_noise = stripped == "" or stripped == "\\"
+
+                if is_blank_or_noise:
+                    # 如果上一行已经是空行/噪音，则跳过当前行（保证连续空行最多 1 行）
+                    if prev_blank:
+                        continue
+                    prev_blank = True
+                    cleaned_lines.append("")  # 统一用真正的空行占位
+                else:
+                    prev_blank = False
+                    cleaned_lines.append(line.rstrip())
+
+            cleaned_ocr_text = "\n".join(cleaned_lines).strip()
+
             title = paper.get("title") or "Untitled"
             arxiv_id = paper.get("arxiv_id") or f"paper_{idx:02d}"
             published = paper.get("published") or ""
@@ -522,7 +608,7 @@ class QueryToMarkdownWorkflow:
                 "",
                 "## Extracted Text",
                 "",
-                ocr_text,
+                cleaned_ocr_text,
             ]
 
             md_path.write_text("\n".join(md_content_lines), encoding="utf-8")
@@ -637,15 +723,17 @@ class QueryToMarkdownWorkflow:
         # -------------------------
         # Step 6: Innovation synthesis agent（3-paper requirement）
         # -------------------------
-        innovation_artifact_path: Optional[str] = None
+        innovation_artifact_paths: List[str] = []
         if self.innovation_agent is not None:
             if not methodology_items:
                 logger.warning("Innovation agent skipped: methodology step produced 0 eligible entries.")
             else:
-                innovation_artifact_path = await run_innovation_synthesis_step(
+                innovation_artifact_paths = await run_innovation_synthesis_step(
                     step_inputs=step_inputs,
                     methodology_items=methodology_items,
                     innovation_agent=self.innovation_agent,
+                    override_keywords=innovation_keywords_override,
+                    run_count=innovation_run_count,
                 )
         else:
             logger.info("Step 6: Skipped (innovation_agent not provided)")
@@ -659,9 +747,57 @@ class QueryToMarkdownWorkflow:
             "markdown_emit_artifact": str(markdown_emit_artifact_path),
             "index_md": str(index_md_path),
             "methodology_extraction_artifact": methodology_extraction_artifact_path,
-            "innovation_artifact": innovation_artifact_path,
+            "innovation_artifacts": innovation_artifact_paths,
+            "innovation_artifact": innovation_artifact_paths[0] if innovation_artifact_paths else None,
             "status": status,
         }
+
+
+_VISION_TEST_IMAGE_PATH = Path(__file__).resolve().parents[3] / "lab" /"img.png" #"arxiv_2506.06962v3_page_18.png"
+
+
+async def _test_anthropic_connectivity(anthropic_service: AnthropicService) -> bool:
+    """
+    发送一个极小的 messages.create 请求，快速验证 Anthropic API 是否可用。
+    遇到无效 token/网络错误时提前终止 main 测试，避免整条流水线失败到 OCR 阶段才发现。
+    """
+    logger.info("Running Anthropic connectivity test...")
+    try:
+        await anthropic_service.messages_create(
+            messages=[{"role": "user", "content": "Ping. Reply with PONG."}],
+            temperature=0,
+            max_tokens=5,
+            model=settings.anthropic_model,
+            system="You are a simple health-check bot. Respond with 'PONG'.",
+        )
+        logger.info("Anthropic connectivity test succeeded.")
+        return True
+    except Exception as exc:
+        logger.error("Anthropic connectivity test failed: %s", exc)
+        return False
+
+
+async def _test_vision_agent(vision_agent: VisionAgent) -> bool:
+    """
+    使用 lab/1.png 调用 VisionAgent.analyze_image，验证 Anthropic 读图接口连通性。
+    图片内容为项目内置示例，仅用于确认 API 可接受图片输入并返回文本。
+    """
+    logger.info("Running Anthropic vision (image/OCR) test...")
+    if not _VISION_TEST_IMAGE_PATH.exists():
+        logger.error("Vision test image not found: %s", _VISION_TEST_IMAGE_PATH)
+        return False
+    try:
+        test_image_bytes = _VISION_TEST_IMAGE_PATH.read_bytes()
+        result = await vision_agent.analyze_image(
+            images=[test_image_bytes],
+            temperature=0,
+            max_tokens=1000,
+        )
+        logger.info("Vision test succeeded. Response😀: %s", result)
+        return True
+    except Exception as exc:
+        logger.error("Anthropic vision test failed: %s", exc)
+        return False
 
 
 async def main() -> None:
@@ -695,50 +831,149 @@ async def main() -> None:
        - generated/index.md：汇总索引文件
        - artifact/：中间产物（rewrite.json、pdf_processing.json 等）
     """
-    # 你可以根据需要在这里修改测试用的 query / username / session_id
-    test_query = "【需求3】Robot Learning(e.g. CoRL, RSS, etc.), Machine Learning or Computer Vision for robotics (ICRL) Learning based and data-driven model for robot manipulations or plans Affordance prediction, manipulation plans, imitation learning, reinforcement learning for robotics LLM or NLP for robotics."
-    test_username = "dev_tester"
-    test_session_id: Optional[str] = None  # None 时会自动生成，格式：session_{timestamp}_{uuid}
+    start_time = time.perf_counter()
+    try:
+        # 你可以根据需要在这里修改测试用的 query / username / session_id
+#         test_query = """把下面和AI Agent结合一下
+#     Integrative Multi-Omics Analysis of HLA-DMB in Glioblastoma Reveals Biomarker Potential and Immune Landscape
+# Nan Lü¹#, Qian Guo²#, Xiyuan Zhu³, Taoyu Zhu⁴, Xutong Xue⁵, Cristiano Coppola⁵, Kaijun Zhao⁶*, Yu’e Liu⁵⁶*,
+# ¹Department of Neurosurgery, 960 Hospital of PLA, Jinan, Shandong, China²Department of Rhinology, The First Affiliated Hospital of Zhengzhou University, Zhengzhou, 450052, China³Department of Chemistry, SUNY Stony Brook University, Stony Brook, NY11794, United States⁴ Krieger School of Arts & Science, Johns Hopkins University, 3400 N, Charles Street, Baltimore, MD⁵Boston Children's Hospital, Dana Farber Cancer Institute, Harvard Medical School, Boston, Massachusetts 02115, USA.⁶Department of Neurosurgery, Shanghai East Hospital, School of Medicine, Tongji University, Shanghai, 200120, China
+#     """
+        #test_query="具身智能"
+        # test_query="a VLA that learnsfrom experience"
+        # test_query="RL + reasoning"
+#         test_query="""【新需求】Cloud Computing
+# Large Language Models
+# Generative AI"""
+#         test_query="""】1.LLM (best with application in VR/AR/Metaverse,ranking and recommendation
+# 2. Reinforcement learning (best with application in VR/AR/Metaverse, ranking and recommendation)
+# 3. Al Models and agent application"""
 
-    # 构造依赖
-    openai_service = OpenAIService()
-    query_agent = QueryRewriteAgent(openai_service=openai_service)
-    methodology_agent = MethodologyExtractionAgent(openai_service=openai_service)
-    innovation_agent = InnovationSynthesisAgent(openai_service=openai_service)
+#         test_query="""Data science for social science (social network analysis, etc)
+# Data analysis in user’s behaviors
+# Biostats analysis方向
+# Causal inference因果推断，在各领域中的应用"""
+#         test_query = """【需求5】 Causal inference (Synthetic control, Difference-in-Difference, Instrumental Variables)
+# - Network effect in ads platforms
+# - Integration of AI in messaging payments (AI and personalization, consumer trust)
+# - Advertising supply and demand
+# - Ad spend and demand generation
+# - User behavior and advertising effectiveness"""
+#         test_query = """【需求】Robot Learning(e.g. CoRL, RSS, etc.), Machine Learning or Computer Vision for robotics (ICRL) Learning based and data-driven model for robot manipulations or plans Affordance prediction, manipulation plans, imitation learning, reinforcement learning for robotics LLM or NLP for robotics."""
+        test_query="""An AI-Augmented BI Platform for Collaborative Production Logistics: A Multi-Agent Predictive Optimization framework"""
+#         test_query="""
+#         意图识别和历史上下文拼接任务要求
+# 1. 项目背景
+# 1.1 需求概述
+# 为了在电商背景下，能够满足广泛大量的C端用户的输入能够被准确识别/分辨。对我们智能体的上下文拼接和分析，以及用户的意图识别提出了较高的要求。要能够快速准确的识别用户的各种意图，能够将用户模糊不清的输入使用上下文拼接以及改写手段使其能够被AGENT准确分辨。
+#
+# 1.2 目前存在的问题
+# •	对于复杂中文语义和电商领域的专业语义的转化不够好，例如用户先查询某个商品之后，在针对商品列表询问“性价比”这样的问题，很难转化为可以量化检索的指标。
+# •	  上下文拼接较为粗暴，目前采用上下文距离权重进行拼接，距离越近权重越高。带来的影响有对于部分指代词的理解很差。例如用户先查询了多款电脑商品，对第一款产品A，提出了要求，我们重新召回了产品B，用户根据产品B，提出要求“不要某些种类，并且要某些类型”。这个需求应该是针对召回A的处理，如果对于召回B进行额外处理则会有额外的风险。
+# •	在多轮意图识别的过程中，无法保持稳定的/高效的判别。
+# •	对于意图识别如果使用单智能体，长上下文输入判别，可能会有一个比较不错的结果，但是随之而来的是更长的时间损耗。我们有尝试过弱大模型的意图识别方法，详情可以查看使用向量构建意图识别树
+#
+# 2. 项目目标
+# 2.1 上下文目标
+# •	能够在多轮对话中准确的匹配上下文。
+# •	能够处理，精炼长期记忆作为用户的全局画像信息。
+# •	可以针对电商购物领域的专业属于进行处理。
+# •	最后对于上下文的处理之后的语句可以准确的用于检索。
+# 2.2 意图识别目标
+# •	能够理解并处理复杂中文名词与口语化表达。
+# •	可以将意图识别的整体时间控制在1-2秒内。
+# •	意图识别分为[购物，闲聊，查询，单商品购物/查询，组合商品购物/查询]。
+# •	能够灵活快速的切换意图。
+#
+# 3. 提供和接受的技术范围
+# •	代码：python3.12
+# •	大语言模型：QWEN全系列开源闭源模型（API访问），自行部署的有国内牌照的LLM
+# •	云服务器：火山云ECS服务器，4090/V100算力服务器
+# •	接口框架：fastapi
+# •	数据：商品数据数据库（full access），上下文存储数据库（full access）
+# PS上述资源均可由爱买科技提供，也可自行选择对应开发工具，但最后需要能够在上述提及的方式进行部署与使用
+# 4. 功能性要求
+# 4.1 性能要求
+# •	意图识别响应时间 <= 3S
+# •	意图识别分支选择正确率 >= 90%
+# •	上下文拼接有效率，通过检索检验达到85%
+# 4.2 稳定性
+# •	异常监控机制：日志/警告等
+# •	自动备份周期：每日/每周
+# 5. 项目管理
+# •	开发模式：敏捷开发
+# •	每周定期交流至少一次（包含进度，问题，计划）
+# •	需要专人负责两边的交流，如有问题随时可以沟通
+# 6. 交付物
+# •	完整源代码
+# •	API文档/手册
+# •	测试报告
+# •	技术架构文档
+# •	数据库结构设计文档
+# •	设计路线预计上线花费
+#
+#
+#         """
+        test_username = "2025_11_29_lab_only"
+        test_session_id: Optional[str] = None  # None 时会自动生成，格式：session_{timestamp}_{uuid}
 
-    anthropic_service = AnthropicService()
-    vision_agent = VisionAgent(anthropic_service=anthropic_service)
+        _load_local_env_file()
 
-    workflow = QueryToMarkdownWorkflow(
-        query_rewrite_agent=query_agent,
-        vision_agent=vision_agent,
-        methodology_extraction_agent=methodology_agent,
-        innovation_agent=innovation_agent,
-        max_concurrent_pdfs=2,
-        max_concurrent_pages=5,  # 每篇论文同时处理的页面数
-    )
+        # 构造依赖
+        openai_service = OpenAIService()
+        query_agent = QueryRewriteAgent(openai_service=openai_service)
+        methodology_agent = MethodologyExtractionAgent(openai_service=openai_service)
+        innovation_agent = InnovationSynthesisAgent(openai_service=openai_service)
 
-    result = await workflow.execute(
-        original_query=test_query,
-        session_id=test_session_id,  # None 时自动生成，如：session_20251127_112630_748edba5
-        username=test_username,
-        target_paper_count=3,  # 最后需要的数量（去重后按时间排序取前 N 篇）
-        per_keyword_max_results=9,  # 每个关键词最大的搜索结果
-        per_keyword_recent_limit=3,  # 每个关键词只考虑最近 N 篇
-        skip_dblp_check=False,  # 设置为 True 可跳过 DBLP 检查（会下载更多论文，但使用 arXiv BibTeX）
-    )
+        anthropic_service = AnthropicService()
+        vision_agent = VisionAgent(anthropic_service=anthropic_service)
 
-    logger.info("Query→Markdown workflow finished.")
-    logger.info("Session folder: %s", result["session_folder"])
-    logger.info("rewrite_artifact: %s", result["rewrite_artifact"])
-    logger.info("papers_manifest: %s", result["papers_manifest"])
-    logger.info("pdf_processing_artifact: %s", result["pdf_processing_artifact"])
-    logger.info("markdown_emit_artifact: %s", result["markdown_emit_artifact"])
-    logger.info("index_md: %s", result["index_md"])
-    if result.get("methodology_extraction_artifact"):
-        logger.info("methodology_extraction_artifact: %s", result["methodology_extraction_artifact"])
-    if result.get("innovation_artifact"):
-        logger.info("innovation_artifact: %s", result["innovation_artifact"])
+
+        if not await _test_anthropic_connectivity(anthropic_service):
+            logger.error("Abort workflow run due to Anthropic connectivity failure.")
+            return
+        if not await _test_vision_agent(vision_agent):
+            logger.error("Abort workflow run due to Anthropic vision failure.")
+            return
+
+        workflow = QueryToMarkdownWorkflow(
+            query_rewrite_agent=query_agent,
+            vision_agent=vision_agent,
+            methodology_extraction_agent=methodology_agent,
+            innovation_agent=innovation_agent,
+            max_concurrent_pdfs=2,
+            max_concurrent_pages=5,  # 每篇论文同时处理的页面数
+        )
+
+        result = await workflow.execute(
+            original_query=test_query,
+            session_id=test_session_id,  # None 时自动生成，如：session_20251127_112630_748edba5
+            username=test_username,
+            target_paper_count=3,  # 最后需要的数量（去重后按时间排序取前 N 篇）
+            per_keyword_max_results=3,  # 每个关键词最大的搜索结果
+            per_keyword_recent_limit=3,  # 每个关键词只考虑最近 N 篇
+            skip_dblp_check=True,  # 设置为 True 可跳过 DBLP 检查（会下载更多论文，但使用 arXiv BibTeX）
+        )
+
+        logger.info("Query→Markdown workflow finished.")
+        logger.info("Session folder: %s", result["session_folder"])
+        logger.info("rewrite_artifact: %s", result["rewrite_artifact"])
+        logger.info("papers_manifest: %s", result["papers_manifest"])
+        logger.info("pdf_processing_artifact: %s", result["pdf_processing_artifact"])
+        logger.info("markdown_emit_artifact: %s", result["markdown_emit_artifact"])
+        logger.info("index_md: %s", result["index_md"])
+        if result.get("methodology_extraction_artifact"):
+            logger.info("methodology_extraction_artifact: %s", result["methodology_extraction_artifact"])
+        innovation_artifacts = result.get("innovation_artifacts") or []
+        if innovation_artifacts:
+            logger.info("innovation_artifacts: %s", innovation_artifacts)
+    finally:
+        elapsed = time.perf_counter() - start_time
+        logger.info(
+            "Query→Markdown workflow total runtime: %.2f seconds (≈%.2f minutes)",
+            elapsed,
+            elapsed / 60,
+        )
 
 
 if __name__ == "__main__":

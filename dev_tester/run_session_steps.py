@@ -52,6 +52,17 @@ def _parse_args() -> argparse.Namespace:
         default=2,
         help="Max concurrent methodology extraction tasks.",
     )
+    parser.add_argument(
+        "--innovation-keywords",
+        nargs="+",
+        help="Optional override keywords for Step 6 (space-separated, wrap phrases in quotes).",
+    )
+    parser.add_argument(
+        "--innovation-run-count",
+        type=int,
+        default=1,
+        help="How many innovation synthesis artifacts to generate (>=1).",
+    )
     return parser.parse_args()
 
 
@@ -78,6 +89,16 @@ async def _run(args: argparse.Namespace) -> None:
     step_inputs: SessionStepInputs = load_step_inputs_from_session(session_folder)
     methodology_items: Optional[List[Dict[str, Any]]] = None
     methodology_artifact: Optional[str] = None
+    innovation_keywords_override: Optional[List[str]] = None
+    if args.innovation_keywords:
+        innovation_keywords_override = [
+            kw.strip() for kw in args.innovation_keywords if kw and kw.strip()
+        ] or None
+        if innovation_keywords_override:
+            logger.info(
+                "CLI override: using %d custom keywords for innovation step.",
+                len(innovation_keywords_override),
+            )
 
     run_methodology = args.step in ("methodology", "both")
     run_innovation = args.step in ("innovation", "both")
@@ -113,13 +134,17 @@ async def _run(args: argparse.Namespace) -> None:
 
         openai_service = openai_service or OpenAIService()
         innovation_agent = InnovationSynthesisAgent(openai_service=openai_service)
-        innovation_artifact = await run_innovation_synthesis_step(
+        innovation_artifacts = await run_innovation_synthesis_step(
             step_inputs=step_inputs,
             methodology_items=methodology_items,
             innovation_agent=innovation_agent,
+            override_keywords=innovation_keywords_override,
+            run_count=max(1, args.innovation_run_count),
         )
-        if innovation_artifact:
-            print(f"[Step 6] innovation_synthesis_artifact: {innovation_artifact}")
+        if innovation_artifacts:
+            print("[Step 6] innovation_synthesis_artifacts:")
+            for path in innovation_artifacts:
+                print(f"  - {path}")
         else:
             print("[Step 6] Innovation synthesis skipped (insufficient eligible inputs).")
     else:

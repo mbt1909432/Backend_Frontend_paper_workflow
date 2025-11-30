@@ -120,3 +120,45 @@ class TokenUsage(Base):
     # 关系
     user = relationship("User", back_populates="token_usages")
 
+
+class ArxivCrawlRun(Base):
+    """arXiv 爬虫执行记录"""
+    __tablename__ = "arxiv_crawl_runs"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    run_month = Column(String(7), nullable=False, index=True)
+    status = Column(String(20), default="running", nullable=False, index=True)
+    started_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    finished_at = Column(DateTime(timezone=True), nullable=True)
+    duration_seconds = Column(Integer, nullable=True)
+    error_message = Column(Text, nullable=True)
+    total_papers = Column(Integer, default=0, nullable=False)
+    new_papers_count = Column(Integer, default=0, nullable=False)
+    hot_phrases = Column(JSON, nullable=True)
+    log = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+    papers = relationship("ArxivPaper", back_populates="crawl_run", cascade="all, delete-orphan")
+
+
+class ArxivPaper(Base):
+    """爬取的 arXiv 论文"""
+    __tablename__ = "arxiv_papers"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    crawl_run_id = Column(String, ForeignKey("arxiv_crawl_runs.id"), nullable=False, index=True)
+    arxiv_id = Column(String(32), unique=True, nullable=False, index=True)
+    title = Column(Text, nullable=True)
+    authors = Column(Text, nullable=True)
+    subjects = Column(Text, nullable=True)
+    abstract = Column(Text, nullable=True)
+    detail_title = Column(Text, nullable=True)
+    detail_dateline = Column(String(255), nullable=True)
+    algorithm_phrase = Column(JSON, nullable=True)
+    # metadata is a reserved Declarative attribute; store actual column as metadata_json
+    metadata_json = Column("metadata", JSON, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+    crawl_run = relationship("ArxivCrawlRun", back_populates="papers")

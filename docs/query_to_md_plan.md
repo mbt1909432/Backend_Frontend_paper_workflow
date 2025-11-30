@@ -359,6 +359,7 @@
   - 若可用论文不足 3 篇，记录 warning 并跳过
 - `max_concurrent_pdfs` (int, 默认 2): 同时处理的 PDF 数量（也用于 Methodology 提取的并发控制）
 - `max_concurrent_pages` (int, 默认 5): 每篇论文同时处理的页面数
+- `max_pages_per_pdf` (Optional[int], 默认 20): 每篇论文最多进行 OCR 的页数，`None` 表示不限制
 
 
 #### 9.4 使用示例
@@ -388,6 +389,7 @@ workflow = QueryToMarkdownWorkflow(
     innovation_agent=innovation_agent,               # Step 6
     max_concurrent_pdfs=2,
     max_concurrent_pages=5,
+    max_pages_per_pdf=20,
 )
 
 # 执行工作流
@@ -399,6 +401,7 @@ result = await workflow.execute(
     per_keyword_max_results=3,    # 每个关键词最多 3 篇
     per_keyword_recent_limit=3,   # 每个关键词只考虑最近 3 篇
     skip_dblp_check=True,        # 跳过 DBLP 检查
+    max_pages_per_pdf=10,         # 如需覆盖实例默认值
 )
 ```
 
@@ -408,6 +411,7 @@ result = await workflow.execute(
   - 目标论文数：通过 `target_paper_count` 参数配置
   - 是否保留 PNG：当前默认保留，如需清理可在处理完成后删除 `processed/paper_{idx}/images/` 目录
   - 并发上限：通过 `max_concurrent_pdfs` 和 `max_concurrent_pages` 参数配置
+  - OCR 页数限制：通过 `max_pages_per_pdf` 参数控制，`None` 表示处理整篇 PDF
 - **重试机制**：
   - Query Rewrite 阶段：自动重试 3 次（使用 `tenacity` 库）
   - Methodology 提取阶段：自动重试 3 次（使用 `tenacity` 库）

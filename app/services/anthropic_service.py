@@ -22,6 +22,7 @@ class AnthropicService:
         self.default_model = settings.anthropic_model
         self.default_temperature = settings.anthropic_temperature
         self.default_max_tokens = settings.anthropic_max_tokens
+        print(f"anthropic😀{client_kwargs}")
     
     def _format_messages_for_log(self, messages: List[Dict[str, Any]]) -> str:
         """格式化消息列表用于日志输出"""

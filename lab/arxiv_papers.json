@@ -27,20 +27,20 @@
       "detail_title": "Agentic Learner with Grow-and-Refine Multimodal Semantic Memory",
       "abstract": "MLLMs exhibit strong reasoning on isolated queries, yet they operate de novo -- solving each problem independently and often repeating the same mistakes. Existing memory-augmented agents mainly store past trajectories for reuse. However, trajectory-based memory suffers from brevity bias, gradually losing essential domain knowledge. More critically, even in truly multimodal problem-solving settings, it records only a single-modality trace of past behavior, failing to preserve how visual attention and logical reasoning jointly contributed to the solution. This is fundamentally misaligned with human cognition: semantic memory is both multimodal and integrated, preserving visual and abstract knowledge through coordinated but distinct representational streams. We thus introduce ViLoMem, a dual-stream memory framework that constructs compact, schema-based memory. It separately encodes visual distraction patterns and logical reasoning errors, enabling MLLMs to learn from their successful and failed experiences. Following a grow-and-refine principle, the system incrementally accumulates and updates multimodal semantic knowledge -- preserving stable, generalizable strategies while avoiding catastrophic forgetting. Across six multimodal benchmarks, ViLoMem consistently improves pass@1 accuracy and substantially reduces repeated visual and logical errors. Ablations confirm the necessity of dual-stream memory with explicit distraction--hallucination separation, demonstrating the value of error-aware multimodal memory for lifelong and cross-domain agentic learning. Our project page will be available at this https URL.",
       "detail_dateline": "[Submitted on 26 Nov 2025]",
-      "detail_fetched_at": "2025-11-28T10:40:49.476516",
+      "detail_fetched_at": "2025-11-28T12:03:52.031938",
       "ai_summary_structured": [
-        "Dual-Stream Memory Framework",
-        "Multimodal Semantic Knowledge Accumulation",
-        "Error-Aware Multimodal Memory",
-        "Grow-and-Refine Learning Principle",
-        "Visual and Logical Reasoning Integration"
+        "Dual-Stream Multimodal Semantic Memory",
+        "Schema-Based Knowledge Representation",
+        "Grow-and-Refine Learning Framework",
+        "Visual-Logical Error Separation",
+        "Catastrophic Forgetting Prevention"
       ],
       "algorithm_phrase": [
-        "Dual-Stream Memory Framework",
-        "Multimodal Semantic Knowledge Accumulation",
-        "Error-Aware Multimodal Memory",
-        "Grow-and-Refine Learning Principle",
-        "Visual and Logical Reasoning Integration"
+        "Dual-Stream Multimodal Semantic Memory",
+        "Schema-Based Knowledge Representation",
+        "Grow-and-Refine Learning Framework",
+        "Visual-Logical Error Separation",
+        "Catastrophic Forgetting Prevention"
       ]
     },
     {
@@ -60,16 +60,18 @@
       "detail_title": "Bridging the Unavoidable A Priori: A Framework for Comparative Causal Modeling",
       "abstract": "AI/ML models have rapidly gained prominence as innovations for solving previously unsolved problems and their unintended consequences from amplifying human biases. Advocates for responsible AI/ML have sought ways to draw on the richer causal models of system dynamics to better inform the development of responsible AI/ML. However, a major barrier to advancing this work is the difficulty of bringing together methods rooted in different underlying assumptions (i.e., Dana Meadow's \"the unavoidable a priori\"). This paper brings system dynamics and structural equation modeling together into a common mathematical framework that can be used to generate systems from distributions, develop methods, and compare results to inform the underlying epistemology of system dynamics for data science and AI/ML applications.",
       "detail_dateline": "[Submitted on 26 Nov 2025]",
-      "detail_fetched_at": "2025-11-28T10:40:50.909743",
+      "detail_fetched_at": "2025-11-28T12:03:53.443734",
       "ai_summary_structured": [
-        "Causal Modeling Framework Integration",
-        "System Dynamics & Structural Equation Modeling",
-        "Comparative Causal Analysis Methods"
+        "Structural Equation Modeling (SEM)",
+        "System Dynamics Causal Modeling",
+        "Comparative Framework for AI Epistemology",
+        "Responsible AI Bias Mitigation Methods"
       ],
       "algorithm_phrase": [
-        "Causal Modeling Framework Integration",
-        "System Dynamics & Structural Equation Modeling",
-        "Comparative Causal Analysis Methods"
+        "Structural Equation Modeling (SEM)",
+        "System Dynamics Causal Modeling",
+        "Comparative Framework for AI Epistemology",
+        "Responsible AI Bias Mitigation Methods"
       ]
     },
     {
@@ -86,20 +88,18 @@
       "detail_title": "On the Limits of Innate Planning in Large Language Models",
       "abstract": "Large language models (LLMs) achieve impressive results on many benchmarks, yet their capacity for planning and stateful reasoning remains unclear. We study these abilities directly, without code execution or other tools, using the 8-puzzle: a classic task that requires state tracking and goal-directed planning while allowing precise, step-by-step evaluation. Four models are tested under common prompting conditions (Zero-Shot, Chain-of-Thought, Algorithm-of-Thought) and with tiered corrective feedback. Feedback improves success rates for some model-prompt combinations, but many successful runs are long, computationally expensive, and indirect. We then examine the models with an external move validator that provides only valid moves. Despite this level of assistance, none of the models solve any puzzles in this setting. Qualitative analysis reveals two dominant deficits across all models: (1) brittle internal state representations, leading to frequent invalid moves, and (2) weak heuristic planning, with models entering loops or selecting actions that do not reduce the distance to the goal state. These findings indicate that, in the absence of external tools such as code interpreters, current LLMs have substantial limitations in planning and that further progress may require mechanisms for maintaining explicit state and performing structured search.",
       "detail_dateline": "[Submitted on 26 Nov 2025]",
-      "detail_fetched_at": "2025-11-28T10:40:52.343419",
+      "detail_fetched_at": "2025-11-28T12:03:54.875461",
       "ai_summary_structured": [
-        "State Tracking & Goal-Directed Planning",
-        "Zero-Shot & Chain-of-Thought Prompting",
-        "Brittle Internal State Representations",
-        "Weak Heuristic Planning Mechanisms",
-        "Need for Structured Search Techniques"
+        "Large Language Model Planning Limitations",
+        "State Tracking & Goal-Directed Reasoning",
+        "Chain-of-Thought & Algorithm-of-Thought Prompting",
+        "Heuristic Search & Structured Planning"
       ],
       "algorithm_phrase": [
-        "State Tracking & Goal-Directed Planning",
-        "Zero-Shot & Chain-of-Thought Prompting",
-        "Brittle Internal State Representations",
-        "Weak Heuristic Planning Mechanisms",
-        "Need for Structured Search Techniques"
+        "Large Language Model Planning Limitations",
+        "State Tracking & Goal-Directed Reasoning",
+        "Chain-of-Thought & Algorithm-of-Thought Prompting",
+        "Heuristic Search & Structured Planning"
       ]
     },
     {
@@ -116,20 +116,18 @@
       "detail_title": "From Prediction to Foresight: The Role of AI in Designing Responsible Futures",
       "abstract": "In an era marked by rapid technological advancements and complex global challenges, responsible foresight has emerged as an essential framework for policymakers aiming to navigate future uncertainties and shape the future. Responsible foresight entails the ethical anticipation of emerging opportunities and risks, with a focus on fostering proactive, sustainable, and accountable future design. This paper coins the term \"responsible computational foresight\", examining the role of human-centric artificial intelligence and computational modeling in advancing responsible foresight, establishing a set of foundational principles for this new field and presenting a suite of AI-driven foresight tools currently shaping it. AI, particularly in conjunction with simulations and scenario analysis, enhances policymakers' ability to address uncertainty, evaluate risks, and devise strategies geared toward sustainable, resilient futures. However, responsible foresight extends beyond mere technical forecasting; it demands a nuanced understanding of the interdependencies within social, environmental, economic and political systems, alongside a commitment to ethical, long-term decision-making that supports human intelligence. We argue that AI will play a role as a supportive tool in responsible, human-centered foresight, complementing rather than substituting policymaker judgment to enable the proactive shaping of resilient and ethically sound futures. This paper advocates for the thoughtful integration of AI into foresight practices to empower policymakers and communities as they confront the grand challenges of the 21st century.",
       "detail_dateline": "[Submitted on 26 Nov 2025]",
-      "detail_fetched_at": "2025-11-28T10:40:53.775834",
+      "detail_fetched_at": "2025-11-28T12:03:56.283773",
       "ai_summary_structured": [
-        "Responsible Computational Foresight",
-        "Human-Centric AI Integration",
-        "Scenario Analysis & Simulation Tools",
-        "Ethical Decision-Making Framework",
-        "Proactive Risk Evaluation Strategies"
+        "Human-Centric AI for Policy Foresight",
+        "Computational Scenario Analysis & Simulation",
+        "Uncertainty Quantification in Future Modeling",
+        "Multi-System Interdependency Risk Assessment"
       ],
       "algorithm_phrase": [
-        "Responsible Computational Foresight",
-        "Human-Centric AI Integration",
-        "Scenario Analysis & Simulation Tools",
-        "Ethical Decision-Making Framework",
-        "Proactive Risk Evaluation Strategies"
+        "Human-Centric AI for Policy Foresight",
+        "Computational Scenario Analysis & Simulation",
+        "Uncertainty Quantification in Future Modeling",
+        "Multi-System Interdependency Risk Assessment"
       ]
     },
     {
@@ -144,20 +142,18 @@
       "detail_title": "Self-Transparency Failures in Expert-Persona LLMs: A Large-Scale Behavioral Audit",
       "abstract": "If a language model cannot reliably disclose its AI identity in expert contexts, users cannot trust its competence boundaries. This study examines self-transparency in models assigned professional personas within high-stakes domains where false expertise risks user harm. Using a common-garden design, sixteen open-weight models (4B--671B parameters) were audited across 19,200 trials. Models exhibited sharp domain-specific inconsistency: a Financial Advisor persona elicited 30.8% disclosure initially, while a Neurosurgeon persona elicited only 3.5%. This creates preconditions for a \"Reverse Gell-Mann Amnesia\" effect, where transparency in some domains leads users to overgeneralize trust to contexts where disclosure fails. Disclosure ranged from 2.8% to 73.6%, with a 14B model reaching 61.4% while a 70B produced just 4.1%. Model identity predicted behavior better than parameter count ($\\Delta R_{adj}^{2} = 0.359$ vs 0.018). Reasoning optimization actively suppressed self-transparency in some models, with reasoning variants showing up to 48.4% lower disclosure than base counterparts. Bayesian validation with Rogan--Gladen correction confirmed robustness to measurement error ($\\kappa = 0.908$). These findings demonstrate transparency reflects training factors rather than scale. Organizations cannot assume safety properties transfer to deployment contexts, requiring deliberate behavior design and empirical verification.",
       "detail_dateline": "[Submitted on 26 Nov 2025]",
-      "detail_fetched_at": "2025-11-28T10:40:55.238187",
+      "detail_fetched_at": "2025-11-28T12:03:57.713002",
       "ai_summary_structured": [
-        "Self-Transparency in Language Models",
-        "Domain-Specific Inconsistency Analysis",
-        "Reverse Gell-Mann Amnesia Effect",
-        "Reasoning Optimization Impact on Disclosure",
-        "Empirical Verification of Safety Properties"
+        "Large Language Model Self-Transparency Auditing",
+        "Domain-Specific AI Disclosure Behavior Analysis",
+        "Bayesian Validation with Rogan-Gladen Correction",
+        "Expert-Persona Model Safety Evaluation"
       ],
       "algorithm_phrase": [
-        "Self-Transparency in Language Models",
-        "Domain-Specific Inconsistency Analysis",
-        "Reverse Gell-Mann Amnesia Effect",
-        "Reasoning Optimization Impact on Disclosure",
-        "Empirical Verification of Safety Properties"
+        "Large Language Model Self-Transparency Auditing",
+        "Domain-Specific AI Disclosure Behavior Analysis",
+        "Bayesian Validation with Rogan-Gladen Correction",
+        "Expert-Persona Model Safety Evaluation"
       ]
     },
     {
@@ -176,20 +172,18 @@
       "detail_title": "Pessimistic Verification for Open Ended Math Questions",
       "abstract": "The key limitation of the verification performance lies in the ability of error detection. With this intuition we designed several variants of pessimistic verification, which are simple workflows that could significantly improve the verification of open-ended math questions. In pessimistic verification we construct multiple parallel verifications for the same proof, and the proof is deemed incorrect if any one of them reports an error. This simple technique significantly improves the performance across many math verification benchmarks without incurring substantial computational resources. Its token efficiency even surpassed extended long-CoT in test-time scaling. Our case studies further indicate that the majority of false negatives in stronger models are actually caused by annotation errors in the original dataset, so our method's performance is in fact underestimated. Self-verification for mathematical problems can effectively improve the reliability and performance of language model outputs, and it also plays a critical role in enabling long-horizon mathematical tasks. We believe that research on pessimistic verification will help enhance the mathematical capabilities of language models across a wide range of tasks.",
       "detail_dateline": "[Submitted on 26 Nov 2025]",
-      "detail_fetched_at": "2025-11-28T10:40:56.755680",
+      "detail_fetched_at": "2025-11-28T12:03:59.161184",
       "ai_summary_structured": [
-        "Pessimistic Verification for Error Detection",
-        "Parallel Verification Workflows",
-        "Self-Verification for Mathematical Problems",
-        "Improved Performance on Math Benchmarks",
-        "Token Efficiency in Verification Processes"
+        "Pessimistic Verification for Mathematical Reasoning",
+        "Parallel Error Detection Workflows",
+        "Self-Verification for Language Models",
+        "Test-Time Scaling for Math Problems"
       ],
       "algorithm_phrase": [
-        "Pessimistic Verification for Error Detection",
-        "Parallel Verification Workflows",
-        "Self-Verification for Mathematical Problems",
-        "Improved Performance on Math Benchmarks",
-        "Token Efficiency in Verification Processes"
+        "Pessimistic Verification for Mathematical Reasoning",
+        "Parallel Error Detection Workflows",
+        "Self-Verification for Language Models",
+        "Test-Time Scaling for Math Problems"
       ]
     },
     {
@@ -208,20 +202,18 @@
       "detail_title": "SpatialBench: Benchmarking Multimodal Large Language Models for Spatial Cognition",
       "abstract": "Spatial cognition is fundamental to real-world multimodal intelligence, allowing models to effectively interact with the physical environment. While multimodal large language models (MLLMs) have made significant strides, existing benchmarks often oversimplify spatial cognition, reducing it to a single-dimensional metric, which fails to capture the hierarchical structure and interdependence of spatial abilities. To address this gap, we propose a hierarchical spatial cognition framework that decomposes spatial intelligence into five progressively complex levels from basic observation to high-level planning. Building upon this taxonomy, we construct SpatialBench, a large-scale, fine-grained benchmark covering 15 tasks aligned with these cognitive levels. To provide a unified evaluation across heterogeneous tasks, we further introduce a high-level capability-oriented metric that reliably assesses a model's overall spatial reasoning ability. Extensive experiments over massive MLLMs reveal distinct performance stratification across cognitive levels: models exhibit strong perceptual grounding yet remain limited in symbolic reasoning, causal inference, and planning. Additional human tests demonstrate that humans perform selective, goal-directed abstraction, while MLLMs tend to over-attend to surface details without coherent spatial intent. Our work establishes the first systematic framework for measuring hierarchical spatial cognition in MLLMs, laying the foundation for future spatially intelligent systems.",
       "detail_dateline": "[Submitted on 26 Nov 2025]",
-      "detail_fetched_at": "2025-11-28T10:40:58.218072",
+      "detail_fetched_at": "2025-11-28T12:04:00.586197",
       "ai_summary_structured": [
         "Hierarchical Spatial Cognition Framework",
         "Multimodal Large Language Models (MLLMs)",
-        "Capability-Oriented Spatial Reasoning Metric",
-        "Fine-Grained Benchmarking for Spatial Tasks",
-        "Cognitive Level Performance Stratification"
+        "Capability-Oriented Evaluation Metrics",
+        "Spatial Reasoning Benchmark Construction"
       ],
       "algorithm_phrase": [
         "Hierarchical Spatial Cognition Framework",
         "Multimodal Large Language Models (MLLMs)",
-        "Capability-Oriented Spatial Reasoning Metric",
-        "Fine-Grained Benchmarking for Spatial Tasks",
-        "Cognitive Level Performance Stratification"
+        "Capability-Oriented Evaluation Metrics",
+        "Spatial Reasoning Benchmark Construction"
       ]
     },
     {
@@ -238,20 +230,18 @@
       "detail_title": "MADRA: Multi-Agent Debate for Risk-Aware Embodied Planning",
       "abstract": "Ensuring the safety of embodied AI agents during task planning is critical for real-world deployment, especially in household environments where dangerous instructions pose significant risks. Existing methods often suffer from either high computational costs due to preference alignment training or over-rejection when using single-agent safety prompts. To address these limitations, we propose MADRA, a training-free Multi-Agent Debate Risk Assessment framework that leverages collective reasoning to enhance safety awareness without sacrificing task performance. MADRA employs multiple LLM-based agents to debate the safety of a given instruction, guided by a critical evaluator that scores responses based on logical soundness, risk identification, evidence quality, and clarity. Through iterative deliberation and consensus voting, MADRA significantly reduces false rejections while maintaining high sensitivity to dangerous tasks. Additionally, we introduce a hierarchical cognitive collaborative planning framework that integrates safety, memory, planning, and self-evolution mechanisms to improve task success rates through continuous learning. We also contribute SafeAware-VH, a benchmark dataset for safety-aware task planning in VirtualHome, containing 800 annotated instructions. Extensive experiments on AI2-THOR and VirtualHome demonstrate that our approach achieves over 90% rejection of unsafe tasks while ensuring that safe-task rejection is low, outperforming existing methods in both safety and execution efficiency. Our work provides a scalable, model-agnostic solution for building trustworthy embodied agents.",
       "detail_dateline": "[Submitted on 26 Nov 2025]",
-      "detail_fetched_at": "2025-11-28T10:40:59.646446",
+      "detail_fetched_at": "2025-11-28T12:04:02.056815",
       "ai_summary_structured": [
-        "Multi-Agent Debate Risk Assessment",
+        "Multi-Agent Debate for Risk Assessment",
+        "Training-Free Safety Evaluation Framework",
         "Hierarchical Cognitive Collaborative Planning",
-        "Safety-Aware Task Planning Benchmark",
-        "Collective Reasoning for Safety Awareness",
-        "Iterative Deliberation and Consensus Voting"
+        "Consensus-Based Decision Making Algorithm"
       ],
       "algorithm_phrase": [
-        "Multi-Agent Debate Risk Assessment",
+        "Multi-Agent Debate for Risk Assessment",
+        "Training-Free Safety Evaluation Framework",
         "Hierarchical Cognitive Collaborative Planning",
-        "Safety-Aware Task Planning Benchmark",
-        "Collective Reasoning for Safety Awareness",
-        "Iterative Deliberation and Consensus Voting"
+        "Consensus-Based Decision Making Algorithm"
       ]
     },
     {
@@ -273,20 +263,18 @@
       "detail_title": "EWE: An Agentic Framework for Extreme Weather Analysis",
       "abstract": "Extreme weather events pose escalating risks to global society, underscoring the urgent need to unravel their underlying physical mechanisms. Yet the prevailing expert-driven, labor-intensive diagnostic paradigm has created a critical analytical bottleneck, stalling scientific progress. While AI for Earth Science has achieved notable advances in prediction, the equally essential challenge of automated diagnostic reasoning remains largely unexplored. We present the Extreme Weather Expert (EWE), the first intelligent agent framework dedicated to this task. EWE emulates expert workflows through knowledge-guided planning, closed-loop reasoning, and a domain-tailored meteorological toolkit. It autonomously produces and interprets multimodal visualizations from raw meteorological data, enabling comprehensive diagnostic analyses. To catalyze progress, we introduce the first benchmark for this emerging field, comprising a curated dataset of 103 high-impact events and a novel step-wise evaluation metric. EWE marks a step toward automated scientific discovery and offers the potential to democratize expertise and intellectual resources, particularly for developing nations vulnerable to extreme weather.",
       "detail_dateline": "[Submitted on 26 Nov 2025]",
-      "detail_fetched_at": "2025-11-28T10:41:01.075446",
+      "detail_fetched_at": "2025-11-28T12:04:03.448351",
       "ai_summary_structured": [
-        "Knowledge-Guided Planning",
-        "Closed-Loop Reasoning",
-        "Multimodal Visualization Generation",
-        "Automated Diagnostic Reasoning",
-        "Benchmark for Extreme Weather Events"
+        "Knowledge-Guided Agentic Planning Framework",
+        "Closed-Loop Diagnostic Reasoning System",
+        "Multimodal Meteorological Data Analysis",
+        "Automated Scientific Discovery Pipeline"
       ],
       "algorithm_phrase": [
-        "Knowledge-Guided Planning",
-        "Closed-Loop Reasoning",
-        "Multimodal Visualization Generation",
-        "Automated Diagnostic Reasoning",
-        "Benchmark for Extreme Weather Events"
+        "Knowledge-Guided Agentic Planning Framework",
+        "Closed-Loop Diagnostic Reasoning System",
+        "Multimodal Meteorological Data Analysis",
+        "Automated Scientific Discovery Pipeline"
       ]
     },
     {
@@ -308,20 +296,20 @@
       "detail_title": "Conversational no-code and multi-agentic disease module identification and drug repurposing prediction with ChatDRex",
       "abstract": "Repurposing approved drugs offers a time-efficient and cost-effective alternative to traditional drug development. However, in silico prediction of repurposing candidates is challenging and requires the effective collaboration of specialists in various fields, including pharmacology, medicine, biology, and bioinformatics. Fragmented, specialized algorithms and tools often address only narrow aspects of the overall problem, and heterogeneous, unstructured data landscapes require specialized users to be involved. Hence, these data services do not integrate smoothly across workflows. With ChatDRex, we present a conversation-based, multi-agent system that facilitates the execution of complex bioinformatic analyses aiming for network-based drug repurposing prediction. It builds on the integrated systems medicine knowledge graph NeDRex. ChatDRex provides natural language access to its extensive biomedical KG and integrates bioinformatics agents for network analysis and drug repurposing, complemented by agents for functional coherence evaluation for in silico validation, as well as agents for literature mining and for discussing the obtained results in a scientific context. Its flexible multi-agent design assigns specific tasks to specialized agents, including query routing, data retrieval, algorithm execution, and result visualization. A dedicated reasoning module keeps the user in the loop and allows for hallucination detection. By enabling physicians and researchers without computer science expertise to control complex analyses in natural language, ChatDRex democratizes access to bioinformatics as an important resource for drug repurposing. It enables clinical experts to generate hypotheses and explore drug repurposing opportunities, ultimately accelerating the discovery of novel therapies and advancing personalized medicine and translational research.",
       "detail_dateline": "[Submitted on 26 Nov 2025]",
-      "detail_fetched_at": "2025-11-28T10:41:02.544282",
+      "detail_fetched_at": "2025-11-28T12:04:04.931116",
       "ai_summary_structured": [
-        "Multi-Agent System for Drug Repurposing",
-        "Natural Language Processing for Bioinformatics",
-        "Network Analysis and Functional Coherence Evaluation",
-        "Integrated Biomedical Knowledge Graph",
-        "In Silico Validation and Hypothesis Generation"
+        "Multi-Agent System Architecture",
+        "Knowledge Graph Integration & Reasoning",
+        "Natural Language Query Processing",
+        "Network-Based Drug Repurposing Algorithms",
+        "Hallucination Detection & Validation"
       ],
       "algorithm_phrase": [
-        "Multi-Agent System for Drug Repurposing",
-        "Natural Language Processing for Bioinformatics",
-        "Network Analysis and Functional Coherence Evaluation",
-        "Integrated Biomedical Knowledge Graph",
-        "In Silico Validation and Hypothesis Generation"
+        "Multi-Agent System Architecture",
+        "Knowledge Graph Integration & Reasoning",
+        "Natural Language Query Processing",
+        "Network-Based Drug Repurposing Algorithms",
+        "Hallucination Detection & Validation"
       ]
     },
     {
@@ -337,18 +325,18 @@
       "detail_title": "New Hybrid Heuristics for Pseudo-Boolean Propagation",
       "abstract": "In pseudo-boolean solving the currently most successful unit propagation strategy is a hybrid mode combining the watched literal scheme with the counting method. This short paper introduces new heuristics for this hybrid decision, which are able to drastically outperform the current method in the RoundingSAT solver.",
       "detail_dateline": "[Submitted on 26 Nov 2025]",
-      "detail_fetched_at": "2025-11-28T10:41:03.958447",
+      "detail_fetched_at": "2025-11-28T12:04:06.338003",
       "ai_summary_structured": [
-        "Hybrid Unit Propagation Strategy",
-        "Watched Literal Scheme",
-        "Counting Method Heuristics",
-        "RoundingSAT Solver Optimization"
+        "Hybrid Pseudo-Boolean Unit Propagation Strategy",
+        "Watched Literal & Counting Method Combination",
+        "Heuristic Decision Optimization for SAT Solving",
+        "RoundingSAT Solver Performance Enhancement"
       ],
       "algorithm_phrase": [
-        "Hybrid Unit Propagation Strategy",
-        "Watched Literal Scheme",
-        "Counting Method Heuristics",
-        "RoundingSAT Solver Optimization"
+        "Hybrid Pseudo-Boolean Unit Propagation Strategy",
+        "Watched Literal & Counting Method Combination",
+        "Heuristic Decision Optimization for SAT Solving",
+        "RoundingSAT Solver Performance Enhancement"
       ]
     },
     {
@@ -369,20 +357,18 @@
       "detail_title": "Prune4Web: DOM Tree Pruning Programming for Web Agent",
       "abstract": "Web automation employs intelligent agents to execute high-level tasks by mimicking human interactions with web interfaces. Despite the capabilities of recent Large Language Model (LLM)-based web agents, navigating complex, real-world webpages efficiently remains a significant hurdle due to the prohibitively large size of Document Object Model (DOM) structures, often ranging from 10,000 to 100,000 tokens. Existing strategies typically rely on crude DOM truncation -- risking the loss of critical information -- or employ inefficient heuristics and separate ranking models, failing to achieve an optimal balance between precision and scalability. To address these challenges, we introduce Prune4Web, a novel paradigm that shifts DOM processing from resource-intensive LLM reading to efficient programmatic pruning. Central to our approach is DOM Tree Pruning Programming, where an LLM generates executable Python scoring scripts to dynamically filter DOM elements based on semantic cues from decomposed sub-tasks. This mechanism eliminates the need for LLMs to ingest raw, massive DOMs, instead delegating traversal and scoring to lightweight, interpretable programs. This methodology achieves a 25x to 50x reduction in candidate elements for grounding, thereby facilitating precise action localization while mitigating attention dilution. Furthermore, we propose a specialized data annotation pipeline and a two-turn dialogue training strategy that jointly optimizes the Planner, Programmatic Filter, and Grounder within a unified framework. Extensive experiments demonstrate state-of-the-art performance. Notably, on our low-level grounding task, Prune4Web dramatically improves accuracy from 46.8% to 88.28%, underscoring its efficacy in real-world web automation.",
       "detail_dateline": "[Submitted on 26 Nov 2025]",
-      "detail_fetched_at": "2025-11-28T10:41:05.414591",
+      "detail_fetched_at": "2025-11-28T12:04:07.753757",
       "ai_summary_structured": [
         "DOM Tree Pruning Programming",
-        "Executable Python Scoring Scripts",
-        "Dynamic DOM Element Filtering",
-        "Two-Turn Dialogue Training Strategy",
-        "Unified Framework Optimization"
+        "LLM-based Web Agent Navigation",
+        "Programmatic Element Filtering & Scoring",
+        "Two-turn Dialogue Training Strategy"
       ],
       "algorithm_phrase": [
         "DOM Tree Pruning Programming",
-        "Executable Python Scoring Scripts",
-        "Dynamic DOM Element Filtering",
-        "Two-Turn Dialogue Training Strategy",
-        "Unified Framework Optimization"
+        "LLM-based Web Agent Navigation",
+        "Programmatic Element Filtering & Scoring",
+        "Two-turn Dialogue Training Strategy"
       ]
     },
     {
@@ -400,20 +386,20 @@
       "detail_title": "Causality Without Causal Models",
       "abstract": "Perhaps the most prominent current definition of (actual) causality is due to Halpern and Pearl.  It is defined using causal models (also known as structural equations models).  We abstract the definition, extracting its key features, so that it can be applied to any other model where counterfactuals are defined. By abstracting the definition, we gain a number of benefits. Not only can we apply the definition in a wider range of models, including ones that allow, for example, backtracking, but we can apply the definition to determine if A is a cause of B  even if A and B are formulas involving disjunctions, negations, beliefs, and nested counterfactuals (none of which can be handled by the Halpern-Pearl definition). Moreover, we can extend the ideas to getting an abstract definition of explanation that can be applied beyond causal models. Finally, we gain a deeper understanding of features of the definition  even in causal models.",
       "detail_dateline": "[Submitted on 26 Nov 2025]",
-      "detail_fetched_at": "2025-11-28T10:41:06.935366",
+      "detail_fetched_at": "2025-11-28T12:04:09.217196",
       "ai_summary_structured": [
-        "Abstract Causality Definition",
-        "Counterfactuals in Non-Causal Models",
-        "Causal Relationships with Disjunctions & Negations",
-        "Extended Explanation Framework",
-        "Deeper Understanding of Causal Features"
+        "Counterfactual Reasoning & Causal Inference",
+        "Structural Equation Models (SEMs)",
+        "Abstract Causality Definition Framework",
+        "Halpern-Pearl Causality Formalization",
+        "Backtracking Counterfactual Models"
       ],
       "algorithm_phrase": [
-        "Abstract Causality Definition",
-        "Counterfactuals in Non-Causal Models",
-        "Causal Relationships with Disjunctions & Negations",
-        "Extended Explanation Framework",
-        "Deeper Understanding of Causal Features"
+        "Counterfactual Reasoning & Causal Inference",
+        "Structural Equation Models (SEMs)",
+        "Abstract Causality Definition Framework",
+        "Halpern-Pearl Causality Formalization",
+        "Backtracking Counterfactual Models"
       ]
     },
     {
@@ -432,20 +418,20 @@
       "detail_title": "OVOD-Agent: A Markov-Bandit Framework for Proactive Visual Reasoning and Self-Evolving Detection",
       "abstract": "Open-Vocabulary Object Detection (OVOD) aims to enable detectors to generalize across categories by leveraging semantic information. Although existing methods are pretrained on large vision-language datasets, their inference is still limited to fixed category names, creating a gap between multimodal training and unimodal inference. Previous work has shown that improving textual representation can significantly enhance OVOD performance, indicating that the textual space is still underexplored. To this end, we propose OVOD-Agent, which transforms passive category matching into proactive visual reasoning and self-evolving detection. Inspired by the Chain-of-Thought (CoT) paradigm, OVOD-Agent extends the textual optimization process into an interpretable Visual-CoT with explicit actions. OVOD's lightweight nature makes LLM-based management unsuitable; instead, we model visual context transitions as a Weakly Markovian Decision Process (w-MDP) over eight state spaces, which naturally represents the agent's state, memory, and interaction dynamics. A Bandit module generates exploration signals under limited supervision, helping the agent focus on uncertain regions and adapt its detection policy. We further integrate Markov transition matrices with Bandit trajectories for self-supervised Reward Model (RM) optimization, forming a closed loop from Bandit exploration to RM learning. Experiments on COCO and LVIS show that OVOD-Agent provides consistent improvements across OVOD backbones, particularly on rare categories, confirming the effectiveness of the proposed framework.",
       "detail_dateline": "[Submitted on 26 Nov 2025]",
-      "detail_fetched_at": "2025-11-28T10:41:08.441319",
+      "detail_fetched_at": "2025-11-28T12:04:10.658828",
       "ai_summary_structured": [
         "Open-Vocabulary Object Detection (OVOD)",
         "Weakly Markovian Decision Process (w-MDP)",
-        "Visual Chain-of-Thought (Visual-CoT)",
-        "Self-Supervised Reward Model (RM) Optimization",
-        "Bandit Exploration for Uncertainty Focus"
+        "Multi-Armed Bandit Exploration Framework",
+        "Chain-of-Thought Visual Reasoning (Visual-CoT)",
+        "Self-Supervised Reward Model Optimization"
       ],
       "algorithm_phrase": [
         "Open-Vocabulary Object Detection (OVOD)",
         "Weakly Markovian Decision Process (w-MDP)",
-        "Visual Chain-of-Thought (Visual-CoT)",
-        "Self-Supervised Reward Model (RM) Optimization",
-        "Bandit Exploration for Uncertainty Focus"
+        "Multi-Armed Bandit Exploration Framework",
+        "Chain-of-Thought Visual Reasoning (Visual-CoT)",
+        "Self-Supervised Reward Model Optimization"
       ]
     },
     {
@@ -463,20 +449,18 @@
       "detail_title": "Towards Trustworthy Legal AI through LLM Agents and Formal Reasoning",
       "abstract": "The rationality of law manifests in two forms: substantive rationality, which concerns the fairness or moral desirability of outcomes, and formal rationality, which requires legal decisions to follow explicitly stated, general, and logically coherent rules. Existing LLM-based systems excel at surface-level text analysis but lack the guarantees required for principled jurisprudence. We introduce L4M, a novel framework that combines adversarial LLM agents with SMT-solver-backed proofs to unite the interpretive flexibility of natural language with the rigor of symbolic verification. The pipeline consists of three phases: (1) Statute Formalization, where domain-specific prompts convert legal provisions into logical formulae; (2) Dual Fact and Statute Extraction, in which prosecutor- and defense-aligned LLMs independently map case narratives to fact tuples and statutes, ensuring role isolation; and (3) Solver-Centric Adjudication, where an autoformalizer compiles both parties' arguments into logic constraints, and unsat cores trigger iterative self-critique until a satisfiable formula is achieved, which is then verbalized by a Judge-LLM into a transparent verdict and optimized sentence. Experimental results on public benchmarks show that our system surpasses advanced LLMs including GPT-o4-mini, DeepSeek-V3, and Claude 4 as well as state-of-the-art Legal AI baselines, while providing rigorous and explainable symbolic justifications.",
       "detail_dateline": "[Submitted on 26 Nov 2025]",
-      "detail_fetched_at": "2025-11-28T10:41:09.880620",
+      "detail_fetched_at": "2025-11-28T12:04:12.122124",
       "ai_summary_structured": [
-        "Adversarial LLM Agents",
-        "SMT-Solver-Backed Proofs",
-        "Statute Formalization",
-        "Dual Fact and Statute Extraction",
-        "Solver-Centric Adjudication"
+        "Adversarial LLM Agents with Role Isolation",
+        "SMT-Solver-Backed Symbolic Verification",
+        "Formal Logic Constraint Compilation",
+        "Iterative Self-Critique via Unsat Cores"
       ],
       "algorithm_phrase": [
-        "Adversarial LLM Agents",
-        "SMT-Solver-Backed Proofs",
-        "Statute Formalization",
-        "Dual Fact and Statute Extraction",
-        "Solver-Centric Adjudication"
+        "Adversarial LLM Agents with Role Isolation",
+        "SMT-Solver-Backed Symbolic Verification",
+        "Formal Logic Constraint Compilation",
+        "Iterative Self-Critique via Unsat Cores"
       ]
     },
     {
@@ -496,20 +480,18 @@
       "detail_title": "ICPO: Intrinsic Confidence-Driven Group Relative Preference Optimization for Efficient Reinforcement Learning",
       "abstract": "Reinforcement Learning with Verifiable Rewards (RLVR) demonstrates significant potential in enhancing the reasoning capabilities of Large Language Models (LLMs). However, existing RLVR methods are often constrained by issues such as coarse-grained rewards, reward noise, and inefficient exploration, which lead to unstable training and entropy collapse. To address this challenge, we propose the Intrinsic Confidence-Driven Group Relative Preference Optimization method (ICPO). The intuition behind it lies in the fact that the probabilities of an LLM generating different responses can inherently and directly reflect its self-assessment of the reasoning process. Inspired by the idea of preference modeling, ICPO calculates a preference advantage score for each response by comparing the relative generation probabilities of multiple responses under the same input prompt, and integrates this score with verifiable rewards to guide the exploration process. We have discovered that the preference advantage score not only alleviates the issues of coarse-grained rewards and reward noise but also effectively curbs overconfident errors, enhances the relative superiority of undervalued high-quality responses, and prevents the model from overfitting to specific strategies, thereby facilitating more thorough exploration. Comprehensive experiments across four general-domain benchmarks and three mathematical benchmarks demonstrate that ICPO steadily boosts reasoning compared to GRPO.",
       "detail_dateline": "[Submitted on 26 Nov 2025]",
-      "detail_fetched_at": "2025-11-28T10:41:11.375861",
+      "detail_fetched_at": "2025-11-28T12:04:13.610456",
       "ai_summary_structured": [
-        "Intrinsic Confidence-Driven Optimization",
-        "Relative Preference Modeling",
-        "Verifiable Rewards in Reinforcement Learning",
-        "Preference Advantage Score Calculation",
-        "Efficient Exploration Strategies"
+        "Reinforcement Learning with Verifiable Rewards (RLVR)",
+        "Intrinsic Confidence-Driven Preference Optimization",
+        "Group Relative Preference Modeling",
+        "Self-Assessment Probability-Based Exploration"
       ],
       "algorithm_phrase": [
-        "Intrinsic Confidence-Driven Optimization",
-        "Relative Preference Modeling",
-        "Verifiable Rewards in Reinforcement Learning",
-        "Preference Advantage Score Calculation",
-        "Efficient Exploration Strategies"
+        "Reinforcement Learning with Verifiable Rewards (RLVR)",
+        "Intrinsic Confidence-Driven Preference Optimization",
+        "Group Relative Preference Modeling",
+        "Self-Assessment Probability-Based Exploration"
       ]
     },
     {
@@ -528,20 +510,18 @@
       "detail_title": "Improving Procedural Skill Explanations via Constrained Generation: A Symbolic-LLM Hybrid Architecture",
       "abstract": "In procedural skill learning, instructional explanations must convey not just steps, but the causal, goal-directed, and compositional logic behind them. Large language models (LLMs) often produce fluent yet shallow responses that miss this structure. We present Ivy, an AI coaching system that delivers structured, multi-step explanations by combining symbolic Task-Method-Knowledge (TMK) models with a generative interpretation layer-an LLM that constructs explanations while being constrained by TMK structure. TMK encodes causal transitions, goal hierarchies, and problem decompositions, and guides the LLM within explicit structural bounds. We evaluate Ivy against responses against GPT and retrieval-augmented GPT baselines using expert and independent annotations across three inferential dimensions. Results show that symbolic constraints consistently improve the structural quality of explanations for \"how\" and \"why\" questions. This study demonstrates a scalable AI for education approach that strengthens the pedagogical value of AI-generated explanations in intelligent coaching systems.",
       "detail_dateline": "[Submitted on 26 Nov 2025]",
-      "detail_fetched_at": "2025-11-28T10:41:12.873228",
+      "detail_fetched_at": "2025-11-28T12:04:15.047349",
       "ai_summary_structured": [
-        "Symbolic Task-Method-Knowledge (TMK) Models",
-        "Constrained Generative Explanation Layer",
-        "Structured Multi-Step Explanations",
-        "Causal Transition Encoding",
-        "Goal-Directed Problem Decomposition"
+        "Symbolic-LLM Hybrid Architecture",
+        "Task-Method-Knowledge (TMK) Constrained Generation",
+        "Structured Procedural Skill Explanation",
+        "Causal Goal-Directed Learning Models"
       ],
       "algorithm_phrase": [
-        "Symbolic Task-Method-Knowledge (TMK) Models",
-        "Constrained Generative Explanation Layer",
-        "Structured Multi-Step Explanations",
-        "Causal Transition Encoding",
-        "Goal-Directed Problem Decomposition"
+        "Symbolic-LLM Hybrid Architecture",
+        "Task-Method-Knowledge (TMK) Constrained Generation",
+        "Structured Procedural Skill Explanation",
+        "Causal Goal-Directed Learning Models"
       ]
     },
     {
@@ -567,20 +547,18 @@
       "detail_title": "ENACT: Evaluating Embodied Cognition with World Modeling of Egocentric Interaction",
       "abstract": "Embodied cognition argues that intelligence arises from sensorimotor interaction rather than passive observation. It raises an intriguing question: do modern vision-language models (VLMs), trained largely in a disembodied manner, exhibit signs of embodied cognition? We introduce ENACT, a benchmark that casts evaluation of embodied cognition as world modeling from egocentric interaction in a visual question answering (VQA) format. Framed as a partially observable Markov decision process (POMDP) whose actions are scene graph changes, ENACT comprises two complementary sequence reordering tasks: forward world modeling (reorder shuffled observations given actions) and inverse world modeling (reorder shuffled actions given observations). While conceptually simple, solving these tasks implicitly demands capabilities central to embodied cognition-affordance recognition, action-effect reasoning, embodied awareness, and interactive, long-horizon memory from partially observable egocentric input, while avoiding low-level image synthesis that could confound the evaluation. We provide a scalable pipeline that synthesizes QA pairs from robotics simulation (BEHAVIOR) and evaluates models on 8,972 QA pairs spanning long-horizon home-scale activities. Experiments reveal a performance gap between frontier VLMs and humans that widens with interaction horizon. Models consistently perform better on the inverse task than the forward one and exhibit anthropocentric biases, including a preference for right-handed actions and degradation when camera intrinsics or viewpoints deviate from human vision. Website at this https URL.",
       "detail_dateline": "[Submitted on 26 Nov 2025]",
-      "detail_fetched_at": "2025-11-28T10:41:14.398477",
+      "detail_fetched_at": "2025-11-28T12:04:16.795956",
       "ai_summary_structured": [
         "Partially Observable Markov Decision Process (POMDP)",
-        "Forward and Inverse World Modeling",
-        "Egocentric Interaction Evaluation",
-        "Affordance Recognition and Action-Effect Reasoning",
-        "Long-Horizon Memory from Shuffled Input"
+        "Egocentric Vision-Language Model Evaluation",
+        "Scene Graph-based World Modeling",
+        "Forward and Inverse Sequence Reasoning"
       ],
       "algorithm_phrase": [
         "Partially Observable Markov Decision Process (POMDP)",
-        "Forward and Inverse World Modeling",
-        "Egocentric Interaction Evaluation",
-        "Affordance Recognition and Action-Effect Reasoning",
-        "Long-Horizon Memory from Shuffled Input"
+        "Egocentric Vision-Language Model Evaluation",
+        "Scene Graph-based World Modeling",
+        "Forward and Inverse Sequence Reasoning"
       ]
     },
     {
@@ -597,20 +575,18 @@
       "detail_title": "Guaranteed Optimal Compositional Explanations for Neurons",
       "abstract": "While neurons are the basic units of deep neural networks, it is still unclear what they learn and if their knowledge is aligned with that of humans. Compositional explanations aim to answer this question by describing the spatial alignment between neuron activations and concepts through logical rules. These logical descriptions are typically computed via a search over all possible concept combinations. Since computing the spatial alignment over the entire state space is computationally infeasible, the literature commonly adopts beam search to restrict the space. However, beam search cannot provide any theoretical guarantees of optimality, and it remains unclear how close current explanations are to the true optimum. In this theoretical paper, we address this gap by introducing the first framework for computing guaranteed optimal compositional explanations. Specifically, we propose: (i) a decomposition that identifies the factors influencing the spatial alignment, (ii) a heuristic to estimate the alignment at any stage of the search, and (iii) the first algorithm that can compute optimal compositional explanations within a feasible time. Using this framework, we analyze the differences between optimal and non-optimal explanations in the most popular settings for compositional explanations, the computer vision domain and Convolutional Neural Networks. In these settings, we demonstrate that 10-40 percent of explanations obtained with beam search are suboptimal when overlapping concepts are involved. Finally, we evaluate a beam-search variant guided by our proposed decomposition and heuristic, showing that it matches or improves runtime over prior methods while offering greater flexibility in hyperparameters and computational resources.",
       "detail_dateline": "[Submitted on 25 Nov 2025]",
-      "detail_fetched_at": "2025-11-28T10:41:15.836553",
+      "detail_fetched_at": "2025-11-28T12:04:18.489424",
       "ai_summary_structured": [
-        "Guaranteed Optimal Compositional Explanations",
-        "Heuristic Alignment Estimation",
-        "Optimal Explanation Computation Algorithm",
-        "Beam Search Variants for Explanations",
-        "Spatial Alignment Decomposition"
+        "Optimal Compositional Neural Network Explanations",
+        "Spatial Alignment Search Algorithms",
+        "Beam Search Optimization with Guarantees",
+        "Heuristic-Guided Explanation Discovery Framework"
       ],
       "algorithm_phrase": [
-        "Guaranteed Optimal Compositional Explanations",
-        "Heuristic Alignment Estimation",
-        "Optimal Explanation Computation Algorithm",
-        "Beam Search Variants for Explanations",
-        "Spatial Alignment Decomposition"
+        "Optimal Compositional Neural Network Explanations",
+        "Spatial Alignment Search Algorithms",
+        "Beam Search Optimization with Guarantees",
+        "Heuristic-Guided Explanation Discovery Framework"
       ]
     },
     {
@@ -634,20 +610,18 @@
       "detail_title": "Representation Interventions Enable Lifelong Unstructured Knowledge Control",
       "abstract": "Large language models (LLMs) often produce incorrect or outdated content. Updating their knowledge efficiently and accurately without costly retraining is a major challenge. This problem is especially hard for complex, unstructured knowledge in a lifelong setting, where many edits must coexist without interference. We introduce RILKE (Representation Intervention for Lifelong KnowledgE Control), a robust and scalable method that treats knowledge control as interventions within the model's representation space. Leveraging representation-space expressiveness, we identify two properties enabling RILKE to deliver fine-grained control over complex, unstructured knowledge while maintaining general utility with frozen base weights. During training, RILKE learns paraphrase-robust and edit-localized modules that limit each update to a low-dimensional subspace to minimize cross-edit interference. In inference, a query-adaptive router selects the appropriate module to guide the model's generation. In evaluation on knowledge editing benchmarks with LLaMA and Qwen models, RILKE is scalable to large-scale datasets, demonstrating high edit success, strong paraphrase generalization, and preserving general utility with modest memory overhead. These results show RILKE is an effective and scalable solution for lifelong knowledge control in LLMs.",
       "detail_dateline": "[Submitted on 25 Nov 2025]",
-      "detail_fetched_at": "2025-11-28T10:41:17.287396",
+      "detail_fetched_at": "2025-11-28T12:04:19.908694",
       "ai_summary_structured": [
-        "Representation Intervention for Knowledge Control",
-        "Paraphrase-Robust Edit Localization",
-        "Query-Adaptive Module Selection",
-        "Lifelong Unstructured Knowledge Management",
-        "Scalable Knowledge Editing Framework"
+        "Representation Space Knowledge Intervention Methods",
+        "Lifelong Learning with Cross-Edit Interference Control",
+        "Query-Adaptive Module Routing Systems",
+        "Paraphrase-Robust Knowledge Localization Techniques"
       ],
       "algorithm_phrase": [
-        "Representation Intervention for Knowledge Control",
-        "Paraphrase-Robust Edit Localization",
-        "Query-Adaptive Module Selection",
-        "Lifelong Unstructured Knowledge Management",
-        "Scalable Knowledge Editing Framework"
+        "Representation Space Knowledge Intervention Methods",
+        "Lifelong Learning with Cross-Edit Interference Control",
+        "Query-Adaptive Module Routing Systems",
+        "Paraphrase-Robust Knowledge Localization Techniques"
       ]
     },
     {
@@ -671,20 +645,18 @@
       "detail_title": "OpenApps: Simulating Environment Variations to Measure UI-Agent Reliability",
       "abstract": "Reliability is key to realizing the promise of autonomous UI-Agents, multimodal agents that directly interact with apps in the same manner as humans, as users must be able to trust an agent to complete a given task. Current evaluations rely on fixed environments, often clones of existing apps, which are limited in that they can only shed light on whether or how often an agent can complete a task within a specific environment. When deployed however, agents are likely to encounter variations in app design and content that can affect an agent's ability to complete a task. To address this blind spot of measuring agent reliability across app variations, we develop OpenApps, a light-weight open-source ecosystem with six apps (messenger, calendar, maps, etc.) that are configurable in appearance and content. OpenApps requires just a single CPU to run, enabling easy generation and deployment of thousands of versions of each app. Specifically, we run more than 10,000 independent evaluations to study reliability across seven leading multimodal agents. We find that while standard reliability within a fixed app is relatively stable, reliability can vary drastically when measured across app variations. Task success rates for many agents can fluctuate by more than $50\\%$ across app variations. For example, Kimi-VL-3B's average success across all tasks fluctuates from $63\\%$ to just $4\\%$ across app versions. We also find agent behaviors such as looping or hallucinating actions can differ drastically depending on the environment configuration. These initial findings highlight the importance of measuring reliability along this new dimension of app variations. OpenApps is available at this https URL",
       "detail_dateline": "[Submitted on 25 Nov 2025]",
-      "detail_fetched_at": "2025-11-28T10:41:18.809894",
+      "detail_fetched_at": "2025-11-28T12:04:21.414356",
       "ai_summary_structured": [
-        "Autonomous UI-Agent Reliability Assessment",
-        "Environment Variation Simulation",
-        "Task Success Rate Evaluation",
-        "Multimodal Agent Performance Analysis",
-        "Configurable App Ecosystem Development"
+        "Multimodal UI-Agent Reliability Assessment",
+        "Environment Variation Simulation Framework",
+        "Cross-Application Robustness Evaluation",
+        "Configurable App Ecosystem Generation"
       ],
       "algorithm_phrase": [
-        "Autonomous UI-Agent Reliability Assessment",
-        "Environment Variation Simulation",
-        "Task Success Rate Evaluation",
-        "Multimodal Agent Performance Analysis",
-        "Configurable App Ecosystem Development"
+        "Multimodal UI-Agent Reliability Assessment",
+        "Environment Variation Simulation Framework",
+        "Cross-Application Robustness Evaluation",
+        "Configurable App Ecosystem Generation"
       ]
     },
     {
@@ -706,20 +678,18 @@
       "detail_title": "Learning Multi-Access Point Coordination in Agentic AI Wi-Fi with Large Language Models",
       "abstract": "Multi-access point coordination (MAPC) is a key technology for enhancing throughput in next-generation Wi-Fi within dense overlapping basic service sets. However, existing MAPC protocols rely on static, protocol-defined rules, which limits their ability to adapt to dynamic network conditions such as varying interference levels and topologies. To address this limitation, we propose a novel Agentic AI Wi-Fi framework where each access point, modeled as an autonomous large language model agent, collaboratively reasons about the network state and negotiates adaptive coordination strategies in real time. This dynamic collaboration is achieved through a cognitive workflow that enables the agents to engage in natural language dialogue, leveraging integrated memory, reflection, and tool use to ground their decisions in past experience and environmental feedback. Comprehensive simulation results demonstrate that our agentic framework successfully learns to adapt to diverse and dynamic network environments, significantly outperforming the state-of-the-art spatial reuse baseline and validating its potential as a robust and intelligent solution for future wireless networks.",
       "detail_dateline": "[Submitted on 25 Nov 2025]",
-      "detail_fetched_at": "2025-11-28T10:41:20.258238",
+      "detail_fetched_at": "2025-11-28T12:04:22.859915",
       "ai_summary_structured": [
-        "Agentic AI Framework for Wi-Fi Coordination",
-        "Dynamic Multi-Access Point Collaboration",
-        "Natural Language Dialogue for Decision Making",
-        "Cognitive Workflow with Integrated Memory",
-        "Real-Time Adaptive Coordination Strategies"
+        "Large Language Model Multi-Agent Systems",
+        "Cognitive Workflow with Memory & Reflection",
+        "Natural Language Agent Negotiation Protocol",
+        "Dynamic Network Adaptation via LLM Reasoning"
       ],
       "algorithm_phrase": [
-        "Agentic AI Framework for Wi-Fi Coordination",
-        "Dynamic Multi-Access Point Collaboration",
-        "Natural Language Dialogue for Decision Making",
-        "Cognitive Workflow with Integrated Memory",
-        "Real-Time Adaptive Coordination Strategies"
+        "Large Language Model Multi-Agent Systems",
+        "Cognitive Workflow with Memory & Reflection",
+        "Natural Language Agent Negotiation Protocol",
+        "Dynamic Network Adaptation via LLM Reasoning"
       ]
     },
     {
@@ -736,20 +706,18 @@
       "detail_title": "Cross Domain Evaluation of Multimodal Chain-of-Thought Reasoning of different datasets into the Amazon CoT Framework",
       "abstract": "While recent work has extended CoT to multimodal settings, achieving state-of-the-art results on science question answering benchmarks like ScienceQA, the generalizability of these approaches across diverse domains remains underexplored. This work presents a comprehensive analysis of Multimodal Chain-of-Thought (Multimodal-CoT) reasoning, evaluating its effectiveness on the A-OKVQA, OKVQA and ChartQA datasets, which requires broad commonsense and world knowledge beyond scientific reasoning. We implement the two-stage framework proposed by Zhang et al. [3], which separates rationale generation from answer inference and integrates vision features through a gated fusion mechanism with T5-based language models. Through systematic ablation studies, we analyze the contributions of vision features, rationale quality, and architectural choices. Our findings reveal that while vision integration significantly reduces hallucination in rationale generation, the effectiveness of CoT reasoning varies substantially across question types, with commonsense reasoning presenting particular challenges. This work provides practical insights for researchers implementing multimodal reasoning systems and identifies key areas for future improvement in cross-domain generalization.",
       "detail_dateline": "[Submitted on 24 Nov 2025]",
-      "detail_fetched_at": "2025-11-28T10:41:21.763131",
+      "detail_fetched_at": "2025-11-28T12:04:24.297323",
       "ai_summary_structured": [
-        "Multimodal Chain-of-Thought (Multimodal-CoT)",
-        "Gated Fusion Mechanism Integration",
-        "Rationale Generation & Answer Inference",
-        "Cross-Domain Generalization Challenges",
-        "Commonsense Reasoning Difficulties"
+        "Multimodal Chain-of-Thought (CoT) Reasoning",
+        "Two-Stage Rationale Generation Framework",
+        "Gated Vision-Language Fusion Mechanism",
+        "Cross-Domain Generalization Analysis"
       ],
       "algorithm_phrase": [
-        "Multimodal Chain-of-Thought (Multimodal-CoT)",
-        "Gated Fusion Mechanism Integration",
-        "Rationale Generation & Answer Inference",
-        "Cross-Domain Generalization Challenges",
-        "Commonsense Reasoning Difficulties"
+        "Multimodal Chain-of-Thought (CoT) Reasoning",
+        "Two-Stage Rationale Generation Framework",
+        "Gated Vision-Language Fusion Mechanism",
+        "Cross-Domain Generalization Analysis"
       ]
     },
     {
@@ -769,20 +737,18 @@
       "detail_title": "Paraconsistent-Lib: an intuitive PAL2v algorithm Python Library",
       "abstract": "This paper introduces Paraconsistent-Lib, an open-source, easy-to-use Python library for building PAL2v algorithms in reasoning and decision-making systems. Paraconsistent-Lib is designed as a general-purpose library of PAL2v standard calculations, presenting three types of results: paraconsistent analysis in one of the 12 classical lattice PAL2v regions, paraconsistent analysis node (PAN) outputs, and a decision output. With Paraconsistent-Lib, well-known PAL2v algorithms such as Para-analyzer, ParaExtrCTX, PAL2v Filter, paraconsistent analysis network (PANnet), and paraconsistent neural network (PNN) can be written in stand-alone or network form, reducing complexity, code size, and bugs, as two examples presented in this paper. Given its stable state, Paraconsistent-Lib is an active development to respond to user-required features and enhancements received on GitHub.",
       "detail_dateline": "[Submitted on 24 Nov 2025]",
-      "detail_fetched_at": "2025-11-28T10:41:23.232765",
+      "detail_fetched_at": "2025-11-28T12:04:25.849341",
       "ai_summary_structured": [
-        "Paraconsistent Analysis in PAL2v Regions",
-        "Paraconsistent Analysis Node (PAN) Outputs",
-        "Decision Output Generation",
-        "Para-analyzer and ParaExtrCTX Algorithms",
-        "Paraconsistent Neural Network (PNN)"
+        "Paraconsistent Logic PAL2v Algorithm Implementation",
+        "Lattice-based Reasoning & Decision Systems",
+        "Paraconsistent Analysis Network (PANnet) Architecture",
+        "Contradiction-tolerant Neural Network Framework"
       ],
       "algorithm_phrase": [
-        "Paraconsistent Analysis in PAL2v Regions",
-        "Paraconsistent Analysis Node (PAN) Outputs",
-        "Decision Output Generation",
-        "Para-analyzer and ParaExtrCTX Algorithms",
-        "Paraconsistent Neural Network (PNN)"
+        "Paraconsistent Logic PAL2v Algorithm Implementation",
+        "Lattice-based Reasoning & Decision Systems",
+        "Paraconsistent Analysis Network (PANnet) Architecture",
+        "Contradiction-tolerant Neural Network Framework"
       ]
     },
     {
@@ -801,34 +767,814 @@
       "detail_title": "A Brief History of Digital Twin Technology",
       "abstract": "Emerging from NASA's spacecraft simulations in the 1960s, digital twin technology has advanced through industrial adoption to spark a healthcare transformation. A digital twin is a dynamic, data-driven virtual counterpart of a physical system, continuously updated through real-time data streams and capable of bidirectional interaction. In medicine, digital twin integrates imaging, biosensors, and computational models to generate patient-specific simulations that support diagnosis, treatment planning, and drug development. Representative applications include cardiac digital twin for predicting arrhythmia treatment outcomes, oncology digital twin for tracking tumor progression and optimizing radiotherapy, and pharmacological digital twin for accelerating drug discovery. Despite rapid progress, major challenges, including interoperability, data privacy, and model fidelity, continue to limit widespread clinical integration. Emerging solutions such as explainable AI, federated learning, and harmonized regulatory frameworks offer promising pathways forward. Looking ahead, advances in multi-organ digital twin, genomics integration, and ethical governance will be essential to ensure that digital twin shifts healthcare from reactive treatment to predictive, preventive, and truly personalized medicine.",
       "detail_dateline": "[Submitted on 24 Nov 2025]",
-      "detail_fetched_at": "2025-11-28T10:41:24.688006",
+      "detail_fetched_at": "2025-11-28T12:04:27.431770",
       "ai_summary_structured": [
-        "Real-Time Data Integration",
-        "Patient-Specific Simulations",
-        "Explainable AI Solutions",
-        "Federated Learning Approaches",
-        "Multi-Organ Digital Twin Development"
+        "Real-time Data Fusion & Synchronization",
+        "Federated Learning for Privacy Preservation",
+        "Explainable AI for Clinical Interpretability",
+        "Multi-modal Computational Model Integration",
+        "Predictive Analytics & Uncertainty Quantification"
       ],
       "algorithm_phrase": [
-        "Real-Time Data Integration",
-        "Patient-Specific Simulations",
-        "Explainable AI Solutions",
-        "Federated Learning Approaches",
-        "Multi-Organ Digital Twin Development"
+        "Real-time Data Fusion & Synchronization",
+        "Federated Learning for Privacy Preservation",
+        "Explainable AI for Clinical Interpretability",
+        "Multi-modal Computational Model Integration",
+        "Predictive Analytics & Uncertainty Quantification"
       ]
     }
   ],
-  "new_papers": [],
+  "new_papers": [
+    {
+      "arxiv_id": "arXiv:2511.21678",
+      "arxiv_url": "https://arxiv.org/abs/arXiv:2511.21678",
+      "pdf_url": "https://arxiv.org/pdf/2511.21678",
+      "title": "Agentic Learner with Grow-and-Refine Multimodal Semantic Memory",
+      "authors": [
+        "Weihao Bo",
+        "Shan Zhang",
+        "Yanpeng Sun",
+        "Jingjing Wu",
+        "Qunyi Xie",
+        "Xiao Tan",
+        "Kunbin Chen",
+        "Wei He",
+        "Xiaofan Li",
+        "Na Zhao",
+        "Jingdong Wang",
+        "Zechao Li"
+      ],
+      "subjects": "Artificial Intelligence (cs.AI); Machine Learning (cs.LG)",
+      "detail_title": "Agentic Learner with Grow-and-Refine Multimodal Semantic Memory",
+      "abstract": "MLLMs exhibit strong reasoning on isolated queries, yet they operate de novo -- solving each problem independently and often repeating the same mistakes. Existing memory-augmented agents mainly store past trajectories for reuse. However, trajectory-based memory suffers from brevity bias, gradually losing essential domain knowledge. More critically, even in truly multimodal problem-solving settings, it records only a single-modality trace of past behavior, failing to preserve how visual attention and logical reasoning jointly contributed to the solution. This is fundamentally misaligned with human cognition: semantic memory is both multimodal and integrated, preserving visual and abstract knowledge through coordinated but distinct representational streams. We thus introduce ViLoMem, a dual-stream memory framework that constructs compact, schema-based memory. It separately encodes visual distraction patterns and logical reasoning errors, enabling MLLMs to learn from their successful and failed experiences. Following a grow-and-refine principle, the system incrementally accumulates and updates multimodal semantic knowledge -- preserving stable, generalizable strategies while avoiding catastrophic forgetting. Across six multimodal benchmarks, ViLoMem consistently improves pass@1 accuracy and substantially reduces repeated visual and logical errors. Ablations confirm the necessity of dual-stream memory with explicit distraction--hallucination separation, demonstrating the value of error-aware multimodal memory for lifelong and cross-domain agentic learning. Our project page will be available at this https URL.",
+      "detail_dateline": "[Submitted on 26 Nov 2025]",
+      "detail_fetched_at": "2025-11-28T12:03:52.031938",
+      "ai_summary_structured": [
+        "Dual-Stream Multimodal Semantic Memory",
+        "Schema-Based Knowledge Representation",
+        "Grow-and-Refine Learning Framework",
+        "Visual-Logical Error Separation",
+        "Catastrophic Forgetting Prevention"
+      ],
+      "algorithm_phrase": [
+        "Dual-Stream Multimodal Semantic Memory",
+        "Schema-Based Knowledge Representation",
+        "Grow-and-Refine Learning Framework",
+        "Visual-Logical Error Separation",
+        "Catastrophic Forgetting Prevention"
+      ]
+    },
+    {
+      "arxiv_id": "arXiv:2511.21636",
+      "arxiv_url": "https://arxiv.org/abs/arXiv:2511.21636",
+      "pdf_url": "https://arxiv.org/pdf/2511.21636",
+      "title": "Bridging the Unavoidable A Priori: A Framework for Comparative Causal Modeling",
+      "authors": [
+        "Peter S. Hovmand",
+        "Kari O'Donnell",
+        "Callie Ogland-Hand",
+        "Brian Biroscak",
+        "Douglas D. Gunzler"
+      ],
+      "subjects": "Artificial Intelligence (cs.AI); Applications (stat.AP); Computation (stat.CO); Methodology (stat.ME); Machine Learning (stat.ML)",
+      "comments": "Presented at 43rd Conference of the International System Dynamics Society in Boston, United States",
+      "detail_title": "Bridging the Unavoidable A Priori: A Framework for Comparative Causal Modeling",
+      "abstract": "AI/ML models have rapidly gained prominence as innovations for solving previously unsolved problems and their unintended consequences from amplifying human biases. Advocates for responsible AI/ML have sought ways to draw on the richer causal models of system dynamics to better inform the development of responsible AI/ML. However, a major barrier to advancing this work is the difficulty of bringing together methods rooted in different underlying assumptions (i.e., Dana Meadow's \"the unavoidable a priori\"). This paper brings system dynamics and structural equation modeling together into a common mathematical framework that can be used to generate systems from distributions, develop methods, and compare results to inform the underlying epistemology of system dynamics for data science and AI/ML applications.",
+      "detail_dateline": "[Submitted on 26 Nov 2025]",
+      "detail_fetched_at": "2025-11-28T12:03:53.443734",
+      "ai_summary_structured": [
+        "Structural Equation Modeling (SEM)",
+        "System Dynamics Causal Modeling",
+        "Comparative Framework for AI Epistemology",
+        "Responsible AI Bias Mitigation Methods"
+      ],
+      "algorithm_phrase": [
+        "Structural Equation Modeling (SEM)",
+        "System Dynamics Causal Modeling",
+        "Comparative Framework for AI Epistemology",
+        "Responsible AI Bias Mitigation Methods"
+      ]
+    },
+    {
+      "arxiv_id": "arXiv:2511.21591",
+      "arxiv_url": "https://arxiv.org/abs/arXiv:2511.21591",
+      "pdf_url": "https://arxiv.org/pdf/2511.21591",
+      "title": "On the Limits of Innate Planning in Large Language Models",
+      "authors": [
+        "Charles Schepanowski",
+        "Charles Ling"
+      ],
+      "subjects": "Artificial Intelligence (cs.AI)",
+      "comments": "33 pages, 7 figures",
+      "detail_title": "On the Limits of Innate Planning in Large Language Models",
+      "abstract": "Large language models (LLMs) achieve impressive results on many benchmarks, yet their capacity for planning and stateful reasoning remains unclear. We study these abilities directly, without code execution or other tools, using the 8-puzzle: a classic task that requires state tracking and goal-directed planning while allowing precise, step-by-step evaluation. Four models are tested under common prompting conditions (Zero-Shot, Chain-of-Thought, Algorithm-of-Thought) and with tiered corrective feedback. Feedback improves success rates for some model-prompt combinations, but many successful runs are long, computationally expensive, and indirect. We then examine the models with an external move validator that provides only valid moves. Despite this level of assistance, none of the models solve any puzzles in this setting. Qualitative analysis reveals two dominant deficits across all models: (1) brittle internal state representations, leading to frequent invalid moves, and (2) weak heuristic planning, with models entering loops or selecting actions that do not reduce the distance to the goal state. These findings indicate that, in the absence of external tools such as code interpreters, current LLMs have substantial limitations in planning and that further progress may require mechanisms for maintaining explicit state and performing structured search.",
+      "detail_dateline": "[Submitted on 26 Nov 2025]",
+      "detail_fetched_at": "2025-11-28T12:03:54.875461",
+      "ai_summary_structured": [
+        "Large Language Model Planning Limitations",
+        "State Tracking & Goal-Directed Reasoning",
+        "Chain-of-Thought & Algorithm-of-Thought Prompting",
+        "Heuristic Search & Structured Planning"
+      ],
+      "algorithm_phrase": [
+        "Large Language Model Planning Limitations",
+        "State Tracking & Goal-Directed Reasoning",
+        "Chain-of-Thought & Algorithm-of-Thought Prompting",
+        "Heuristic Search & Structured Planning"
+      ]
+    },
+    {
+      "arxiv_id": "arXiv:2511.21570",
+      "arxiv_url": "https://arxiv.org/abs/arXiv:2511.21570",
+      "pdf_url": "https://arxiv.org/pdf/2511.21570",
+      "title": "From Prediction to Foresight: The Role of AI in Designing Responsible Futures",
+      "authors": [
+        "Maria Perez-Ortiz"
+      ],
+      "subjects": "Artificial Intelligence (cs.AI); Computers and Society (cs.CY); Human-Computer Interaction (cs.HC)",
+      "comments": "Accessible at this https URL",
+      "journal_ref": "Journal of Artificial Intelligence for Sustainable Development (JAISD), 2024",
+      "detail_title": "From Prediction to Foresight: The Role of AI in Designing Responsible Futures",
+      "abstract": "In an era marked by rapid technological advancements and complex global challenges, responsible foresight has emerged as an essential framework for policymakers aiming to navigate future uncertainties and shape the future. Responsible foresight entails the ethical anticipation of emerging opportunities and risks, with a focus on fostering proactive, sustainable, and accountable future design. This paper coins the term \"responsible computational foresight\", examining the role of human-centric artificial intelligence and computational modeling in advancing responsible foresight, establishing a set of foundational principles for this new field and presenting a suite of AI-driven foresight tools currently shaping it. AI, particularly in conjunction with simulations and scenario analysis, enhances policymakers' ability to address uncertainty, evaluate risks, and devise strategies geared toward sustainable, resilient futures. However, responsible foresight extends beyond mere technical forecasting; it demands a nuanced understanding of the interdependencies within social, environmental, economic and political systems, alongside a commitment to ethical, long-term decision-making that supports human intelligence. We argue that AI will play a role as a supportive tool in responsible, human-centered foresight, complementing rather than substituting policymaker judgment to enable the proactive shaping of resilient and ethically sound futures. This paper advocates for the thoughtful integration of AI into foresight practices to empower policymakers and communities as they confront the grand challenges of the 21st century.",
+      "detail_dateline": "[Submitted on 26 Nov 2025]",
+      "detail_fetched_at": "2025-11-28T12:03:56.283773",
+      "ai_summary_structured": [
+        "Human-Centric AI for Policy Foresight",
+        "Computational Scenario Analysis & Simulation",
+        "Uncertainty Quantification in Future Modeling",
+        "Multi-System Interdependency Risk Assessment"
+      ],
+      "algorithm_phrase": [
+        "Human-Centric AI for Policy Foresight",
+        "Computational Scenario Analysis & Simulation",
+        "Uncertainty Quantification in Future Modeling",
+        "Multi-System Interdependency Risk Assessment"
+      ]
+    },
+    {
+      "arxiv_id": "arXiv:2511.21569",
+      "arxiv_url": "https://arxiv.org/abs/arXiv:2511.21569",
+      "pdf_url": "https://arxiv.org/pdf/2511.21569",
+      "title": "Self-Transparency Failures in Expert-Persona LLMs: A Large-Scale Behavioral Audit",
+      "authors": [
+        "Alex Diep"
+      ],
+      "subjects": "Artificial Intelligence (cs.AI); Human-Computer Interaction (cs.HC)",
+      "detail_title": "Self-Transparency Failures in Expert-Persona LLMs: A Large-Scale Behavioral Audit",
+      "abstract": "If a language model cannot reliably disclose its AI identity in expert contexts, users cannot trust its competence boundaries. This study examines self-transparency in models assigned professional personas within high-stakes domains where false expertise risks user harm. Using a common-garden design, sixteen open-weight models (4B--671B parameters) were audited across 19,200 trials. Models exhibited sharp domain-specific inconsistency: a Financial Advisor persona elicited 30.8% disclosure initially, while a Neurosurgeon persona elicited only 3.5%. This creates preconditions for a \"Reverse Gell-Mann Amnesia\" effect, where transparency in some domains leads users to overgeneralize trust to contexts where disclosure fails. Disclosure ranged from 2.8% to 73.6%, with a 14B model reaching 61.4% while a 70B produced just 4.1%. Model identity predicted behavior better than parameter count ($\\Delta R_{adj}^{2} = 0.359$ vs 0.018). Reasoning optimization actively suppressed self-transparency in some models, with reasoning variants showing up to 48.4% lower disclosure than base counterparts. Bayesian validation with Rogan--Gladen correction confirmed robustness to measurement error ($\\kappa = 0.908$). These findings demonstrate transparency reflects training factors rather than scale. Organizations cannot assume safety properties transfer to deployment contexts, requiring deliberate behavior design and empirical verification.",
+      "detail_dateline": "[Submitted on 26 Nov 2025]",
+      "detail_fetched_at": "2025-11-28T12:03:57.713002",
+      "ai_summary_structured": [
+        "Large Language Model Self-Transparency Auditing",
+        "Domain-Specific AI Disclosure Behavior Analysis",
+        "Bayesian Validation with Rogan-Gladen Correction",
+        "Expert-Persona Model Safety Evaluation"
+      ],
+      "algorithm_phrase": [
+        "Large Language Model Self-Transparency Auditing",
+        "Domain-Specific AI Disclosure Behavior Analysis",
+        "Bayesian Validation with Rogan-Gladen Correction",
+        "Expert-Persona Model Safety Evaluation"
+      ]
+    },
+    {
+      "arxiv_id": "arXiv:2511.21522",
+      "arxiv_url": "https://arxiv.org/abs/arXiv:2511.21522",
+      "pdf_url": "https://arxiv.org/pdf/2511.21522",
+      "title": "Pessimistic Verification for Open Ended Math Questions",
+      "authors": [
+        "Yanxing Huang",
+        "Zihan Tang",
+        "Zejin Lin",
+        "Peng Li",
+        "Yang Liu"
+      ],
+      "subjects": "Artificial Intelligence (cs.AI)",
+      "detail_title": "Pessimistic Verification for Open Ended Math Questions",
+      "abstract": "The key limitation of the verification performance lies in the ability of error detection. With this intuition we designed several variants of pessimistic verification, which are simple workflows that could significantly improve the verification of open-ended math questions. In pessimistic verification we construct multiple parallel verifications for the same proof, and the proof is deemed incorrect if any one of them reports an error. This simple technique significantly improves the performance across many math verification benchmarks without incurring substantial computational resources. Its token efficiency even surpassed extended long-CoT in test-time scaling. Our case studies further indicate that the majority of false negatives in stronger models are actually caused by annotation errors in the original dataset, so our method's performance is in fact underestimated. Self-verification for mathematical problems can effectively improve the reliability and performance of language model outputs, and it also plays a critical role in enabling long-horizon mathematical tasks. We believe that research on pessimistic verification will help enhance the mathematical capabilities of language models across a wide range of tasks.",
+      "detail_dateline": "[Submitted on 26 Nov 2025]",
+      "detail_fetched_at": "2025-11-28T12:03:59.161184",
+      "ai_summary_structured": [
+        "Pessimistic Verification for Mathematical Reasoning",
+        "Parallel Error Detection Workflows",
+        "Self-Verification for Language Models",
+        "Test-Time Scaling for Math Problems"
+      ],
+      "algorithm_phrase": [
+        "Pessimistic Verification for Mathematical Reasoning",
+        "Parallel Error Detection Workflows",
+        "Self-Verification for Language Models",
+        "Test-Time Scaling for Math Problems"
+      ]
+    },
+    {
+      "arxiv_id": "arXiv:2511.21471",
+      "arxiv_url": "https://arxiv.org/abs/arXiv:2511.21471",
+      "pdf_url": "https://arxiv.org/pdf/2511.21471",
+      "title": "SpatialBench: Benchmarking Multimodal Large Language Models for Spatial Cognition",
+      "authors": [
+        "Peiran Xu",
+        "Sudong Wang",
+        "Yao Zhu",
+        "Jianing Li",
+        "Yunjian Zhang"
+      ],
+      "subjects": "Artificial Intelligence (cs.AI)",
+      "detail_title": "SpatialBench: Benchmarking Multimodal Large Language Models for Spatial Cognition",
+      "abstract": "Spatial cognition is fundamental to real-world multimodal intelligence, allowing models to effectively interact with the physical environment. While multimodal large language models (MLLMs) have made significant strides, existing benchmarks often oversimplify spatial cognition, reducing it to a single-dimensional metric, which fails to capture the hierarchical structure and interdependence of spatial abilities. To address this gap, we propose a hierarchical spatial cognition framework that decomposes spatial intelligence into five progressively complex levels from basic observation to high-level planning. Building upon this taxonomy, we construct SpatialBench, a large-scale, fine-grained benchmark covering 15 tasks aligned with these cognitive levels. To provide a unified evaluation across heterogeneous tasks, we further introduce a high-level capability-oriented metric that reliably assesses a model's overall spatial reasoning ability. Extensive experiments over massive MLLMs reveal distinct performance stratification across cognitive levels: models exhibit strong perceptual grounding yet remain limited in symbolic reasoning, causal inference, and planning. Additional human tests demonstrate that humans perform selective, goal-directed abstraction, while MLLMs tend to over-attend to surface details without coherent spatial intent. Our work establishes the first systematic framework for measuring hierarchical spatial cognition in MLLMs, laying the foundation for future spatially intelligent systems.",
+      "detail_dateline": "[Submitted on 26 Nov 2025]",
+      "detail_fetched_at": "2025-11-28T12:04:00.586197",
+      "ai_summary_structured": [
+        "Hierarchical Spatial Cognition Framework",
+        "Multimodal Large Language Models (MLLMs)",
+        "Capability-Oriented Evaluation Metrics",
+        "Spatial Reasoning Benchmark Construction"
+      ],
+      "algorithm_phrase": [
+        "Hierarchical Spatial Cognition Framework",
+        "Multimodal Large Language Models (MLLMs)",
+        "Capability-Oriented Evaluation Metrics",
+        "Spatial Reasoning Benchmark Construction"
+      ]
+    },
+    {
+      "arxiv_id": "arXiv:2511.21460",
+      "arxiv_url": "https://arxiv.org/abs/arXiv:2511.21460",
+      "pdf_url": "https://arxiv.org/pdf/2511.21460",
+      "title": "MADRA: Multi-Agent Debate for Risk-Aware Embodied Planning",
+      "authors": [
+        "Junjian Wang",
+        "Lidan Zhao",
+        "Xi Sheryl Zhang"
+      ],
+      "subjects": "Artificial Intelligence (cs.AI)",
+      "detail_title": "MADRA: Multi-Agent Debate for Risk-Aware Embodied Planning",
+      "abstract": "Ensuring the safety of embodied AI agents during task planning is critical for real-world deployment, especially in household environments where dangerous instructions pose significant risks. Existing methods often suffer from either high computational costs due to preference alignment training or over-rejection when using single-agent safety prompts. To address these limitations, we propose MADRA, a training-free Multi-Agent Debate Risk Assessment framework that leverages collective reasoning to enhance safety awareness without sacrificing task performance. MADRA employs multiple LLM-based agents to debate the safety of a given instruction, guided by a critical evaluator that scores responses based on logical soundness, risk identification, evidence quality, and clarity. Through iterative deliberation and consensus voting, MADRA significantly reduces false rejections while maintaining high sensitivity to dangerous tasks. Additionally, we introduce a hierarchical cognitive collaborative planning framework that integrates safety, memory, planning, and self-evolution mechanisms to improve task success rates through continuous learning. We also contribute SafeAware-VH, a benchmark dataset for safety-aware task planning in VirtualHome, containing 800 annotated instructions. Extensive experiments on AI2-THOR and VirtualHome demonstrate that our approach achieves over 90% rejection of unsafe tasks while ensuring that safe-task rejection is low, outperforming existing methods in both safety and execution efficiency. Our work provides a scalable, model-agnostic solution for building trustworthy embodied agents.",
+      "detail_dateline": "[Submitted on 26 Nov 2025]",
+      "detail_fetched_at": "2025-11-28T12:04:02.056815",
+      "ai_summary_structured": [
+        "Multi-Agent Debate for Risk Assessment",
+        "Training-Free Safety Evaluation Framework",
+        "Hierarchical Cognitive Collaborative Planning",
+        "Consensus-Based Decision Making Algorithm"
+      ],
+      "algorithm_phrase": [
+        "Multi-Agent Debate for Risk Assessment",
+        "Training-Free Safety Evaluation Framework",
+        "Hierarchical Cognitive Collaborative Planning",
+        "Consensus-Based Decision Making Algorithm"
+      ]
+    },
+    {
+      "arxiv_id": "arXiv:2511.21444",
+      "arxiv_url": "https://arxiv.org/abs/arXiv:2511.21444",
+      "pdf_url": "https://arxiv.org/pdf/2511.21444",
+      "title": "EWE: An Agentic Framework for Extreme Weather Analysis",
+      "authors": [
+        "Zhe Jiang",
+        "Jiong Wang",
+        "Xiaoyu Yue",
+        "Zijie Guo",
+        "Wenlong Zhang",
+        "Fenghua Ling",
+        "Wanli Ouyang",
+        "Lei Bai"
+      ],
+      "subjects": "Artificial Intelligence (cs.AI); Atmospheric and Oceanic Physics (physics.ao-ph)",
+      "detail_title": "EWE: An Agentic Framework for Extreme Weather Analysis",
+      "abstract": "Extreme weather events pose escalating risks to global society, underscoring the urgent need to unravel their underlying physical mechanisms. Yet the prevailing expert-driven, labor-intensive diagnostic paradigm has created a critical analytical bottleneck, stalling scientific progress. While AI for Earth Science has achieved notable advances in prediction, the equally essential challenge of automated diagnostic reasoning remains largely unexplored. We present the Extreme Weather Expert (EWE), the first intelligent agent framework dedicated to this task. EWE emulates expert workflows through knowledge-guided planning, closed-loop reasoning, and a domain-tailored meteorological toolkit. It autonomously produces and interprets multimodal visualizations from raw meteorological data, enabling comprehensive diagnostic analyses. To catalyze progress, we introduce the first benchmark for this emerging field, comprising a curated dataset of 103 high-impact events and a novel step-wise evaluation metric. EWE marks a step toward automated scientific discovery and offers the potential to democratize expertise and intellectual resources, particularly for developing nations vulnerable to extreme weather.",
+      "detail_dateline": "[Submitted on 26 Nov 2025]",
+      "detail_fetched_at": "2025-11-28T12:04:03.448351",
+      "ai_summary_structured": [
+        "Knowledge-Guided Agentic Planning Framework",
+        "Closed-Loop Diagnostic Reasoning System",
+        "Multimodal Meteorological Data Analysis",
+        "Automated Scientific Discovery Pipeline"
+      ],
+      "algorithm_phrase": [
+        "Knowledge-Guided Agentic Planning Framework",
+        "Closed-Loop Diagnostic Reasoning System",
+        "Multimodal Meteorological Data Analysis",
+        "Automated Scientific Discovery Pipeline"
+      ]
+    },
+    {
+      "arxiv_id": "arXiv:2511.21438",
+      "arxiv_url": "https://arxiv.org/abs/arXiv:2511.21438",
+      "pdf_url": "https://arxiv.org/pdf/2511.21438",
+      "title": "Conversational no-code and multi-agentic disease module identification and drug repurposing prediction with ChatDRex",
+      "authors": [
+        "Simon Süwer",
+        "Kester Bagemihl",
+        "Sylvie Baier",
+        "Lucia Dicunta",
+        "Markus List",
+        "Jan Baumbach",
+        "Andreas Maier",
+        "Fernando M. Delgado-Chaves"
+      ],
+      "subjects": "Artificial Intelligence (cs.AI); Multiagent Systems (cs.MA)",
+      "detail_title": "Conversational no-code and multi-agentic disease module identification and drug repurposing prediction with ChatDRex",
+      "abstract": "Repurposing approved drugs offers a time-efficient and cost-effective alternative to traditional drug development. However, in silico prediction of repurposing candidates is challenging and requires the effective collaboration of specialists in various fields, including pharmacology, medicine, biology, and bioinformatics. Fragmented, specialized algorithms and tools often address only narrow aspects of the overall problem, and heterogeneous, unstructured data landscapes require specialized users to be involved. Hence, these data services do not integrate smoothly across workflows. With ChatDRex, we present a conversation-based, multi-agent system that facilitates the execution of complex bioinformatic analyses aiming for network-based drug repurposing prediction. It builds on the integrated systems medicine knowledge graph NeDRex. ChatDRex provides natural language access to its extensive biomedical KG and integrates bioinformatics agents for network analysis and drug repurposing, complemented by agents for functional coherence evaluation for in silico validation, as well as agents for literature mining and for discussing the obtained results in a scientific context. Its flexible multi-agent design assigns specific tasks to specialized agents, including query routing, data retrieval, algorithm execution, and result visualization. A dedicated reasoning module keeps the user in the loop and allows for hallucination detection. By enabling physicians and researchers without computer science expertise to control complex analyses in natural language, ChatDRex democratizes access to bioinformatics as an important resource for drug repurposing. It enables clinical experts to generate hypotheses and explore drug repurposing opportunities, ultimately accelerating the discovery of novel therapies and advancing personalized medicine and translational research.",
+      "detail_dateline": "[Submitted on 26 Nov 2025]",
+      "detail_fetched_at": "2025-11-28T12:04:04.931116",
+      "ai_summary_structured": [
+        "Multi-Agent System Architecture",
+        "Knowledge Graph Integration & Reasoning",
+        "Natural Language Query Processing",
+        "Network-Based Drug Repurposing Algorithms",
+        "Hallucination Detection & Validation"
+      ],
+      "algorithm_phrase": [
+        "Multi-Agent System Architecture",
+        "Knowledge Graph Integration & Reasoning",
+        "Natural Language Query Processing",
+        "Network-Based Drug Repurposing Algorithms",
+        "Hallucination Detection & Validation"
+      ]
+    },
+    {
+      "arxiv_id": "arXiv:2511.21417",
+      "arxiv_url": "https://arxiv.org/abs/arXiv:2511.21417",
+      "pdf_url": "https://arxiv.org/pdf/2511.21417",
+      "title": "New Hybrid Heuristics for Pseudo-Boolean Propagation",
+      "authors": [
+        "Mia Müßig",
+        "Jan Johannsen"
+      ],
+      "subjects": "Artificial Intelligence (cs.AI); Optimization and Control (math.OC)",
+      "detail_title": "New Hybrid Heuristics for Pseudo-Boolean Propagation",
+      "abstract": "In pseudo-boolean solving the currently most successful unit propagation strategy is a hybrid mode combining the watched literal scheme with the counting method. This short paper introduces new heuristics for this hybrid decision, which are able to drastically outperform the current method in the RoundingSAT solver.",
+      "detail_dateline": "[Submitted on 26 Nov 2025]",
+      "detail_fetched_at": "2025-11-28T12:04:06.338003",
+      "ai_summary_structured": [
+        "Hybrid Pseudo-Boolean Unit Propagation Strategy",
+        "Watched Literal & Counting Method Combination",
+        "Heuristic Decision Optimization for SAT Solving",
+        "RoundingSAT Solver Performance Enhancement"
+      ],
+      "algorithm_phrase": [
+        "Hybrid Pseudo-Boolean Unit Propagation Strategy",
+        "Watched Literal & Counting Method Combination",
+        "Heuristic Decision Optimization for SAT Solving",
+        "RoundingSAT Solver Performance Enhancement"
+      ]
+    },
+    {
+      "arxiv_id": "arXiv:2511.21398",
+      "arxiv_url": "https://arxiv.org/abs/arXiv:2511.21398",
+      "pdf_url": "https://arxiv.org/pdf/2511.21398",
+      "title": "Prune4Web: DOM Tree Pruning Programming for Web Agent",
+      "authors": [
+        "Jiayuan Zhang",
+        "Kaiquan Chen",
+        "Zhihao Lu",
+        "Enshen Zhou",
+        "Qian Yu",
+        "Jing Zhang"
+      ],
+      "subjects": "Artificial Intelligence (cs.AI); Computation and Language (cs.CL); Human-Computer Interaction (cs.HC); Multiagent Systems (cs.MA)",
+      "comments": "Paper accepted to AAAI 2026",
+      "detail_title": "Prune4Web: DOM Tree Pruning Programming for Web Agent",
+      "abstract": "Web automation employs intelligent agents to execute high-level tasks by mimicking human interactions with web interfaces. Despite the capabilities of recent Large Language Model (LLM)-based web agents, navigating complex, real-world webpages efficiently remains a significant hurdle due to the prohibitively large size of Document Object Model (DOM) structures, often ranging from 10,000 to 100,000 tokens. Existing strategies typically rely on crude DOM truncation -- risking the loss of critical information -- or employ inefficient heuristics and separate ranking models, failing to achieve an optimal balance between precision and scalability. To address these challenges, we introduce Prune4Web, a novel paradigm that shifts DOM processing from resource-intensive LLM reading to efficient programmatic pruning. Central to our approach is DOM Tree Pruning Programming, where an LLM generates executable Python scoring scripts to dynamically filter DOM elements based on semantic cues from decomposed sub-tasks. This mechanism eliminates the need for LLMs to ingest raw, massive DOMs, instead delegating traversal and scoring to lightweight, interpretable programs. This methodology achieves a 25x to 50x reduction in candidate elements for grounding, thereby facilitating precise action localization while mitigating attention dilution. Furthermore, we propose a specialized data annotation pipeline and a two-turn dialogue training strategy that jointly optimizes the Planner, Programmatic Filter, and Grounder within a unified framework. Extensive experiments demonstrate state-of-the-art performance. Notably, on our low-level grounding task, Prune4Web dramatically improves accuracy from 46.8% to 88.28%, underscoring its efficacy in real-world web automation.",
+      "detail_dateline": "[Submitted on 26 Nov 2025]",
+      "detail_fetched_at": "2025-11-28T12:04:07.753757",
+      "ai_summary_structured": [
+        "DOM Tree Pruning Programming",
+        "LLM-based Web Agent Navigation",
+        "Programmatic Element Filtering & Scoring",
+        "Two-turn Dialogue Training Strategy"
+      ],
+      "algorithm_phrase": [
+        "DOM Tree Pruning Programming",
+        "LLM-based Web Agent Navigation",
+        "Programmatic Element Filtering & Scoring",
+        "Two-turn Dialogue Training Strategy"
+      ]
+    },
+    {
+      "arxiv_id": "arXiv:2511.21260",
+      "arxiv_url": "https://arxiv.org/abs/arXiv:2511.21260",
+      "pdf_url": "https://arxiv.org/pdf/2511.21260",
+      "title": "Causality Without Causal Models",
+      "authors": [
+        "Joseph Y. Halpern",
+        "Rafael Pass"
+      ],
+      "subjects": "Artificial Intelligence (cs.AI)",
+      "comments": "In Proceedings TARK 2025, arXiv:2511.20540",
+      "journal_ref": "EPTCS 437, 2025, pp. 160-174",
+      "detail_title": "Causality Without Causal Models",
+      "abstract": "Perhaps the most prominent current definition of (actual) causality is due to Halpern and Pearl.  It is defined using causal models (also known as structural equations models).  We abstract the definition, extracting its key features, so that it can be applied to any other model where counterfactuals are defined. By abstracting the definition, we gain a number of benefits. Not only can we apply the definition in a wider range of models, including ones that allow, for example, backtracking, but we can apply the definition to determine if A is a cause of B  even if A and B are formulas involving disjunctions, negations, beliefs, and nested counterfactuals (none of which can be handled by the Halpern-Pearl definition). Moreover, we can extend the ideas to getting an abstract definition of explanation that can be applied beyond causal models. Finally, we gain a deeper understanding of features of the definition  even in causal models.",
+      "detail_dateline": "[Submitted on 26 Nov 2025]",
+      "detail_fetched_at": "2025-11-28T12:04:09.217196",
+      "ai_summary_structured": [
+        "Counterfactual Reasoning & Causal Inference",
+        "Structural Equation Models (SEMs)",
+        "Abstract Causality Definition Framework",
+        "Halpern-Pearl Causality Formalization",
+        "Backtracking Counterfactual Models"
+      ],
+      "algorithm_phrase": [
+        "Counterfactual Reasoning & Causal Inference",
+        "Structural Equation Models (SEMs)",
+        "Abstract Causality Definition Framework",
+        "Halpern-Pearl Causality Formalization",
+        "Backtracking Counterfactual Models"
+      ]
+    },
+    {
+      "arxiv_id": "arXiv:2511.21064",
+      "arxiv_url": "https://arxiv.org/abs/arXiv:2511.21064",
+      "pdf_url": "https://arxiv.org/pdf/2511.21064",
+      "title": "OVOD-Agent: A Markov-Bandit Framework for Proactive Visual Reasoning and Self-Evolving Detection",
+      "authors": [
+        "Chujie Wang",
+        "Jianyu Lu",
+        "Zhiyuan Luo",
+        "Xi Chen",
+        "Chu He"
+      ],
+      "subjects": "Artificial Intelligence (cs.AI); Computer Vision and Pattern Recognition (cs.CV)",
+      "detail_title": "OVOD-Agent: A Markov-Bandit Framework for Proactive Visual Reasoning and Self-Evolving Detection",
+      "abstract": "Open-Vocabulary Object Detection (OVOD) aims to enable detectors to generalize across categories by leveraging semantic information. Although existing methods are pretrained on large vision-language datasets, their inference is still limited to fixed category names, creating a gap between multimodal training and unimodal inference. Previous work has shown that improving textual representation can significantly enhance OVOD performance, indicating that the textual space is still underexplored. To this end, we propose OVOD-Agent, which transforms passive category matching into proactive visual reasoning and self-evolving detection. Inspired by the Chain-of-Thought (CoT) paradigm, OVOD-Agent extends the textual optimization process into an interpretable Visual-CoT with explicit actions. OVOD's lightweight nature makes LLM-based management unsuitable; instead, we model visual context transitions as a Weakly Markovian Decision Process (w-MDP) over eight state spaces, which naturally represents the agent's state, memory, and interaction dynamics. A Bandit module generates exploration signals under limited supervision, helping the agent focus on uncertain regions and adapt its detection policy. We further integrate Markov transition matrices with Bandit trajectories for self-supervised Reward Model (RM) optimization, forming a closed loop from Bandit exploration to RM learning. Experiments on COCO and LVIS show that OVOD-Agent provides consistent improvements across OVOD backbones, particularly on rare categories, confirming the effectiveness of the proposed framework.",
+      "detail_dateline": "[Submitted on 26 Nov 2025]",
+      "detail_fetched_at": "2025-11-28T12:04:10.658828",
+      "ai_summary_structured": [
+        "Open-Vocabulary Object Detection (OVOD)",
+        "Weakly Markovian Decision Process (w-MDP)",
+        "Multi-Armed Bandit Exploration Framework",
+        "Chain-of-Thought Visual Reasoning (Visual-CoT)",
+        "Self-Supervised Reward Model Optimization"
+      ],
+      "algorithm_phrase": [
+        "Open-Vocabulary Object Detection (OVOD)",
+        "Weakly Markovian Decision Process (w-MDP)",
+        "Multi-Armed Bandit Exploration Framework",
+        "Chain-of-Thought Visual Reasoning (Visual-CoT)",
+        "Self-Supervised Reward Model Optimization"
+      ]
+    },
+    {
+      "arxiv_id": "arXiv:2511.21033",
+      "arxiv_url": "https://arxiv.org/abs/arXiv:2511.21033",
+      "pdf_url": "https://arxiv.org/pdf/2511.21033",
+      "title": "Towards Trustworthy Legal AI through LLM Agents and Formal Reasoning",
+      "authors": [
+        "Linze Chen",
+        "Yufan Cai",
+        "Zhe Hou",
+        "Jinsong Dong"
+      ],
+      "subjects": "Artificial Intelligence (cs.AI)",
+      "detail_title": "Towards Trustworthy Legal AI through LLM Agents and Formal Reasoning",
+      "abstract": "The rationality of law manifests in two forms: substantive rationality, which concerns the fairness or moral desirability of outcomes, and formal rationality, which requires legal decisions to follow explicitly stated, general, and logically coherent rules. Existing LLM-based systems excel at surface-level text analysis but lack the guarantees required for principled jurisprudence. We introduce L4M, a novel framework that combines adversarial LLM agents with SMT-solver-backed proofs to unite the interpretive flexibility of natural language with the rigor of symbolic verification. The pipeline consists of three phases: (1) Statute Formalization, where domain-specific prompts convert legal provisions into logical formulae; (2) Dual Fact and Statute Extraction, in which prosecutor- and defense-aligned LLMs independently map case narratives to fact tuples and statutes, ensuring role isolation; and (3) Solver-Centric Adjudication, where an autoformalizer compiles both parties' arguments into logic constraints, and unsat cores trigger iterative self-critique until a satisfiable formula is achieved, which is then verbalized by a Judge-LLM into a transparent verdict and optimized sentence. Experimental results on public benchmarks show that our system surpasses advanced LLMs including GPT-o4-mini, DeepSeek-V3, and Claude 4 as well as state-of-the-art Legal AI baselines, while providing rigorous and explainable symbolic justifications.",
+      "detail_dateline": "[Submitted on 26 Nov 2025]",
+      "detail_fetched_at": "2025-11-28T12:04:12.122124",
+      "ai_summary_structured": [
+        "Adversarial LLM Agents with Role Isolation",
+        "SMT-Solver-Backed Symbolic Verification",
+        "Formal Logic Constraint Compilation",
+        "Iterative Self-Critique via Unsat Cores"
+      ],
+      "algorithm_phrase": [
+        "Adversarial LLM Agents with Role Isolation",
+        "SMT-Solver-Backed Symbolic Verification",
+        "Formal Logic Constraint Compilation",
+        "Iterative Self-Critique via Unsat Cores"
+      ]
+    },
+    {
+      "arxiv_id": "arXiv:2511.21005",
+      "arxiv_url": "https://arxiv.org/abs/arXiv:2511.21005",
+      "pdf_url": "https://arxiv.org/pdf/2511.21005",
+      "title": "ICPO: Intrinsic Confidence-Driven Group Relative Preference Optimization for Efficient Reinforcement Learning",
+      "authors": [
+        "Jinpeng Wang",
+        "Chao Li",
+        "Ting Ye",
+        "Mengyuan Zhang",
+        "Wei Liu",
+        "Jian Luan"
+      ],
+      "subjects": "Artificial Intelligence (cs.AI); Information Retrieval (cs.IR)",
+      "detail_title": "ICPO: Intrinsic Confidence-Driven Group Relative Preference Optimization for Efficient Reinforcement Learning",
+      "abstract": "Reinforcement Learning with Verifiable Rewards (RLVR) demonstrates significant potential in enhancing the reasoning capabilities of Large Language Models (LLMs). However, existing RLVR methods are often constrained by issues such as coarse-grained rewards, reward noise, and inefficient exploration, which lead to unstable training and entropy collapse. To address this challenge, we propose the Intrinsic Confidence-Driven Group Relative Preference Optimization method (ICPO). The intuition behind it lies in the fact that the probabilities of an LLM generating different responses can inherently and directly reflect its self-assessment of the reasoning process. Inspired by the idea of preference modeling, ICPO calculates a preference advantage score for each response by comparing the relative generation probabilities of multiple responses under the same input prompt, and integrates this score with verifiable rewards to guide the exploration process. We have discovered that the preference advantage score not only alleviates the issues of coarse-grained rewards and reward noise but also effectively curbs overconfident errors, enhances the relative superiority of undervalued high-quality responses, and prevents the model from overfitting to specific strategies, thereby facilitating more thorough exploration. Comprehensive experiments across four general-domain benchmarks and three mathematical benchmarks demonstrate that ICPO steadily boosts reasoning compared to GRPO.",
+      "detail_dateline": "[Submitted on 26 Nov 2025]",
+      "detail_fetched_at": "2025-11-28T12:04:13.610456",
+      "ai_summary_structured": [
+        "Reinforcement Learning with Verifiable Rewards (RLVR)",
+        "Intrinsic Confidence-Driven Preference Optimization",
+        "Group Relative Preference Modeling",
+        "Self-Assessment Probability-Based Exploration"
+      ],
+      "algorithm_phrase": [
+        "Reinforcement Learning with Verifiable Rewards (RLVR)",
+        "Intrinsic Confidence-Driven Preference Optimization",
+        "Group Relative Preference Modeling",
+        "Self-Assessment Probability-Based Exploration"
+      ]
+    },
+    {
+      "arxiv_id": "arXiv:2511.20942",
+      "arxiv_url": "https://arxiv.org/abs/arXiv:2511.20942",
+      "pdf_url": "https://arxiv.org/pdf/2511.20942",
+      "title": "Improving Procedural Skill Explanations via Constrained Generation: A Symbolic-LLM Hybrid Architecture",
+      "authors": [
+        "Rahul Dass",
+        "Thomas Bowlin",
+        "Zebing Li",
+        "Xiao Jin",
+        "Ashok Goel"
+      ],
+      "subjects": "Artificial Intelligence (cs.AI)",
+      "detail_title": "Improving Procedural Skill Explanations via Constrained Generation: A Symbolic-LLM Hybrid Architecture",
+      "abstract": "In procedural skill learning, instructional explanations must convey not just steps, but the causal, goal-directed, and compositional logic behind them. Large language models (LLMs) often produce fluent yet shallow responses that miss this structure. We present Ivy, an AI coaching system that delivers structured, multi-step explanations by combining symbolic Task-Method-Knowledge (TMK) models with a generative interpretation layer-an LLM that constructs explanations while being constrained by TMK structure. TMK encodes causal transitions, goal hierarchies, and problem decompositions, and guides the LLM within explicit structural bounds. We evaluate Ivy against responses against GPT and retrieval-augmented GPT baselines using expert and independent annotations across three inferential dimensions. Results show that symbolic constraints consistently improve the structural quality of explanations for \"how\" and \"why\" questions. This study demonstrates a scalable AI for education approach that strengthens the pedagogical value of AI-generated explanations in intelligent coaching systems.",
+      "detail_dateline": "[Submitted on 26 Nov 2025]",
+      "detail_fetched_at": "2025-11-28T12:04:15.047349",
+      "ai_summary_structured": [
+        "Symbolic-LLM Hybrid Architecture",
+        "Task-Method-Knowledge (TMK) Constrained Generation",
+        "Structured Procedural Skill Explanation",
+        "Causal Goal-Directed Learning Models"
+      ],
+      "algorithm_phrase": [
+        "Symbolic-LLM Hybrid Architecture",
+        "Task-Method-Knowledge (TMK) Constrained Generation",
+        "Structured Procedural Skill Explanation",
+        "Causal Goal-Directed Learning Models"
+      ]
+    },
+    {
+      "arxiv_id": "arXiv:2511.20937",
+      "arxiv_url": "https://arxiv.org/abs/arXiv:2511.20937",
+      "pdf_url": "https://arxiv.org/pdf/2511.20937",
+      "title": "ENACT: Evaluating Embodied Cognition with World Modeling of Egocentric Interaction",
+      "authors": [
+        "Qineng Wang",
+        "Wenlong Huang",
+        "Yu Zhou",
+        "Hang Yin",
+        "Tianwei Bao",
+        "Jianwen Lyu",
+        "Weiyu Liu",
+        "Ruohan Zhang",
+        "Jiajun Wu",
+        "Li Fei-Fei",
+        "Manling Li"
+      ],
+      "subjects": "Artificial Intelligence (cs.AI); Computation and Language (cs.CL); Computer Vision and Pattern Recognition (cs.CV); Robotics (cs.RO)",
+      "comments": "Preprint version",
+      "detail_title": "ENACT: Evaluating Embodied Cognition with World Modeling of Egocentric Interaction",
+      "abstract": "Embodied cognition argues that intelligence arises from sensorimotor interaction rather than passive observation. It raises an intriguing question: do modern vision-language models (VLMs), trained largely in a disembodied manner, exhibit signs of embodied cognition? We introduce ENACT, a benchmark that casts evaluation of embodied cognition as world modeling from egocentric interaction in a visual question answering (VQA) format. Framed as a partially observable Markov decision process (POMDP) whose actions are scene graph changes, ENACT comprises two complementary sequence reordering tasks: forward world modeling (reorder shuffled observations given actions) and inverse world modeling (reorder shuffled actions given observations). While conceptually simple, solving these tasks implicitly demands capabilities central to embodied cognition-affordance recognition, action-effect reasoning, embodied awareness, and interactive, long-horizon memory from partially observable egocentric input, while avoiding low-level image synthesis that could confound the evaluation. We provide a scalable pipeline that synthesizes QA pairs from robotics simulation (BEHAVIOR) and evaluates models on 8,972 QA pairs spanning long-horizon home-scale activities. Experiments reveal a performance gap between frontier VLMs and humans that widens with interaction horizon. Models consistently perform better on the inverse task than the forward one and exhibit anthropocentric biases, including a preference for right-handed actions and degradation when camera intrinsics or viewpoints deviate from human vision. Website at this https URL.",
+      "detail_dateline": "[Submitted on 26 Nov 2025]",
+      "detail_fetched_at": "2025-11-28T12:04:16.795956",
+      "ai_summary_structured": [
+        "Partially Observable Markov Decision Process (POMDP)",
+        "Egocentric Vision-Language Model Evaluation",
+        "Scene Graph-based World Modeling",
+        "Forward and Inverse Sequence Reasoning"
+      ],
+      "algorithm_phrase": [
+        "Partially Observable Markov Decision Process (POMDP)",
+        "Egocentric Vision-Language Model Evaluation",
+        "Scene Graph-based World Modeling",
+        "Forward and Inverse Sequence Reasoning"
+      ]
+    },
+    {
+      "arxiv_id": "arXiv:2511.20934",
+      "arxiv_url": "https://arxiv.org/abs/arXiv:2511.20934",
+      "pdf_url": "https://arxiv.org/pdf/2511.20934",
+      "title": "Guaranteed Optimal Compositional Explanations for Neurons",
+      "authors": [
+        "Biagio La Rosa",
+        "Leilani H. Gilpin"
+      ],
+      "subjects": "Artificial Intelligence (cs.AI); Computer Vision and Pattern Recognition (cs.CV); Machine Learning (cs.LG)",
+      "comments": "41 pages, 10 figures",
+      "detail_title": "Guaranteed Optimal Compositional Explanations for Neurons",
+      "abstract": "While neurons are the basic units of deep neural networks, it is still unclear what they learn and if their knowledge is aligned with that of humans. Compositional explanations aim to answer this question by describing the spatial alignment between neuron activations and concepts through logical rules. These logical descriptions are typically computed via a search over all possible concept combinations. Since computing the spatial alignment over the entire state space is computationally infeasible, the literature commonly adopts beam search to restrict the space. However, beam search cannot provide any theoretical guarantees of optimality, and it remains unclear how close current explanations are to the true optimum. In this theoretical paper, we address this gap by introducing the first framework for computing guaranteed optimal compositional explanations. Specifically, we propose: (i) a decomposition that identifies the factors influencing the spatial alignment, (ii) a heuristic to estimate the alignment at any stage of the search, and (iii) the first algorithm that can compute optimal compositional explanations within a feasible time. Using this framework, we analyze the differences between optimal and non-optimal explanations in the most popular settings for compositional explanations, the computer vision domain and Convolutional Neural Networks. In these settings, we demonstrate that 10-40 percent of explanations obtained with beam search are suboptimal when overlapping concepts are involved. Finally, we evaluate a beam-search variant guided by our proposed decomposition and heuristic, showing that it matches or improves runtime over prior methods while offering greater flexibility in hyperparameters and computational resources.",
+      "detail_dateline": "[Submitted on 25 Nov 2025]",
+      "detail_fetched_at": "2025-11-28T12:04:18.489424",
+      "ai_summary_structured": [
+        "Optimal Compositional Neural Network Explanations",
+        "Spatial Alignment Search Algorithms",
+        "Beam Search Optimization with Guarantees",
+        "Heuristic-Guided Explanation Discovery Framework"
+      ],
+      "algorithm_phrase": [
+        "Optimal Compositional Neural Network Explanations",
+        "Spatial Alignment Search Algorithms",
+        "Beam Search Optimization with Guarantees",
+        "Heuristic-Guided Explanation Discovery Framework"
+      ]
+    },
+    {
+      "arxiv_id": "arXiv:2511.20892",
+      "arxiv_url": "https://arxiv.org/abs/arXiv:2511.20892",
+      "pdf_url": "https://arxiv.org/pdf/2511.20892",
+      "title": "Representation Interventions Enable Lifelong Unstructured Knowledge Control",
+      "authors": [
+        "Xuyuan Liu",
+        "Zhengzhang Chen",
+        "Xinshuai Dong",
+        "Yanchi Liu",
+        "Xujiang Zhao",
+        "Shengyu Chen",
+        "Haoyu Wang",
+        "Yujun Yan",
+        "Haifeng Chen"
+      ],
+      "subjects": "Artificial Intelligence (cs.AI)",
+      "comments": "18 Page",
+      "detail_title": "Representation Interventions Enable Lifelong Unstructured Knowledge Control",
+      "abstract": "Large language models (LLMs) often produce incorrect or outdated content. Updating their knowledge efficiently and accurately without costly retraining is a major challenge. This problem is especially hard for complex, unstructured knowledge in a lifelong setting, where many edits must coexist without interference. We introduce RILKE (Representation Intervention for Lifelong KnowledgE Control), a robust and scalable method that treats knowledge control as interventions within the model's representation space. Leveraging representation-space expressiveness, we identify two properties enabling RILKE to deliver fine-grained control over complex, unstructured knowledge while maintaining general utility with frozen base weights. During training, RILKE learns paraphrase-robust and edit-localized modules that limit each update to a low-dimensional subspace to minimize cross-edit interference. In inference, a query-adaptive router selects the appropriate module to guide the model's generation. In evaluation on knowledge editing benchmarks with LLaMA and Qwen models, RILKE is scalable to large-scale datasets, demonstrating high edit success, strong paraphrase generalization, and preserving general utility with modest memory overhead. These results show RILKE is an effective and scalable solution for lifelong knowledge control in LLMs.",
+      "detail_dateline": "[Submitted on 25 Nov 2025]",
+      "detail_fetched_at": "2025-11-28T12:04:19.908694",
+      "ai_summary_structured": [
+        "Representation Space Knowledge Intervention Methods",
+        "Lifelong Learning with Cross-Edit Interference Control",
+        "Query-Adaptive Module Routing Systems",
+        "Paraphrase-Robust Knowledge Localization Techniques"
+      ],
+      "algorithm_phrase": [
+        "Representation Space Knowledge Intervention Methods",
+        "Lifelong Learning with Cross-Edit Interference Control",
+        "Query-Adaptive Module Routing Systems",
+        "Paraphrase-Robust Knowledge Localization Techniques"
+      ]
+    },
+    {
+      "arxiv_id": "arXiv:2511.20766",
+      "arxiv_url": "https://arxiv.org/abs/arXiv:2511.20766",
+      "pdf_url": "https://arxiv.org/pdf/2511.20766",
+      "title": "OpenApps: Simulating Environment Variations to Measure UI-Agent Reliability",
+      "authors": [
+        "Karen Ullrich",
+        "Jingtong Su",
+        "Claudia Shi",
+        "Arjun Subramonian",
+        "Amir Bar",
+        "Ivan Evtimov",
+        "Nikolaos Tsilivis",
+        "Randall Balestriero",
+        "Julia Kempe",
+        "Mark Ibrahim"
+      ],
+      "subjects": "Artificial Intelligence (cs.AI)",
+      "detail_title": "OpenApps: Simulating Environment Variations to Measure UI-Agent Reliability",
+      "abstract": "Reliability is key to realizing the promise of autonomous UI-Agents, multimodal agents that directly interact with apps in the same manner as humans, as users must be able to trust an agent to complete a given task. Current evaluations rely on fixed environments, often clones of existing apps, which are limited in that they can only shed light on whether or how often an agent can complete a task within a specific environment. When deployed however, agents are likely to encounter variations in app design and content that can affect an agent's ability to complete a task. To address this blind spot of measuring agent reliability across app variations, we develop OpenApps, a light-weight open-source ecosystem with six apps (messenger, calendar, maps, etc.) that are configurable in appearance and content. OpenApps requires just a single CPU to run, enabling easy generation and deployment of thousands of versions of each app. Specifically, we run more than 10,000 independent evaluations to study reliability across seven leading multimodal agents. We find that while standard reliability within a fixed app is relatively stable, reliability can vary drastically when measured across app variations. Task success rates for many agents can fluctuate by more than $50\\%$ across app variations. For example, Kimi-VL-3B's average success across all tasks fluctuates from $63\\%$ to just $4\\%$ across app versions. We also find agent behaviors such as looping or hallucinating actions can differ drastically depending on the environment configuration. These initial findings highlight the importance of measuring reliability along this new dimension of app variations. OpenApps is available at this https URL",
+      "detail_dateline": "[Submitted on 25 Nov 2025]",
+      "detail_fetched_at": "2025-11-28T12:04:21.414356",
+      "ai_summary_structured": [
+        "Multimodal UI-Agent Reliability Assessment",
+        "Environment Variation Simulation Framework",
+        "Cross-Application Robustness Evaluation",
+        "Configurable App Ecosystem Generation"
+      ],
+      "algorithm_phrase": [
+        "Multimodal UI-Agent Reliability Assessment",
+        "Environment Variation Simulation Framework",
+        "Cross-Application Robustness Evaluation",
+        "Configurable App Ecosystem Generation"
+      ]
+    },
+    {
+      "arxiv_id": "arXiv:2511.20719",
+      "arxiv_url": "https://arxiv.org/abs/arXiv:2511.20719",
+      "pdf_url": "https://arxiv.org/pdf/2511.20719",
+      "title": "Learning Multi-Access Point Coordination in Agentic AI Wi-Fi with Large Language Models",
+      "authors": [
+        "Yifan Fan",
+        "Le Liang",
+        "Peng Liu",
+        "Xiao Li",
+        "Ziyang Guo",
+        "Qiao Lan",
+        "Shi Jin",
+        "Wen Tong"
+      ],
+      "subjects": "Artificial Intelligence (cs.AI); Information Theory (cs.IT); Signal Processing (eess.SP)",
+      "detail_title": "Learning Multi-Access Point Coordination in Agentic AI Wi-Fi with Large Language Models",
+      "abstract": "Multi-access point coordination (MAPC) is a key technology for enhancing throughput in next-generation Wi-Fi within dense overlapping basic service sets. However, existing MAPC protocols rely on static, protocol-defined rules, which limits their ability to adapt to dynamic network conditions such as varying interference levels and topologies. To address this limitation, we propose a novel Agentic AI Wi-Fi framework where each access point, modeled as an autonomous large language model agent, collaboratively reasons about the network state and negotiates adaptive coordination strategies in real time. This dynamic collaboration is achieved through a cognitive workflow that enables the agents to engage in natural language dialogue, leveraging integrated memory, reflection, and tool use to ground their decisions in past experience and environmental feedback. Comprehensive simulation results demonstrate that our agentic framework successfully learns to adapt to diverse and dynamic network environments, significantly outperforming the state-of-the-art spatial reuse baseline and validating its potential as a robust and intelligent solution for future wireless networks.",
+      "detail_dateline": "[Submitted on 25 Nov 2025]",
+      "detail_fetched_at": "2025-11-28T12:04:22.859915",
+      "ai_summary_structured": [
+        "Large Language Model Multi-Agent Systems",
+        "Cognitive Workflow with Memory & Reflection",
+        "Natural Language Agent Negotiation Protocol",
+        "Dynamic Network Adaptation via LLM Reasoning"
+      ],
+      "algorithm_phrase": [
+        "Large Language Model Multi-Agent Systems",
+        "Cognitive Workflow with Memory & Reflection",
+        "Natural Language Agent Negotiation Protocol",
+        "Dynamic Network Adaptation via LLM Reasoning"
+      ]
+    },
+    {
+      "arxiv_id": "arXiv:2511.20701",
+      "arxiv_url": "https://arxiv.org/abs/arXiv:2511.20701",
+      "pdf_url": "https://arxiv.org/pdf/2511.20701",
+      "title": "Cross Domain Evaluation of Multimodal Chain-of-Thought Reasoning of different datasets into the Amazon CoT Framework",
+      "authors": [
+        "Nitya Tiwari",
+        "Parv Maheshwari",
+        "Vidisha Agarwal"
+      ],
+      "subjects": "Artificial Intelligence (cs.AI); Machine Learning (cs.LG)",
+      "detail_title": "Cross Domain Evaluation of Multimodal Chain-of-Thought Reasoning of different datasets into the Amazon CoT Framework",
+      "abstract": "While recent work has extended CoT to multimodal settings, achieving state-of-the-art results on science question answering benchmarks like ScienceQA, the generalizability of these approaches across diverse domains remains underexplored. This work presents a comprehensive analysis of Multimodal Chain-of-Thought (Multimodal-CoT) reasoning, evaluating its effectiveness on the A-OKVQA, OKVQA and ChartQA datasets, which requires broad commonsense and world knowledge beyond scientific reasoning. We implement the two-stage framework proposed by Zhang et al. [3], which separates rationale generation from answer inference and integrates vision features through a gated fusion mechanism with T5-based language models. Through systematic ablation studies, we analyze the contributions of vision features, rationale quality, and architectural choices. Our findings reveal that while vision integration significantly reduces hallucination in rationale generation, the effectiveness of CoT reasoning varies substantially across question types, with commonsense reasoning presenting particular challenges. This work provides practical insights for researchers implementing multimodal reasoning systems and identifies key areas for future improvement in cross-domain generalization.",
+      "detail_dateline": "[Submitted on 24 Nov 2025]",
+      "detail_fetched_at": "2025-11-28T12:04:24.297323",
+      "ai_summary_structured": [
+        "Multimodal Chain-of-Thought (CoT) Reasoning",
+        "Two-Stage Rationale Generation Framework",
+        "Gated Vision-Language Fusion Mechanism",
+        "Cross-Domain Generalization Analysis"
+      ],
+      "algorithm_phrase": [
+        "Multimodal Chain-of-Thought (CoT) Reasoning",
+        "Two-Stage Rationale Generation Framework",
+        "Gated Vision-Language Fusion Mechanism",
+        "Cross-Domain Generalization Analysis"
+      ]
+    },
+    {
+      "arxiv_id": "arXiv:2511.20700",
+      "arxiv_url": "https://arxiv.org/abs/arXiv:2511.20700",
+      "pdf_url": "https://arxiv.org/pdf/2511.20700",
+      "title": "Paraconsistent-Lib: an intuitive PAL2v algorithm Python Library",
+      "authors": [
+        "Arnaldo de Carvalho Junior",
+        "Diego Oliveira da Cruz",
+        "Bruno da Silva Alves",
+        "Fernando da Silva Paulo Junior",
+        "João Inacio da Silva Filho"
+      ],
+      "subjects": "Artificial Intelligence (cs.AI); Logic in Computer Science (cs.LO)",
+      "comments": "11 pages, 9 figures, 2 appendix",
+      "detail_title": "Paraconsistent-Lib: an intuitive PAL2v algorithm Python Library",
+      "abstract": "This paper introduces Paraconsistent-Lib, an open-source, easy-to-use Python library for building PAL2v algorithms in reasoning and decision-making systems. Paraconsistent-Lib is designed as a general-purpose library of PAL2v standard calculations, presenting three types of results: paraconsistent analysis in one of the 12 classical lattice PAL2v regions, paraconsistent analysis node (PAN) outputs, and a decision output. With Paraconsistent-Lib, well-known PAL2v algorithms such as Para-analyzer, ParaExtrCTX, PAL2v Filter, paraconsistent analysis network (PANnet), and paraconsistent neural network (PNN) can be written in stand-alone or network form, reducing complexity, code size, and bugs, as two examples presented in this paper. Given its stable state, Paraconsistent-Lib is an active development to respond to user-required features and enhancements received on GitHub.",
+      "detail_dateline": "[Submitted on 24 Nov 2025]",
+      "detail_fetched_at": "2025-11-28T12:04:25.849341",
+      "ai_summary_structured": [
+        "Paraconsistent Logic PAL2v Algorithm Implementation",
+        "Lattice-based Reasoning & Decision Systems",
+        "Paraconsistent Analysis Network (PANnet) Architecture",
+        "Contradiction-tolerant Neural Network Framework"
+      ],
+      "algorithm_phrase": [
+        "Paraconsistent Logic PAL2v Algorithm Implementation",
+        "Lattice-based Reasoning & Decision Systems",
+        "Paraconsistent Analysis Network (PANnet) Architecture",
+        "Contradiction-tolerant Neural Network Framework"
+      ]
+    },
+    {
+      "arxiv_id": "arXiv:2511.20695",
+      "arxiv_url": "https://arxiv.org/abs/arXiv:2511.20695",
+      "pdf_url": "https://arxiv.org/pdf/2511.20695",
+      "title": "A Brief History of Digital Twin Technology",
+      "authors": [
+        "Yunqi Zhang",
+        "Kuangyu Shi",
+        "Biao Li"
+      ],
+      "subjects": "Artificial Intelligence (cs.AI); Computers and Society (cs.CY); Medical Physics (physics.med-ph)",
+      "comments": "21 pages, 1 figure, 1 table",
+      "journal_ref": "PET Clin. 2026 Jan;21(1):143-151. Epub 2025 Oct 21",
+      "detail_title": "A Brief History of Digital Twin Technology",
+      "abstract": "Emerging from NASA's spacecraft simulations in the 1960s, digital twin technology has advanced through industrial adoption to spark a healthcare transformation. A digital twin is a dynamic, data-driven virtual counterpart of a physical system, continuously updated through real-time data streams and capable of bidirectional interaction. In medicine, digital twin integrates imaging, biosensors, and computational models to generate patient-specific simulations that support diagnosis, treatment planning, and drug development. Representative applications include cardiac digital twin for predicting arrhythmia treatment outcomes, oncology digital twin for tracking tumor progression and optimizing radiotherapy, and pharmacological digital twin for accelerating drug discovery. Despite rapid progress, major challenges, including interoperability, data privacy, and model fidelity, continue to limit widespread clinical integration. Emerging solutions such as explainable AI, federated learning, and harmonized regulatory frameworks offer promising pathways forward. Looking ahead, advances in multi-organ digital twin, genomics integration, and ethical governance will be essential to ensure that digital twin shifts healthcare from reactive treatment to predictive, preventive, and truly personalized medicine.",
+      "detail_dateline": "[Submitted on 24 Nov 2025]",
+      "detail_fetched_at": "2025-11-28T12:04:27.431770",
+      "ai_summary_structured": [
+        "Real-time Data Fusion & Synchronization",
+        "Federated Learning for Privacy Preservation",
+        "Explainable AI for Clinical Interpretability",
+        "Multi-modal Computational Model Integration",
+        "Predictive Analytics & Uncertainty Quantification"
+      ],
+      "algorithm_phrase": [
+        "Real-time Data Fusion & Synchronization",
+        "Federated Learning for Privacy Preservation",
+        "Explainable AI for Clinical Interpretability",
+        "Multi-modal Computational Model Integration",
+        "Predictive Analytics & Uncertainty Quantification"
+      ]
+    }
+  ],
   "hot_phrases": [
     "Multimodal Large Language Models (MLLMs)",
-    "Causal Modeling Framework Integration",
-    "Visual and Logical Reasoning Integration",
-    "Zero-Shot & Chain-of-Thought Prompting",
-    "Self-Verification for Mathematical Problems",
-    "Explainable AI Solutions",
-    "Human-Centric AI Integration",
-    "Proactive Risk Evaluation Strategies",
-    "Dynamic Multi-Access Point Collaboration",
-    "Automated Diagnostic Reasoning"
+    "Chain-of-Thought Visual Reasoning (CoT)",
+    "Multi-Agent System Architecture",
+    "Self-Verification for Language Models",
+    "Causal Inference & Counterfactual Reasoning",
+    "Knowledge Graph Integration & Reasoning",
+    "Reinforcement Learning with Verifiable Rewards",
+    "Hierarchical Cognitive Collaborative Planning",
+    "Hallucination Detection & Validation",
+    "Explainable AI for Clinical Interpretability"
   ]
 }

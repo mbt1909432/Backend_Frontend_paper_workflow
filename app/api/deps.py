@@ -1,6 +1,7 @@
-from fastapi import Depends
+from fastapi import Depends, Request
 from app.services.openai_service import OpenAIService
 from app.services.anthropic_service import AnthropicService
+from app.services.crawler_service import MonthlyArxivSyncService
 from app.core.agent import Agent
 from app.core.agents.paper_overview_agent import PaperOverviewAgent
 from app.core.agents.latex_paper_generator_agent import LaTeXPaperGeneratorAgent
@@ -63,4 +64,14 @@ def get_paper_generation_workflow(
         latex_paper_agent=latex_paper_agent,
         requirement_checklist_agent=requirement_checklist_agent
     )
+
+
+def get_crawl_service(request: Request) -> MonthlyArxivSyncService:
+    """获取全局爬虫服务实例"""
+    service = getattr(request.app.state, "crawl_service", None)
+    if service is None:
+        service = MonthlyArxivSyncService()
+        request.app.state.crawl_service = service
+    return service
+
 

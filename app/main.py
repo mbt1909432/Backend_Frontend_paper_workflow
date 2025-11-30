@@ -5,6 +5,8 @@ from app.api.v1.router import api_router
 from app.utils.logger import logger
 from app.db.database import engine, Base
 from app.utils.provider_health import check_llm_connectivity
+from app.services.crawler_service import MonthlyArxivSyncService
+from app.core.scheduler import init_scheduler
 
 
 # 创建 FastAPI 应用
@@ -64,11 +66,22 @@ async def startup_event():
     app.state.provider_health = provider_status
     app.state.proxy_available = proxy_available
 
+    # 初始化 arXiv 爬虫服务与调度
+    crawl_service = MonthlyArxivSyncService()
+    app.state.crawl_service = crawl_service
+    scheduler = init_scheduler(crawl_service)
+    if scheduler:
+        app.state.scheduler = scheduler
+
 
 @app.on_event("shutdown")
 async def shutdown_event():
     """应用关闭事件"""
     logger.info("Application shutting down...")
+    scheduler = getattr(app.state, "scheduler", None)
+    if scheduler:
+        scheduler.shutdown(wait=False)
+        logger.info("Scheduler shut down")
 
 
 @app.get("/")

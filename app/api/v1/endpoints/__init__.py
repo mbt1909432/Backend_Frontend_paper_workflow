@@ -11,6 +11,7 @@ from app.api.v1.endpoints import (
     auth,
     admin,
     token_usage,
+    arxiv_crawl,
 )
 
 __all__ = [
@@ -25,5 +26,6 @@ __all__ = [
     "auth",
     "admin",
     "token_usage",
+    "arxiv_crawl",
 ]
 

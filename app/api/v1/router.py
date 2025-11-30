@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.v1.endpoints import agent, health, paper_overview, latex_paper, requirement_checklist, workflow, workflow_tasks, vision, auth, admin, token_usage
+from app.api.v1.endpoints import agent, health, paper_overview, latex_paper, requirement_checklist, workflow, workflow_tasks, vision, auth, admin, token_usage, arxiv_crawl
 
 
 api_router = APIRouter()
@@ -16,4 +16,5 @@ api_router.include_router(workflow.router, prefix="/workflow", tags=["workflow"]
 api_router.include_router(workflow_tasks.router, prefix="/workflow/tasks", tags=["workflow-tasks"])
 api_router.include_router(vision.router, prefix="/vision", tags=["vision"])
 api_router.include_router(token_usage.router, prefix="/token-usage", tags=["token-usage"])
+api_router.include_router(arxiv_crawl.router, prefix="/arxiv-crawl", tags=["arxiv-crawl"])
 

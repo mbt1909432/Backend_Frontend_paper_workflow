@@ -2,15 +2,41 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import random
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+from dotenv import load_dotenv
+
 from app.core.agents.innovation_synthesis_agent import InnovationSynthesisAgent
 from app.core.agents.methodology_extraction_agent import MethodologyExtractionAgent
+from app.services.hot_phrase_service import get_recent_hot_phrases
+from app.services.openai_service import OpenAIService
 from app.utils.file_manager import save_artifact
 from app.utils.logger import logger
+from app.config.settings import reload_settings
+
+
+_KEYWORD_OVERRIDE_LIMIT = 4
+
+
+def _prepare_keyword_list(raw_keywords: Optional[List[str]]) -> List[str]:
+    prepared: List[str] = []
+    if not raw_keywords:
+        return prepared
+
+    for kw in raw_keywords:
+        if not kw:
+            continue
+        normalized = kw.strip()
+        if not normalized:
+            continue
+        prepared.append(normalized)
+        if len(prepared) >= _KEYWORD_OVERRIDE_LIMIT:
+            break
+    return prepared
 
 
 @dataclass
@@ -101,6 +127,12 @@ async def run_methodology_extraction_step(
             logger.exception("Failed to read markdown for paper #%d (%s): %s", idx, arxiv_id, exc)
             return None
 
+        # 在后续使用前先清理 markdown：移除纯空行
+        # 这样既不影响正文内容，又能避免多余空行干扰后续解析或 token 计数
+        md_content = "\n".join(
+            line for line in md_content.splitlines() if line.strip()
+        )
+
         extracted_text_marker = "## Extracted Text"
         if extracted_text_marker in md_content:
             parts = md_content.split(extracted_text_marker, 1)
@@ -117,6 +149,18 @@ async def run_methodology_extraction_step(
                 paper_title=title,
                 paper_content=paper_content,
             )
+
+            # 记录本次调用的大模型 token 使用情况，方便排查上下文过长等问题
+            usage_stats = extraction_result.get("usage") or {}
+            if usage_stats:
+                logger.info(
+                    "😀Methodology LLM usage for paper #%d (%s): prompt_tokens=%s, completion_tokens=%s, total_tokens=%s",
+                    idx,
+                    arxiv_id,
+                    usage_stats.get("prompt_tokens"),
+                    usage_stats.get("completion_tokens"),
+                    usage_stats.get("total_tokens"),
+                )
 
             extraction_json = extraction_result.get("json") or {}
             methodology_text = extraction_json.get("methodology", "").strip()
@@ -202,18 +246,26 @@ async def run_innovation_synthesis_step(
     step_inputs: SessionStepInputs,
     methodology_items: List[Dict[str, Any]],
     innovation_agent: InnovationSynthesisAgent,
-) -> Optional[str]:
+    *,
+    override_keywords: Optional[List[str]] = None,
+    run_count: int = 1,
+) -> List[str]:
     """
     Execute Step 6 (innovation synthesis) using the already extracted methodologies.
+
+    Args:
+        run_count: How many synthesis attempts to run (≥1). Each run produces
+            a separate `innovation_synthesis*.json` artifact.
     """
     if len(methodology_items) < 3:
         logger.warning(
             "Innovation agent skipped: need ≥3 methodology entries, got %d",
             len(methodology_items),
         )
-        return None
+        return []
 
     session_folder = step_inputs.session_folder
+    generated_dir = step_inputs.generated_dir
     eligible_items: List[Dict[str, Any]] = []
     for item in methodology_items:
         if item.get("status") != "ok":
@@ -257,52 +309,279 @@ async def run_innovation_synthesis_step(
             "Innovation agent skipped: only %d eligible entries with both methodology and problem statement.",
             len(eligible_items),
         )
-        return None
+        return []
 
-    selected_items = random.sample(eligible_items, 3) if len(eligible_items) > 3 else eligible_items
+    def _build_module_payload() -> Tuple[str, List[Dict[str, Any]]]:
+        selected = random.sample(eligible_items, 3) if len(eligible_items) > 3 else eligible_items
 
-    module_lines: List[str] = []
-    selection_metadata: List[Dict[str, Any]] = []
-    for offset, item in enumerate(selected_items):
-        module_id = chr(ord("A") + offset)
-        title = item.get("title") or f"Paper {module_id}"
-        arxiv_id = item.get("arxiv_id") or ""
-        module_lines.append(f"Module {module_id}: [{title} | {arxiv_id}]\n{item['methodology_text']}")
-        module_lines.append("")
-        module_lines.append(f"Problem {module_id}: [{title} | {arxiv_id}]\n{item['problem_text']}")
-        module_lines.append("")
-        selection_metadata.append(
-            {
-                "module_id": module_id,
-                "paper_index": item["paper_index"],
-                "arxiv_id": arxiv_id,
-                "title": title,
-            }
+        module_lines: List[str] = []
+        metadata: List[Dict[str, Any]] = []
+        for offset, item in enumerate(selected):
+            module_id = chr(ord("A") + offset)
+            title = item.get("title") or f"Paper {module_id}"
+            arxiv_id = item.get("arxiv_id") or ""
+            module_lines.append(f"Module {module_id}: [{title} | {arxiv_id}]\n{item['methodology_text']}")
+            module_lines.append("")
+            module_lines.append(f"Problem {module_id}: [{title} | {arxiv_id}]\n{item['problem_text']}")
+            module_lines.append("")
+            metadata.append(
+                {
+                    "module_id": module_id,
+                    "paper_index": item["paper_index"],
+                    "arxiv_id": arxiv_id,
+                    "title": title,
+                }
+            )
+
+        return "\n".join(module_lines).strip(), metadata
+
+    keyword_override = _prepare_keyword_list(override_keywords)
+    hot_keyword_candidates: List[str] = []
+    if not keyword_override:
+        hot_keyword_candidates = get_recent_hot_phrases(limit=_KEYWORD_OVERRIDE_LIMIT)
+        keyword_override = _prepare_keyword_list(hot_keyword_candidates)
+        if keyword_override:
+            logger.info(
+                "Using %d hot phrases from DB as innovation keywords override.",
+                len(keyword_override),
+            )
+
+    keywords_for_agent = keyword_override or step_inputs.keywords
+    if keyword_override:
+        logger.info(
+            "Innovation agent using %d user-supplied keywords instead of rewrite output.",
+            len(keyword_override),
         )
-
-    module_payload = "\n".join(module_lines).strip()
 
     try:
-        innovation_result = await innovation_agent.generate_innovation_plan(
-            module_payload=module_payload,
-            keywords=step_inputs.keywords,
+        run_count = max(1, run_count)
+        final_proposal_dir = generated_dir / "final_proposals"
+        final_proposal_dir.mkdir(parents=True, exist_ok=True)
+
+        async def run_single_innovation(run_index: int) -> str:
+            """Execute a single innovation synthesis run and return artifact path."""
+            module_payload, selection_metadata = _build_module_payload()
+            logger.info(
+                "Innovation run %d/%d: sending payload to agent (modules=%d, keywords=%d, payload_chars=%d)",
+                run_index + 1,
+                run_count,
+                len(selection_metadata),
+                len(keywords_for_agent),
+                len(module_payload),
+            )
+            innovation_result = await innovation_agent.generate_innovation_plan(
+                module_payload=module_payload,
+                keywords=keywords_for_agent,
+            )
+            usage_stats = innovation_result.get("usage") or {}
+            logger.info(
+                "Innovation run %d/%d: agent call finished (prompt_tokens=%s, completion_tokens=%s)",
+                run_index + 1,
+                run_count,
+                usage_stats.get("prompt_tokens"),
+                usage_stats.get("completion_tokens"),
+            )
+            stage_suffix = "" if run_index == 0 else f"_{run_index + 1}"
+            artifact_path = save_artifact(
+                session_folder=session_folder,
+                stage_name=f"innovation_synthesis{stage_suffix}",
+                artifact_data={
+                    "run_index": run_index + 1,
+                    "selected_modules": selection_metadata,
+                    "module_payload": module_payload,
+                    "keywords": keywords_for_agent,
+                    "hot_keywords": keyword_override if hot_keyword_candidates else [],
+                    "output": innovation_result.get("json"),
+                    "usage": innovation_result.get("usage"),
+                },
+            )
+
+            # 读取该 artifact，拼接 final_proposal_topic / final_problem_statement / final_method_proposal_text
+            try:
+                artifact_file = Path(artifact_path)
+                if not artifact_file.exists():
+                    logger.warning(
+                        "Skip final proposal markdown: artifact missing at %s",
+                        artifact_file,
+                    )
+                else:
+                    artifact_payload = json.loads(artifact_file.read_text(encoding="utf-8"))
+                    output = artifact_payload.get("output") or {}
+                    topic = (output.get("final_proposal_topic") or "").strip()
+                    problem = (output.get("final_problem_statement") or "").strip()
+                    method_text = (output.get("final_method_proposal_text") or "").strip()
+
+                    if not (topic or problem or method_text):
+                        logger.info(
+                            "Skip final proposal markdown: missing required fields in %s",
+                            artifact_file,
+                        )
+                    else:
+                        md_filename = f"{artifact_file.stem}.md"
+                        md_path = final_proposal_dir / md_filename
+
+                        lines: List[str] = []
+                        # 标题
+                        lines.append(f"# {topic or 'Final Proposal'}")
+                        lines.append("")
+                        # 问题描述
+                        if problem:
+                            lines.append("## Problem Statement")
+                            lines.append("")
+                            lines.append(problem)
+                            lines.append("")
+                        # 方法方案
+                        if method_text:
+                            lines.append("## Method Proposal")
+                            lines.append("")
+                            lines.append(method_text)
+                            lines.append("")
+
+                        md_path.write_text("\n".join(lines).strip() + "\n", encoding="utf-8")
+                        rel_md_path = md_path.relative_to(session_folder)
+                        logger.info(
+                            "Final proposal markdown generated: %s (from %s)",
+                            md_path,
+                            artifact_file,
+                        )
+            except Exception as md_exc:
+                logger.exception(
+                    "Failed to build final proposal markdown for run #%d: %s",
+                    run_index + 1,
+                    md_exc,
+                )
+            logger.info(
+                "✓ innovation_synthesis%s.json saved at %s",
+                stage_suffix or "",
+                artifact_path,
+            )
+            return str(artifact_path)
+
+        # 并行执行所有 runs
+        artifact_paths = await asyncio.gather(
+            *[run_single_innovation(run_index) for run_index in range(run_count)],
+            return_exceptions=False,
         )
+        return artifact_paths
     except Exception as exc:
         logger.exception("Innovation agent failed: %s", exc)
-        return None
+        return []
 
-    artifact_path = save_artifact(
-        session_folder=session_folder,
-        stage_name="innovation_synthesis",
-        artifact_data={
-            "selected_modules": selection_metadata,
-            "module_payload": module_payload,
-            "keywords": step_inputs.keywords,
-            "output": innovation_result.get("json"),
-            "usage": innovation_result.get("usage"),
-        },
+
+def _load_local_env_file(env_filename: Optional[str] = None) -> Optional[Path]:
+    """
+    Load a local .env file located in this folder for quick manual testing.
+    """
+    base_dir = Path(__file__).resolve().parent
+    seen: List[Path] = []
+
+    explicit_name = env_filename or os.environ.get("POSTPROCESS_ENV_FILE")
+    if explicit_name:
+        seen.append(base_dir / explicit_name)
+    seen.extend(
+        [
+            base_dir / ".env.postprocess",
+            base_dir / ".env",
+        ]
     )
-    logger.info("✓ innovation_synthesis.json saved at %s", artifact_path)
-    return str(artifact_path)
+
+    for env_path in seen:
+        if env_path.exists():
+            load_dotenv(env_path, override=True)
+            reload_settings()
+            logger.info("Loaded postprocess env from %s", env_path)
+            return env_path
+
+    logger.info(
+        "No local env file found for postprocess_steps (checked %s)",
+        ", ".join(str(path) for path in seen),
+    )
+    return None
 
 
+async def main_run_steps_5_and_6(
+    custom_keywords: Optional[List[str]] = None,
+    innovation_run_count: int = 1,
+) -> None:
+    """
+    测试入口：对指定 session 依次运行 Step 5（Methodology）和 Step 6（Innovation）。
+    """
+
+    # TODO: 修改为真实 session 路径，例如 Path("E:/.../session_20251128_xxx")
+    test_session_folder = Path(r"E:\pycharm_project\software_idea\academic draft agentic_workflow\app\core\workflows\output\dev_tester\session_20251128_214503_52fb8e1e").resolve()
+    max_concurrent_tasks = 2
+
+    _load_local_env_file()
+
+    step_inputs = load_step_inputs_from_session(test_session_folder)
+
+    openai_service = OpenAIService()
+    methodology_agent = MethodologyExtractionAgent(openai_service=openai_service)
+    innovation_agent = InnovationSynthesisAgent(openai_service=openai_service)
+
+    methodology_artifact, methodology_items = await run_methodology_extraction_step(
+        step_inputs=step_inputs,
+        methodology_agent=methodology_agent,
+        max_concurrent_tasks=max_concurrent_tasks,
+    )
+
+    logger.info("Methodology artifact: %s", methodology_artifact)
+
+    if not methodology_items:
+        logger.info("No methodology items extracted; skip innovation synthesis.")
+        return
+
+    innovation_artifacts = await run_innovation_synthesis_step(
+        step_inputs=step_inputs,
+        methodology_items=methodology_items,
+        innovation_agent=innovation_agent,
+        override_keywords=custom_keywords,
+        run_count=innovation_run_count,
+    )
+
+    if innovation_artifacts:
+        logger.info("Innovation artifacts: %s", innovation_artifacts)
+    else:
+        logger.info("Innovation synthesis skipped or failed.")
+
+
+async def main_run_step_6_only(
+    custom_keywords: Optional[List[str]] = None,
+    innovation_run_count: int = 1,
+) -> None:
+    """
+    测试入口：复用已有 methodology_extraction.json，仅运行 Step 6（Innovation）。
+    """
+
+    # TODO: 修改为真实 session 路径，例如 Path("E:/.../session_20251128_xxx")
+    test_session_folder = Path(r"E:\pycharm_project\software_idea\academic draft agentic_workflow\app\core\workflows\output\dev_tester\session_20251128_224959_6a932f9b").resolve()
+
+    _load_local_env_file()
+
+    step_inputs = load_step_inputs_from_session(test_session_folder)
+    methodology_items, _ = load_methodology_items_from_artifact(step_inputs.session_folder)
+
+    if not methodology_items:
+        logger.warning("No methodology artifact found or empty; cannot run Step 6.")
+        return
+
+    openai_service = OpenAIService()
+    innovation_agent = InnovationSynthesisAgent(openai_service=openai_service)
+
+    innovation_artifacts = await run_innovation_synthesis_step(
+        step_inputs=step_inputs,
+        methodology_items=methodology_items,
+        innovation_agent=innovation_agent,
+        override_keywords=custom_keywords,
+        run_count=innovation_run_count,
+    )
+
+    if innovation_artifacts:
+        logger.info("Innovation artifacts: %s", innovation_artifacts)
+    else:
+        logger.info("Innovation synthesis skipped or failed.")
+
+
+if __name__ == "__main__":
+    _load_local_env_file()
+    asyncio.run(main_run_step_6_only())
