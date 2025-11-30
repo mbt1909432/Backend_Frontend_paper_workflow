@@ -833,88 +833,13 @@ async def main() -> None:
     """
     start_time = time.perf_counter()
     try:
-        # 你可以根据需要在这里修改测试用的 query / username / session_id
-#         test_query = """把下面和AI Agent结合一下
-#     Integrative Multi-Omics Analysis of HLA-DMB in Glioblastoma Reveals Biomarker Potential and Immune Landscape
-# Nan Lü¹#, Qian Guo²#, Xiyuan Zhu³, Taoyu Zhu⁴, Xutong Xue⁵, Cristiano Coppola⁵, Kaijun Zhao⁶*, Yu’e Liu⁵⁶*,
-# ¹Department of Neurosurgery, 960 Hospital of PLA, Jinan, Shandong, China²Department of Rhinology, The First Affiliated Hospital of Zhengzhou University, Zhengzhou, 450052, China³Department of Chemistry, SUNY Stony Brook University, Stony Brook, NY11794, United States⁴ Krieger School of Arts & Science, Johns Hopkins University, 3400 N, Charles Street, Baltimore, MD⁵Boston Children's Hospital, Dana Farber Cancer Institute, Harvard Medical School, Boston, Massachusetts 02115, USA.⁶Department of Neurosurgery, Shanghai East Hospital, School of Medicine, Tongji University, Shanghai, 200120, China
-#     """
-        #test_query="具身智能"
-        # test_query="a VLA that learnsfrom experience"
-        # test_query="RL + reasoning"
-#         test_query="""【新需求】Cloud Computing
-# Large Language Models
-# Generative AI"""
-#         test_query="""】1.LLM (best with application in VR/AR/Metaverse,ranking and recommendation
-# 2. Reinforcement learning (best with application in VR/AR/Metaverse, ranking and recommendation)
-# 3. Al Models and agent application"""
+        #test_query="""sci二区[领域需求]Autonomous driving safety"""
 
-#         test_query="""Data science for social science (social network analysis, etc)
-# Data analysis in user’s behaviors
-# Biostats analysis方向
-# Causal inference因果推断，在各领域中的应用"""
-#         test_query = """【需求5】 Causal inference (Synthetic control, Difference-in-Difference, Instrumental Variables)
-# - Network effect in ads platforms
-# - Integration of AI in messaging payments (AI and personalization, consumer trust)
-# - Advertising supply and demand
-# - Ad spend and demand generation
-# - User behavior and advertising effectiveness"""
-#         test_query = """【需求】Robot Learning(e.g. CoRL, RSS, etc.), Machine Learning or Computer Vision for robotics (ICRL) Learning based and data-driven model for robot manipulations or plans Affordance prediction, manipulation plans, imitation learning, reinforcement learning for robotics LLM or NLP for robotics."""
-        test_query="""An AI-Augmented BI Platform for Collaborative Production Logistics: A Multi-Agent Predictive Optimization framework"""
-#         test_query="""
-#         意图识别和历史上下文拼接任务要求
-# 1. 项目背景
-# 1.1 需求概述
-# 为了在电商背景下，能够满足广泛大量的C端用户的输入能够被准确识别/分辨。对我们智能体的上下文拼接和分析，以及用户的意图识别提出了较高的要求。要能够快速准确的识别用户的各种意图，能够将用户模糊不清的输入使用上下文拼接以及改写手段使其能够被AGENT准确分辨。
-#
-# 1.2 目前存在的问题
-# •	对于复杂中文语义和电商领域的专业语义的转化不够好，例如用户先查询某个商品之后，在针对商品列表询问“性价比”这样的问题，很难转化为可以量化检索的指标。
-# •	  上下文拼接较为粗暴，目前采用上下文距离权重进行拼接，距离越近权重越高。带来的影响有对于部分指代词的理解很差。例如用户先查询了多款电脑商品，对第一款产品A，提出了要求，我们重新召回了产品B，用户根据产品B，提出要求“不要某些种类，并且要某些类型”。这个需求应该是针对召回A的处理，如果对于召回B进行额外处理则会有额外的风险。
-# •	在多轮意图识别的过程中，无法保持稳定的/高效的判别。
-# •	对于意图识别如果使用单智能体，长上下文输入判别，可能会有一个比较不错的结果，但是随之而来的是更长的时间损耗。我们有尝试过弱大模型的意图识别方法，详情可以查看使用向量构建意图识别树
-#
-# 2. 项目目标
-# 2.1 上下文目标
-# •	能够在多轮对话中准确的匹配上下文。
-# •	能够处理，精炼长期记忆作为用户的全局画像信息。
-# •	可以针对电商购物领域的专业属于进行处理。
-# •	最后对于上下文的处理之后的语句可以准确的用于检索。
-# 2.2 意图识别目标
-# •	能够理解并处理复杂中文名词与口语化表达。
-# •	可以将意图识别的整体时间控制在1-2秒内。
-# •	意图识别分为[购物，闲聊，查询，单商品购物/查询，组合商品购物/查询]。
-# •	能够灵活快速的切换意图。
-#
-# 3. 提供和接受的技术范围
-# •	代码：python3.12
-# •	大语言模型：QWEN全系列开源闭源模型（API访问），自行部署的有国内牌照的LLM
-# •	云服务器：火山云ECS服务器，4090/V100算力服务器
-# •	接口框架：fastapi
-# •	数据：商品数据数据库（full access），上下文存储数据库（full access）
-# PS上述资源均可由爱买科技提供，也可自行选择对应开发工具，但最后需要能够在上述提及的方式进行部署与使用
-# 4. 功能性要求
-# 4.1 性能要求
-# •	意图识别响应时间 <= 3S
-# •	意图识别分支选择正确率 >= 90%
-# •	上下文拼接有效率，通过检索检验达到85%
-# 4.2 稳定性
-# •	异常监控机制：日志/警告等
-# •	自动备份周期：每日/每周
-# 5. 项目管理
-# •	开发模式：敏捷开发
-# •	每周定期交流至少一次（包含进度，问题，计划）
-# •	需要专人负责两边的交流，如有问题随时可以沟通
-# 6. 交付物
-# •	完整源代码
-# •	API文档/手册
-# •	测试报告
-# •	技术架构文档
-# •	数据库结构设计文档
-# •	设计路线预计上线花费
-#
-#
-#         """
-        test_username = "2025_11_29_lab_only"
+        # test_query="""sci二区[领域需求]AI safety protection algorithms"""
+
+        test_query="""Cloud computing + autonomous vehicles"""
+
+        test_username = "2025_11_30"
         test_session_id: Optional[str] = None  # None 时会自动生成，格式：session_{timestamp}_{uuid}
 
         _load_local_env_file()
@@ -950,9 +875,9 @@ async def main() -> None:
             session_id=test_session_id,  # None 时自动生成，如：session_20251127_112630_748edba5
             username=test_username,
             target_paper_count=3,  # 最后需要的数量（去重后按时间排序取前 N 篇）
-            per_keyword_max_results=3,  # 每个关键词最大的搜索结果
+            per_keyword_max_results=8,  # 每个关键词最大的搜索结果
             per_keyword_recent_limit=3,  # 每个关键词只考虑最近 N 篇
-            skip_dblp_check=True,  # 设置为 True 可跳过 DBLP 检查（会下载更多论文，但使用 arXiv BibTeX）
+            skip_dblp_check=False,  # 设置为 True 可跳过 DBLP 检查（会下载更多论文，但使用 arXiv BibTeX）
         )
 
         logger.info("Query→Markdown workflow finished.")

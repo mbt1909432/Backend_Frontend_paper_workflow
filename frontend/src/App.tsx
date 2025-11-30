@@ -171,9 +171,9 @@ function NavBar() {
       <nav className="navbar">
         <div className="navbar-container">
           <div className="navbar-header">
-            <Link to="/" className="navbar-brand" onClick={(e) => handleNavClick('/', e)}>
-              <span className="brand-text">ResearchFlow</span>
-            </Link>
+          <Link to="/" className="navbar-brand" onClick={(e) => handleNavClick('/', e)}>
+            <span className="brand-text">ResearchFlow</span>
+          </Link>
             <button
               type="button"
               className={`navbar-toggle ${isMobileMenuOpen ? 'open' : ''}`}

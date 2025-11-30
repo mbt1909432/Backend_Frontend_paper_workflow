@@ -2,6 +2,11 @@ import json
 import re
 from typing import Any, Dict, List, Optional
 
+try:
+    import json_repair
+except ImportError:
+    json_repair = None
+
 from tenacity import AsyncRetrying, retry_if_result, stop_after_attempt, wait_exponential
 
 from app.services.openai_service import OpenAIService
@@ -39,6 +44,12 @@ Transform three method modules (A, B, C) into a practical new method:
 (e.g., "Combining A* and B: Step 1 - A* processes input image (224x224x3) through multi-scale convolutions, outputs feature tensor (7x7x512). Step 2 - B takes this 512-dim feature vector, applies attention mechanism with 8 heads, outputs refined features (7x7x256). Step 3 - These features feed into final classifier. Overall advantage: A* captures multi-scale patterns (handles objects of size 10-200 pixels), B refines them with attention (focuses on relevant regions), together improving accuracy by 3-5% on small objects while reducing false positives by 15%." — NOT "A* connects to B through signal flow, creating complementary mechanisms")
 4. Formulate an Implementation Roadmap: How can this be concretely coded? Provide clear, actionable steps for implementation.
 (e.g., "Step 1: Define the dynamic weight generation layer using PyTorch; Step 2: Integrate it into the existing module and write the forward propagation logic; Step 3: Design the corresponding loss function and training script for the new composite module")
+
+**CRITICAL: Throughout all steps, you MUST:**
+- Provide mathematical formulas (LaTeX) for all computations - do NOT leave math_spec or math_formulation empty
+- Specify exact data formats with schemas, dimensions, and sizes - do NOT use vague terms like "JSON" or "tensor"
+- Include code-level implementation details with library names, versions, and function calls - do NOT use high-level descriptions
+- Give concrete complexity measurements with actual runtime and memory numbers - do NOT provide only Big-O notation
 
 ---
 
@@ -98,6 +109,12 @@ Keywords: {{keywords}}
 
 # 🔶 REQUIRED JSON OUTPUT SCHEMA
 
+**CRITICAL REMINDER**: Before generating JSON, ensure you have:
+- ✅ Mathematical formulas for all computational operations (NOT empty strings)
+- ✅ Exact data formats with schemas, dimensions, and sizes (NOT vague descriptions)
+- ✅ Code-level implementation details with libraries and versions (NOT high-level concepts)
+- ✅ Concrete complexity measurements with actual numbers (NOT just Big-O)
+
 You MUST output ONLY a JSON object wrapped in ```json ... ``` with the following structure (adjusting array lengths per earlier table):
 
 ```json
@@ -133,7 +150,7 @@ You MUST output ONLY a JSON object wrapped in ```json ... ``` with the following
             "Exact change to fix W-A2 if exists"
           ],
           "workflow_change": "How does A* work differently now? Step by step. (e.g., 'Instead of single 3x3 conv, A* applies three convs with different sizes, then combines their outputs by concatenation')",
-          "math_spec": "LaTeX formula only if essential. Otherwise empty string."
+          "math_spec": "CRITICAL: Provide LaTeX formula describing the key computation. If the module performs scoring, ranking, aggregation, or any mathematical operation, you MUST include the formula. Examples: 'score = w1*x1 + w2*x2 + w3*x3' or 'output = concat(conv3x3(x), conv5x5(x), conv7x7(x))'. Only use empty string if the module has NO mathematical operations (e.g., pure data formatting)."
         }}
       }},
       {{
@@ -184,10 +201,10 @@ You MUST output ONLY a JSON object wrapped in ```json ... ``` with the following
         "combination_id": "C1",
         "pipeline": "A* → B → C",
         "modules_used": ["A*", "B", "C"],
-        "connection_details": "How do these modules connect? What data format does each expect/produce? Describe in concrete, step-by-step specifics. (e.g., 'Step 1: A* processes input image (224x224x3), applies conv layers, outputs feature tensor shape [batch_size, 512, 7, 7]. Step 2: Reshape to [batch_size, 49, 512] for B. Step 3: B takes this tensor, applies attention mechanism, outputs [batch_size, 49, 256]. Step 4: Flatten to [batch_size, 12544] for C*. They connect directly because A* output shape matches B input shape after reshaping.' - NOT 'signal compatibility' or 'mechanism-level connection')",
+        "connection_details": "CRITICAL: Describe data flow with EXACT formats, schemas, and technical implementation details. Include: (1) Exact data structures (JSON schema with field names and types, tensor shapes with dimensions, file formats), (2) Serialization/deserialization steps (e.g., 'JSON serialization using json.dumps(), validation with JSON Schema v7'), (3) API endpoints or function signatures if applicable, (4) Database operations if applicable (e.g., 'SQL query: SELECT * FROM table WHERE condition'), (5) Data sizes and dimensions (e.g., 'JSON file size ~50KB, contains array of 20-50 objects'). Example: 'Step 1: A* processes input image (224x224x3), applies conv layers, outputs PyTorch tensor shape [batch_size, 512, 7, 7], stored as .pt file. Step 2: Load tensor using torch.load(), reshape to [batch_size, 49, 512] using tensor.view(). Step 3: B takes this tensor via forward() method, applies attention mechanism (8 heads, dim=64), outputs [batch_size, 49, 256]. Step 4: Convert to numpy array, flatten to [batch_size, 12544] using .flatten(), pass to C* via API endpoint POST /api/process with JSON body {features: array.tolist()}.' - NOT 'signal compatibility' or vague descriptions.",
         "novelty_level": "High/Medium/Low",
         "fit_to_problem_gap": "How does this combination solve the problem? Describe in concrete, step-by-step specifics. (e.g., 'Problem: Current methods fail on small objects (<50 pixels). Step 1: A* uses multi-scale convs (3x3, 5x5, 7x7) to capture features at different scales, specifically the 3x3 conv captures small object features. Step 2: B applies attention to focus on these small object regions. Step 3: Together, they improve small object detection accuracy from 45% to 52% on COCO dataset.' - NOT 'addresses mechanism-level gap' or 'complementary mechanisms')",
-        "feasibility_notes": "What do we need to implement this? (e.g., 'Requires PyTorch, about 2GB GPU memory, training data with labels' - NOT 'implementation considerations')"
+        "feasibility_notes": "CRITICAL: List EXACT technical requirements with versions and specifications. Include: (1) Libraries and frameworks with versions (e.g., 'PyTorch 2.0.0, NumPy 1.24.0, PostgreSQL 14.5'), (2) Hardware specs (e.g., 'GPU: NVIDIA RTX 3090 with 24GB VRAM, CPU: 8 cores, RAM: 32GB'), (3) Data requirements (e.g., 'Dataset: COCO 2017 (~20GB), requires labels in YOLO format'), (4) API dependencies (e.g., 'REST API endpoints: /api/process, /api/train, requires Flask 2.3.0'), (5) Database setup if needed (e.g., 'PostgreSQL database with schema: CREATE TABLE risks (id SERIAL, ...)'). Be specific - NOT vague like 'implementation considerations' or 'technical expertise'."
       }}
     ],
     "selected_pipeline": {{
@@ -207,9 +224,9 @@ You MUST output ONLY a JSON object wrapped in ```json ... ``` with the following
       {{
         "stage_name": "Stage 1: [Descriptive name, e.g., 'Multi-Scale Feature Extractor']",
         "derived_from": "Module A*",
-        "input_output": "What goes in, what comes out? Be specific. (e.g., 'Input: RGB image 224x224x3 → Output: feature tensor 7x7x512' - NOT 'x → h')",
-        "operations": "What happens step by step? (e.g., '1. Apply 3x3 conv with 64 filters, 2. Apply 5x5 conv with 64 filters, 3. Apply 7x7 conv with 64 filters, 4. Concatenate all three outputs' - NOT 'key computations')",
-        "math_formulation": "LaTeX formula only if essential. Otherwise empty string."
+        "input_output": "CRITICAL: Specify EXACT data structures with schemas, types, dimensions, and sizes. For JSON: include field names, types, array lengths (e.g., 'Input: JSON object {{system_name: str, deployment_context: {{location: str, user_count: int}}, stakeholders: List[str]}} → Output: JSON array of risk objects [{{risk_id: str, risk_type: str, severity_score: float[1-10], affected_stakeholders: List[str], recommended_interventions: List[dict]}}], array length: 20-50 items, file size ~50KB'). For tensors: include exact shapes (e.g., 'Input: PyTorch tensor [batch_size, 3, 224, 224] → Output: tensor [batch_size, 512, 7, 7]'). For files: include format and size. NOT vague like 'x → h'.",
+        "operations": "CRITICAL: Provide code-level implementation steps with specific libraries, functions, and parameters. Include: (1) Exact function calls (e.g., 'torch.nn.Conv2d(in_channels=3, out_channels=64, kernel_size=3, stride=1, padding=1)'), (2) API calls if applicable (e.g., 'POST /api/workshop/submit with JSON body'), (3) Database operations (e.g., 'SQL: SELECT expert_id FROM experts WHERE expertise_tags && ARRAY[risk_categories] ORDER BY match_score DESC LIMIT 20'), (4) Library imports (e.g., 'from torch import nn; from sqlalchemy import create_engine'). Example: '1. Import torch.nn.Conv2d, create conv3x3 = Conv2d(3, 64, 3, padding=1), 2. Create conv5x5 = Conv2d(3, 64, 5, padding=2), 3. Create conv7x7 = Conv2d(3, 64, 7, padding=3), 4. Apply all three: out3 = conv3x3(x), out5 = conv5x5(x), out7 = conv7x7(x), 5. Concatenate: output = torch.cat([out3, out5, out7], dim=1)' - NOT vague like 'key computations'.",
+        "math_formulation": "CRITICAL: MUST provide LaTeX formula for any mathematical operation. If the stage performs scoring, ranking, aggregation, transformation, or any computation, include the formula. Examples: 'score = 0.4 * impact + 0.3 * frequency + 0.3 * reversibility' or 'output = concat(conv3x3(x), conv5x5(x), conv7x7(x))' or 'attention(Q,K,V) = softmax(QK^T/√d_k)V'. If the stage is pure data formatting with no math, use empty string, but this should be rare."
       }},
       {{
         "stage_name": "Stage 2: ...",
@@ -229,9 +246,9 @@ You MUST output ONLY a JSON object wrapped in ```json ... ``` with the following
     "information_flow": "How does data move between stages? What format at each step? (e.g., 'Stage 1 outputs 512-dim vectors. Stage 2 takes these vectors, applies attention, outputs 256-dim vectors. Stage 3 takes 256-dim vectors and produces final predictions.' - NOT 'signal/gradient flow')"
   }},
   "training_and_optimization": {{
-    "loss_function": "LaTeX formula (e.g., L = L_main + λ * L_aux)",
-    "objective_explanation": "What does each term do? Be specific. (e.g., 'L_main is cross-entropy for classification. L_aux is consistency loss that ensures A* and B outputs agree. λ=0.1 balances them.' - NOT 'purpose of each term')",
-    "optimization_strategy": "How do we train? Be specific. (e.g., 'Use Adam optimizer with lr=0.001, batch_size=32, train for 50 epochs. Reduce lr by 0.5 every 10 epochs.' - NOT 'optimizer, schedules')",
+    "loss_function": "CRITICAL: Provide COMPLETE LaTeX formula with all terms expanded. Include: (1) Full formula with all components (e.g., 'L = L_main + λ₁ * L_consistency + λ₂ * L_uncertainty'), (2) Each term's formula (e.g., 'L_main = -∑ᵢ yᵢ log(ŷᵢ)', 'L_consistency = ||S_A - S_B||₂²'), (3) All parameter values (e.g., 'λ₁=0.3, λ₂=0.2'). NOT just 'L = L_main + λ * L_aux' without expansion.",
+    "objective_explanation": "CRITICAL: Explain each term with mathematical details and implementation specifics. Include: (1) Exact mathematical definition (e.g., 'L_main = -∑ᵢ yᵢ log(ŷᵢ) is cross-entropy loss where yᵢ is true label, ŷᵢ is predicted probability'), (2) How it's computed in code (e.g., 'Implemented as torch.nn.CrossEntropyLoss()'), (3) Parameter values and their effects (e.g., 'λ=0.1 means consistency loss contributes 10% to total loss. If λ=0.01, modules agree less; if λ=1.0, training becomes unstable'). NOT vague like 'purpose of each term'.",
+    "optimization_strategy": "CRITICAL: Provide code-level training procedure with exact parameters and implementation details. Include: (1) Optimizer with exact parameters (e.g., 'torch.optim.Adam(model.parameters(), lr=0.001, betas=(0.9, 0.999), weight_decay=1e-4)'), (2) Learning rate schedule with exact implementation (e.g., 'torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.5)'), (3) Batch processing details (e.g., 'batch_size=32, use DataLoader with num_workers=4, pin_memory=True'), (4) Training loop structure (e.g., 'for epoch in range(50): for batch in dataloader: loss.backward(); optimizer.step(); scheduler.step()'), (5) Checkpointing and logging (e.g., 'Save checkpoint every 5 epochs to ./checkpoints/epoch_{epoch}.pt'). NOT vague like 'optimizer, schedules'.",
     "hyperparameters": [
       {{
         "name": "lambda_consistency",
@@ -241,11 +258,12 @@ You MUST output ONLY a JSON object wrapped in ```json ... ``` with the following
     ],
     "regularization_and_constraints": "What constraints or regularization? Be specific. (e.g., 'Apply L2 weight decay 1e-4, gradient clipping at max_norm=1.0, dropout 0.2 after each layer' - NOT 'priors, normalization')",
     "pseudocode": [
-      "Step 1: Initialize model weights randomly",
-      "Step 2: For each batch: forward pass through A* → B → C",
-      "Step 3: Compute loss = L_main + λ * L_aux",
-      "Step 4: Backward pass, update weights with Adam",
-      "Step 5: Repeat for all epochs, reduce learning rate every 10 epochs"
+      "CRITICAL: Provide detailed pseudocode with code-level specifics. Include:",
+      "Step 1: Initialize model weights (e.g., 'model.apply(init_weights); optimizer = Adam(model.parameters(), lr=0.001)')",
+      "Step 2: For each batch: Load data (e.g., 'batch = next(iter(dataloader)); x, y = batch'), Forward pass (e.g., 'output = model(x)'), Compute loss (e.g., 'loss = criterion(output, y) + 0.1 * consistency_loss(output_A, output_B)')",
+      "Step 3: Backward pass (e.g., 'loss.backward(); torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)'), Update weights (e.g., 'optimizer.step(); optimizer.zero_grad()')",
+      "Step 4: Learning rate scheduling (e.g., 'scheduler.step()'), Logging (e.g., 'logger.info(f\"Epoch {epoch}, Loss: {loss.item():.4f}\")')",
+      "Step 5: Checkpointing (e.g., 'if epoch % 5 == 0: torch.save(model.state_dict(), f\"checkpoint_{epoch}.pt\")'), Validation (e.g., 'if epoch % 10 == 0: validate(model, val_loader)')"
     ]
   }},
   "theoretical_and_complexity": {{
@@ -255,9 +273,9 @@ You MUST output ONLY a JSON object wrapped in ```json ... ``` with the following
     ],
     "guarantees_or_intuitions": "Why should this work? Be concrete. (e.g., 'Multi-scale features from A* should help because objects come in different sizes. Training with consistency loss ensures modules agree.' - NOT 'convergence guarantees')",
     "complexity_analysis": {{
-      "time_complexity": "How fast? Be specific. (e.g., 'O(n²) where n is image size. For 224x224 image, takes ~50ms on GPU' - NOT 'Big-O statement')",
-      "space_complexity": "How much memory? (e.g., 'Needs ~2GB GPU memory for batch_size=32, image_size=224' - NOT 'memory footprint')",
-      "computational_bottlenecks": "What's slow? How to speed up? (e.g., 'Stage 2 attention is slowest. Can use sparse attention or reduce sequence length to speed up.' - NOT 'where cost lies')"
+      "time_complexity": "CRITICAL: Provide both Big-O notation AND concrete runtime measurements. Include: (1) Complexity analysis with variable definitions (e.g., 'O(n*m*k) where n=number_of_risks, m=number_of_experts, k=number_of_sources'), (2) Breakdown of operations (e.g., 'Expert matching: O(m log m) using sorted index, Risk assessment: O(n * m * t_workshop) where t_workshop=72h'), (3) Actual runtime for typical inputs (e.g., 'For n=50, m=20, k=100: ~2.5 hours on 8-core CPU + 4GB GPU'), (4) Scaling behavior (e.g., 'n=200 → ~8 hours, n=1000 → ~35 hours, approximately linear scaling'). NOT just 'O(n²)' without concrete numbers.",
+      "space_complexity": "CRITICAL: Specify exact memory requirements with breakdowns. Include: (1) Memory per component (e.g., 'Model weights: 500MB, Input data buffer: 200MB per batch, Intermediate activations: 1.2GB for batch_size=32'), (2) Total memory (e.g., 'Total GPU memory: ~2GB for batch_size=32, image_size=224x224'), (3) Scaling with input size (e.g., 'batch_size=64 → ~3.5GB, batch_size=128 → ~6GB'), (4) CPU RAM requirements (e.g., 'Additional CPU RAM: 4GB for data loading and preprocessing'). NOT vague like 'memory footprint'.",
+      "computational_bottlenecks": "CRITICAL: Identify specific bottlenecks with profiling data and concrete optimization strategies. Include: (1) Which operation is slowest (e.g., 'Stage 2 attention mechanism takes 60% of total time, measured with torch.profiler'), (2) Why it's slow (e.g., 'O(n²) attention computation on sequence length 1000'), (3) Exact optimization methods (e.g., 'Use torch.nn.MultiheadAttention with sparse attention mask, or reduce sequence length from 1000 to 500 using max pooling, reduces time by 40%'), (4) Trade-offs (e.g., 'Sparse attention reduces accuracy by 1-2% but speeds up by 3x'). NOT vague like 'where cost lies'."
     }}
   }},
   "experimental_guidance": {{
@@ -287,7 +305,7 @@ You MUST output ONLY a JSON object wrapped in ```json ... ``` with the following
   }},
   "final_proposal_topic": "Clear, specific headline ≤12 words. (e.g., 'Multi-Scale Feature Fusion for Small Object Detection' - NOT abstract buzzwords)",
   "final_problem_statement": "One sentence stating the real problem. (e.g., 'Current object detectors fail on small objects because they use fixed-scale convolutional features' - NOT abstract gap description)",
-  "final_method_proposal_text": "One clear paragraph explaining: (1) What problem are we solving? (2) Why do current methods fail? (3) How does our method work? (4) What are the implementation steps? (5) How do we test it? (6) What do we need to build it? Use simple, direct language. Avoid abstract terms. Give concrete examples (datasets, sizes, numbers). Describe methods in concrete, step-by-step specifics: include exact data shapes, tensor dimensions, layer configurations, and execution flow (e.g., 'Step 1: Input image (224x224x3) → Step 2: Multi-scale conv layers output [batch, 512, 7, 7] → Step 3: Attention mechanism processes → Step 4: Final output [batch, 1000] for classification'). Avoid high-level conceptual summaries."
+  "final_method_proposal_text": "One clear paragraph explaining: (1) What problem are we solving? (2) Why do current methods fail? (3) How does our method work? (4) What are the implementation steps? (5) How do we test it? (6) What do we need to build it? Use simple, direct language. Avoid abstract terms. Give concrete examples (datasets, sizes, numbers). Describe methods in concrete, step-by-step specifics: include exact data shapes, tensor dimensions, layer configurations, and execution flow (e.g., 'Step 1: Input image (224x224x3) → Step 2: Multi-scale conv layers output [batch, 512, 7, 7] → Step 3: Attention mechanism processes → Step 4: Final output [batch, 1000] for classification'). Avoid high-level conceptual summaries. CRITICAL: Do NOT mention 'combining modules' or 'combine xxx modules'. Do NOT use module names like A*, B*, C*. Instead, describe the method as a unified, coherent approach with specific components and steps. Present it as a single integrated method, not as a combination of separate modules."
 }}
 
 ```
@@ -325,8 +343,7 @@ You MUST output ONLY a JSON object wrapped in ```json ... ``` with the following
 **DO NOT USE these abstract/obscure terms:**
 - ❌ "mechanism-level", "mechanistic", "mechanism shift"
 - ❌ "signal flow", "gradient compatibility", "signal/gradient flow"
-- ❌ "adaptive granularity", "granular mechanism"
-- ❌ "complementary mechanisms", "mechanistic fit"
+- ❌ "granular mechanism", "complementary mechanisms", "mechanistic fit"
 - ❌ "phased implementation", "implementation considerations"
 - ❌ "evaluation dimensions", "verification strategy"
 - ❌ Any vague academic jargon
@@ -340,8 +357,38 @@ You MUST output ONLY a JSON object wrapped in ```json ... ``` with the following
 - ✅ "step-by-step instructions"
 
 **Example transformation:**
-- ❌ BAD: "Module A introduces adaptive mechanism-level granularity with signal flow compatibility"
+- ❌ BAD: "Module A introduces mechanism-level granularity with signal flow compatibility"
 - ✅ GOOD: "Module A uses three different kernel sizes (3x3, 5x5, 7x7) and combines their outputs. This helps because objects come in different sizes."
+
+---
+
+# 🔶 CRITICAL TECHNICAL REQUIREMENTS - MUST FOLLOW
+
+**These requirements are MANDATORY and will be strictly evaluated:**
+
+1. **Mathematical Formulas (math_spec, math_formulation, loss_function)**
+   - ❌ NEVER leave these fields empty unless the operation has ZERO mathematical content (extremely rare)
+   - ✅ MUST provide LaTeX formulas for: scoring functions, ranking algorithms, aggregations, transformations, loss functions, attention mechanisms, etc.
+   - ✅ Include parameter values and variable definitions (e.g., "score = 0.4 * impact + 0.3 * frequency, where impact ∈ [1,10]")
+   - ✅ Expand loss functions fully: show each term's formula, not just "L = L1 + λ*L2"
+
+2. **Data Format Specifications (input_output, connection_details)**
+   - ❌ NEVER use vague descriptions like "JSON format" or "tensor"
+   - ✅ MUST specify: exact JSON schema with field names and types, tensor shapes with dimensions, file formats and sizes
+   - ✅ Include: array lengths, data sizes (e.g., "~50KB"), serialization methods (e.g., "json.dumps() with ensure_ascii=False")
+   - ✅ For tensors: exact shapes like "[batch_size, 512, 7, 7]", not "feature tensor"
+
+3. **Implementation Details (operations, feasibility_notes, pseudocode)**
+   - ❌ NEVER use high-level descriptions like "apply attention mechanism" or "use optimizer"
+   - ✅ MUST provide: exact function calls (e.g., "torch.nn.MultiheadAttention(num_heads=8, embed_dim=512)"), library versions (e.g., "PyTorch 2.0.0"), API endpoints (e.g., "POST /api/process"), SQL queries if applicable
+   - ✅ Include: database schemas, file paths, configuration parameters
+   - ✅ Pseudocode should be detailed enough to write actual code from it
+
+4. **Complexity Analysis**
+   - ❌ NEVER provide only Big-O notation without concrete numbers
+   - ✅ MUST include: actual runtime measurements (e.g., "~2.5 hours for n=50"), memory breakdowns (e.g., "Model: 500MB, Activations: 1.2GB"), scaling behavior (e.g., "n=200 → ~8 hours")
+
+**If your output lacks these technical details, it will be considered incomplete and will need revision.**
 
 ---
 
@@ -376,8 +423,15 @@ You MUST output ONLY a JSON object wrapped in ```json ... ``` with the following
 
         json_str = match.group(1).strip()
         try:
-            return json.loads(json_str)
-        except json.JSONDecodeError as exc:
+            # Use json_repair.loads() to handle broken/incomplete JSON
+            # It automatically checks if JSON is valid and repairs if needed
+            # json_repair preserves non-Latin characters (Chinese, Japanese, etc.) by default
+            if json_repair is not None:
+                return json_repair.loads(json_str)
+            else:
+                # Fallback to standard json.loads() if json_repair is not available
+                return json.loads(json_str)
+        except (json.JSONDecodeError, ValueError) as exc:
             logger.warning("InnovationSynthesisAgent: failed to parse JSON block: %s", exc)
             logger.debug("Raw JSON content:\n%s", json_str)
             return None

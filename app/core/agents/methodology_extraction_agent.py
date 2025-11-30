@@ -2,6 +2,7 @@ from typing import Dict, Any, Optional, Tuple
 import json
 import re
 import asyncio
+import logging
 from tenacity import (
     AsyncRetrying,
     retry_if_result,
@@ -10,6 +11,11 @@ from tenacity import (
     before_sleep_log,
     RetryError,
 )
+
+try:
+    import json_repair
+except ImportError:
+    json_repair = None
 
 from app.services.openai_service import OpenAIService
 from app.utils.logger import logger
@@ -123,6 +129,12 @@ CRITICAL RULES:
   2) one ```json block with the JSON content
 - Do NOT output any explanations, comments, or questions outside these code blocks.
 - The orchestrator will parse this markdown and save the JSON file.
+- **JSON STRING ESCAPING**: All string values in the JSON must be properly escaped:
+  - Newlines must be escaped as `\\n` (not literal newlines)
+  - Double quotes inside strings must be escaped as `\\"` (not literal quotes)
+  - Backslashes must be escaped as `\\\\`
+  - The JSON must be valid and parseable by `json.loads()`
+  - If the methodology or problem_statement contains code blocks, formulas, or multi-line content, ensure all special characters are properly escaped
 """
 
     def __init__(self, openai_service: OpenAIService):
@@ -172,8 +184,15 @@ CRITICAL RULES:
             json_str = json_match.group(1).strip()
 
             try:
-                json_obj = json.loads(json_str)
-            except json.JSONDecodeError as e:
+                # Use json_repair.loads() to handle broken/incomplete JSON
+                # It automatically checks if JSON is valid and repairs if needed
+                # json_repair preserves non-Latin characters (Chinese, Japanese, etc.) by default
+                if json_repair is not None:
+                    json_obj = json_repair.loads(json_str)
+                else:
+                    # Fallback to standard json.loads() if json_repair is not available
+                    json_obj = json.loads(json_str)
+            except (json.JSONDecodeError, ValueError) as e:
                 logger.warning(f"Failed to parse JSON from MethodologyExtractionAgent output: {e}")
                 logger.warning(f"Raw json content:\n{json_str}")
                 return None, None
@@ -276,7 +295,7 @@ Please extract the problem statement and the complete methodology section follow
         paper_title: str,
         paper_content: str,
         temperature: Optional[float] = 0.3,
-        max_tokens: int = 4096,
+        max_tokens: int = 40000,
         model: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
@@ -286,7 +305,7 @@ Please extract the problem statement and the complete methodology section follow
             paper_title: 论文标题
             paper_content: 论文的完整文本内容（通常是 OCR 提取的文本）
             temperature: 生成温度（默认 0.3，较低以获得更一致的提取）
-            max_tokens: 最大 token 数（默认 4096，因为 methodology 可能较长）
+            max_tokens: 最大 token 数（默认 40000，因为 methodology 可能很长，需要足够空间完成 JSON 输出）
             model: 使用的模型（可选，使用服务默认值）
 
         Returns:
@@ -313,7 +332,7 @@ Please extract the problem statement and the complete methodology section follow
                 stop=stop_after_attempt(3),
                 retry=retry_if_result(is_parse_failed),
                 wait=wait_exponential(multiplier=1, min=1, max=5),
-                before_sleep=before_sleep_log(logger, logger.warning),
+                before_sleep=before_sleep_log(logger, logging.WARNING),
             ):
                 with attempt:
                     attempt_number = attempt.retry_state.attempt_number

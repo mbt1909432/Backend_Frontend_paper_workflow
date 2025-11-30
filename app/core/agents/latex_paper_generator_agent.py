@@ -1,5 +1,6 @@
 from typing import Dict, Any, Optional, Tuple
 import re
+import logging
 from tenacity import (
     AsyncRetrying,
     retry_if_result,
@@ -570,7 +571,7 @@ Please generate a complete LaTeX paper with all required sections filled with de
                 stop=stop_after_attempt(3),
                 retry=retry_if_result(is_parse_failed),
                 wait=wait_exponential(multiplier=1, min=2, max=10),
-                before_sleep=before_sleep_log(logger, logger.warning)
+                before_sleep=before_sleep_log(logger, logging.WARNING)
             ):
                 with attempt:
                     last_result = await self._generate_latex_paper_attempt(

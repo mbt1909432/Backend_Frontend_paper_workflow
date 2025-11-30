@@ -12,6 +12,7 @@ from dotenv import load_dotenv
 
 from app.core.agents.innovation_synthesis_agent import InnovationSynthesisAgent
 from app.core.agents.methodology_extraction_agent import MethodologyExtractionAgent
+from app.core.agents.writing.methods_writing_agent import MethodsWritingAgent
 from app.services.hot_phrase_service import get_recent_hot_phrases
 from app.services.openai_service import OpenAIService
 from app.utils.file_manager import save_artifact
@@ -468,6 +469,168 @@ async def run_innovation_synthesis_step(
         return []
 
 
+def _find_innovation_synthesis_artifacts(session_folder: Path) -> List[Path]:
+    """
+    Find all innovation_synthesis*.json artifacts in the session's artifact directory.
+    """
+    artifact_dir = session_folder / "artifact"
+    if not artifact_dir.exists():
+        return []
+    
+    # Find all innovation_synthesis*.json files
+    pattern = "innovation_synthesis*.json"
+    artifacts = sorted(artifact_dir.glob(pattern))
+    return artifacts
+
+
+async def run_methods_writing_step(
+    step_inputs: SessionStepInputs,
+    methods_writing_agent: MethodsWritingAgent,
+    *,
+    temperature: float = 0.7,
+    max_tokens: int = 20000,
+) -> List[str]:
+    """
+    Execute Step 7 (Methods writing) using the innovation_synthesis artifacts.
+    
+    This step reads all innovation_synthesis*.json artifacts and generates
+    LaTeX Methods sections for each one.
+    
+    Args:
+        step_inputs: Session inputs containing session folder and paths
+        methods_writing_agent: Initialized MethodsWritingAgent instance
+        temperature: Generation temperature (default: 0.7)
+        max_tokens: Maximum tokens for generation (default: 20000)
+    
+    Returns:
+        List of artifact paths for the generated methods_writing*.json files
+    """
+    session_folder = step_inputs.session_folder
+    generated_dir = step_inputs.generated_dir
+    methods_dir = generated_dir / "methods"
+    methods_dir.mkdir(parents=True, exist_ok=True)
+    
+    innovation_artifacts = _find_innovation_synthesis_artifacts(session_folder)
+    
+    if not innovation_artifacts:
+        logger.warning(
+            "Methods writing step skipped: no innovation_synthesis*.json artifacts found in %s",
+            session_folder / "artifact",
+        )
+        return []
+    
+    logger.info(
+        "Found %d innovation_synthesis artifact(s), generating Methods sections...",
+        len(innovation_artifacts),
+    )
+    
+    async def generate_single_methods(artifact_path: Path, run_index: int) -> Optional[str]:
+        """Generate Methods section for a single innovation_synthesis artifact."""
+        try:
+            artifact_data = json.loads(artifact_path.read_text(encoding="utf-8"))
+            innovation_json = artifact_data.get("output")
+            
+            if not innovation_json:
+                logger.warning(
+                    "Skip methods writing for %s: missing 'output' field",
+                    artifact_path.name,
+                )
+                return None
+            
+            logger.info(
+                "Methods writing run %d/%d: processing %s",
+                run_index + 1,
+                len(innovation_artifacts),
+                artifact_path.name,
+            )
+            
+            methods_result = await methods_writing_agent.generate_methods_section(
+                innovation_json=innovation_json,
+                temperature=temperature,
+                max_tokens=max_tokens,
+            )
+            
+            usage_stats = methods_result.get("usage") or {}
+            logger.info(
+                "Methods writing run %d/%d: agent call finished (prompt_tokens=%s, completion_tokens=%s, total_tokens=%s)",
+                run_index + 1,
+                len(innovation_artifacts),
+                usage_stats.get("prompt_tokens"),
+                usage_stats.get("completion_tokens"),
+                usage_stats.get("total_tokens"),
+            )
+            
+            latex_content = methods_result.get("latex_content", "").strip()
+            if not latex_content:
+                logger.warning(
+                    "Methods writing run %d/%d: empty LaTeX content from agent",
+                    run_index + 1,
+                    len(innovation_artifacts),
+                )
+                return None
+            
+            # Save LaTeX content to file
+            latex_filename = f"{artifact_path.stem}_methods.tex"
+            latex_path = methods_dir / latex_filename
+            latex_path.write_text(latex_content, encoding="utf-8")
+            rel_latex_path = latex_path.relative_to(session_folder)
+            logger.info(
+                "Methods LaTeX saved: %s (from %s)",
+                latex_path,
+                artifact_path.name,
+            )
+            
+            # Determine stage suffix based on artifact name
+            artifact_stem = artifact_path.stem
+            if artifact_stem == "innovation_synthesis":
+                stage_suffix = ""
+            else:
+                # Extract suffix from innovation_synthesis_2 -> _2
+                suffix = artifact_stem.replace("innovation_synthesis", "")
+                stage_suffix = suffix if suffix else ""
+            
+            # Save artifact
+            methods_artifact_path = save_artifact(
+                session_folder=session_folder,
+                stage_name=f"methods_writing{stage_suffix}",
+                artifact_data={
+                    "run_index": run_index + 1,
+                    "source_innovation_artifact": str(artifact_path.relative_to(session_folder)),
+                    "latex_path": str(rel_latex_path),
+                    "latex_content": latex_content,
+                    "raw_response": methods_result.get("raw_response"),
+                    "usage": usage_stats,
+                },
+            )
+            
+            logger.info(
+                "✓ methods_writing%s.json saved at %s",
+                stage_suffix or "",
+                methods_artifact_path,
+            )
+            
+            return str(methods_artifact_path)
+            
+        except Exception as exc:
+            logger.exception(
+                "Failed to generate Methods section for %s: %s",
+                artifact_path.name,
+                exc,
+            )
+            return None
+    
+    # Process all artifacts sequentially (to avoid overwhelming the API)
+    artifact_paths: List[str] = []
+    for idx, artifact_path in enumerate(innovation_artifacts):
+        result = await generate_single_methods(artifact_path, idx)
+        if result:
+            artifact_paths.append(result)
+    
+    return artifact_paths
+
+
+
+
 def _load_local_env_file(env_filename: Optional[str] = None) -> Optional[Path]:
     """
     Load a local .env file located in this folder for quick manual testing.
@@ -582,6 +745,38 @@ async def main_run_step_6_only(
         logger.info("Innovation synthesis skipped or failed.")
 
 
+async def main_run_step_7_only(
+    temperature: float = 0.7,
+    max_tokens: int = 20000,
+) -> None:
+    """
+    测试入口：复用已有 innovation_synthesis*.json，仅运行 Step 7（Methods Writing）。
+    """
+
+    # TODO: 修改为真实 session 路径，例如 Path("E:/.../session_20251128_xxx")
+    test_session_folder = Path(r"E:\pycharm_project\software_idea\academic draft agentic_workflow\app\core\workflows\output\2025_11_29\session_20251129_111308_87ffb736").resolve()
+
+    _load_local_env_file()
+
+    step_inputs = load_step_inputs_from_session(test_session_folder)
+
+    openai_service = OpenAIService()
+    methods_writing_agent = MethodsWritingAgent(openai_service=openai_service)
+
+    methods_artifacts = await run_methods_writing_step(
+        step_inputs=step_inputs,
+        methods_writing_agent=methods_writing_agent,
+        temperature=temperature,
+        max_tokens=max_tokens,
+    )
+
+    if methods_artifacts:
+        logger.info("Methods writing artifacts: %s", methods_artifacts)
+    else:
+        logger.info("Methods writing skipped or failed.")
+
+
 if __name__ == "__main__":
     _load_local_env_file()
+    # asyncio.run(main_run_step_7_only())
     asyncio.run(main_run_step_6_only())

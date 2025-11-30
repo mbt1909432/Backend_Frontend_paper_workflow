@@ -304,18 +304,18 @@ function SessionManager() {
           >
             弹窗搜索
           </button>
-          <button
-            onClick={loadSessions}
-            disabled={loading}
-            className="btn btn-primary"
-            style={{
-              padding: '0.625rem 1.25rem',
-              fontSize: '0.875rem',
-              opacity: loading ? 0.6 : 1,
-            }}
-          >
-            {loading ? '加载中...' : '刷新'}
-          </button>
+        <button
+          onClick={loadSessions}
+          disabled={loading}
+          className="btn btn-primary"
+          style={{
+            padding: '0.625rem 1.25rem',
+            fontSize: '0.875rem',
+            opacity: loading ? 0.6 : 1,
+          }}
+        >
+          {loading ? '加载中...' : '刷新'}
+        </button>
         </div>
       </div>
 

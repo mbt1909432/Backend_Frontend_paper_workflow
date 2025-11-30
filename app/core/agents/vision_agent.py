@@ -1,6 +1,8 @@
-from typing import Dict, Any, Optional, List, Union
+from typing import Dict, Any, Optional, List, Union, Tuple
 import base64
 from pathlib import Path
+from io import BytesIO
+from PIL import Image
 from app.services.anthropic_service import AnthropicService
 from app.utils.logger import logger
 
@@ -28,6 +30,11 @@ Extract and output ONLY the actual content from images. Do NOT add any:
 - Do NOT provide summaries or interpretations
 - Output raw content only, nothing else"""
 
+    # Anthropic API 限制：base64 编码后的图片不能超过 5MB (5242880 bytes)
+    # base64 编码会增加约 33% 的大小（4/3 倍），所以原始图片应该控制在约 3.75MB
+    MAX_BASE64_SIZE_BYTES = 5_242_880  # 5MB，API 限制
+    MAX_ORIGINAL_SIZE_BYTES = 3_750_000  # 约 3.75MB，确保 base64 编码后不超过 5MB
+    
     def __init__(self, anthropic_service: AnthropicService):
         self.anthropic_service = anthropic_service
     
@@ -70,6 +77,136 @@ Extract and output ONLY the actual content from images. Do NOT add any:
         }
         
         return media_type_map.get(ext, "image/jpeg")
+    
+    def _get_base64_size(self, image_data: bytes) -> int:
+        """
+        计算图片 base64 编码后的大小
+        
+        Args:
+            image_data: 原始图片数据
+            
+        Returns:
+            base64 编码后的大小（字节）
+        """
+        # base64 编码会增加约 33% 的大小（4/3 倍）
+        # 实际大小 = len(base64.b64encode(image_data))
+        # 但为了效率，我们使用近似值：original_size * 4 / 3
+        return int(len(image_data) * 4 / 3)
+    
+    def _compress_image(
+        self,
+        image_data: bytes,
+        media_type: str,
+        max_base64_size_bytes: int = MAX_BASE64_SIZE_BYTES
+    ) -> Tuple[bytes, str]:
+        """
+        压缩图片直到 base64 编码后小于指定大小
+        
+        Args:
+            image_data: 原始图片数据
+            media_type: 原始图片类型
+            max_base64_size_bytes: base64 编码后的最大允许大小（字节）
+            
+        Returns:
+            (压缩后的图片数据, 压缩后的媒体类型)
+        """
+        original_size = len(image_data)
+        original_base64_size = self._get_base64_size(image_data)
+        
+        # 如果 base64 编码后已经小于限制，直接返回
+        if original_base64_size <= max_base64_size_bytes:
+            logger.debug(
+                f"Image size {original_size} bytes (base64: ~{original_base64_size} bytes) "
+                f"is within limit, no compression needed"
+            )
+            return image_data, media_type
+        
+        logger.warning(
+            f"Image size {original_size} bytes (base64: ~{original_base64_size} bytes) "
+            f"exceeds limit {max_base64_size_bytes} bytes, compressing..."
+        )
+        
+        # 计算目标原始大小（考虑 base64 编码的膨胀）
+        # 目标原始大小 = max_base64_size * 3 / 4
+        target_original_size = int(max_base64_size_bytes * 3 / 4)
+        
+        try:
+            # 打开图片
+            img = Image.open(BytesIO(image_data))
+            original_format = img.format
+            original_mode = img.mode
+            
+            # 转换为 RGB 模式（JPEG 不支持透明度）
+            if img.mode in ('RGBA', 'LA', 'P'):
+                # 创建白色背景
+                background = Image.new('RGB', img.size, (255, 255, 255))
+                if img.mode == 'P':
+                    img = img.convert('RGBA')
+                background.paste(img, mask=img.split()[-1] if img.mode in ('RGBA', 'LA') else None)
+                img = background
+            elif img.mode != 'RGB':
+                img = img.convert('RGB')
+            
+            # 计算初始质量
+            quality = 85
+            scale_factor = 1.0
+            
+            # 尝试压缩
+            for attempt in range(10):  # 最多尝试 10 次
+                output = BytesIO()
+                
+                # 如果尺寸太大，先缩小尺寸
+                if scale_factor < 1.0:
+                    new_width = int(img.width * scale_factor)
+                    new_height = int(img.height * scale_factor)
+                    resized_img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
+                else:
+                    resized_img = img
+                
+                # 保存为 JPEG
+                resized_img.save(
+                    output,
+                    format='JPEG',
+                    quality=quality,
+                    optimize=True
+                )
+                
+                compressed_data = output.getvalue()
+                compressed_size = len(compressed_data)
+                compressed_base64_size = self._get_base64_size(compressed_data)
+                
+                # 如果 base64 编码后小于限制，返回
+                if compressed_base64_size <= max_base64_size_bytes:
+                    logger.info(
+                        f"Image compressed successfully: {original_size} -> {compressed_size} bytes "
+                        f"(base64: ~{compressed_base64_size} bytes, quality={quality}, scale={scale_factor:.2f})"
+                    )
+                    return compressed_data, "image/jpeg"
+                
+                # 调整压缩参数
+                if attempt < 3:
+                    # 前3次尝试降低质量
+                    quality = max(30, quality - 15)
+                elif attempt < 6:
+                    # 接下来3次尝试缩小尺寸
+                    scale_factor = max(0.5, scale_factor - 0.1)
+                    quality = max(30, quality - 5)
+                else:
+                    # 最后几次同时降低质量和尺寸
+                    scale_factor = max(0.3, scale_factor - 0.1)
+                    quality = max(20, quality - 5)
+            
+            # 如果还是太大，返回最后一次尝试的结果（即使超过限制）
+            logger.warning(
+                f"Image compression reached limit: {compressed_size} bytes "
+                f"(base64: ~{compressed_base64_size} bytes, target base64: {max_base64_size_bytes} bytes). "
+                f"Using compressed version anyway."
+            )
+            return compressed_data, "image/jpeg"
+            
+        except Exception as e:
+            logger.error(f"Failed to compress image: {e}. Using original image.")
+            return image_data, media_type
     
     def _prepare_image_content(
         self,
@@ -119,6 +256,19 @@ Extract and output ONLY the actual content from images. Do NOT add any:
                     media_type = self._detect_media_type(image)
             else:
                 raise ValueError(f"Unsupported image type: {type(image)}")
+            
+            # 检查并压缩图片（如果需要）
+            original_size = len(image_data)
+            original_base64_size = self._get_base64_size(image_data)
+            
+            if original_base64_size > self.MAX_BASE64_SIZE_BYTES:
+                image_data, media_type = self._compress_image(image_data, media_type)
+                compressed_base64_size = self._get_base64_size(image_data)
+                logger.info(
+                    f"Image compressed: {original_size} -> {len(image_data)} bytes "
+                    f"(base64: ~{original_base64_size} -> ~{compressed_base64_size} bytes, "
+                    f"media_type: {media_type})"
+                )
             
             # 创建图片块
             image_block = self.anthropic_service.create_image_block(image_data, media_type)

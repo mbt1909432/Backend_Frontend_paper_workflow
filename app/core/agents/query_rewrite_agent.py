@@ -2,6 +2,7 @@ from typing import Dict, Any, Optional, Tuple
 import json
 import re
 import asyncio
+import logging
 from tenacity import (
     AsyncRetrying,
     retry_if_result,
@@ -10,6 +11,11 @@ from tenacity import (
     before_sleep_log,
     RetryError,
 )
+
+try:
+    import json_repair
+except ImportError:
+    json_repair = None
 
 from app.services.openai_service import OpenAIService
 from app.utils.logger import logger
@@ -172,8 +178,15 @@ CRITICAL RULES:
             json_str = json_match.group(1).strip()
 
             try:
-                json_obj = json.loads(json_str)
-            except json.JSONDecodeError as e:
+                # Use json_repair.loads() to handle broken/incomplete JSON
+                # It automatically checks if JSON is valid and repairs if needed
+                # json_repair preserves non-Latin characters (Chinese, Japanese, etc.) by default
+                if json_repair is not None:
+                    json_obj = json_repair.loads(json_str)
+                else:
+                    # Fallback to standard json.loads() if json_repair is not available
+                    json_obj = json.loads(json_str)
+            except (json.JSONDecodeError, ValueError) as e:
                 logger.warning(f"Failed to parse JSON from QueryRewriteAgent output: {e}")
                 logger.warning(f"Raw json content:\n{json_str}")
                 return None, None
@@ -296,7 +309,7 @@ Please rewrite this query into EXACTLY 4 high-quality search keywords following 
                 stop=stop_after_attempt(3),
                 retry=retry_if_result(is_parse_failed),
                 wait=wait_exponential(multiplier=1, min=1, max=5),
-                before_sleep=before_sleep_log(logger, logger.warning),
+                before_sleep=before_sleep_log(logger, logging.WARNING),
             ):
                 with attempt:
                     attempt_number = attempt.retry_state.attempt_number
