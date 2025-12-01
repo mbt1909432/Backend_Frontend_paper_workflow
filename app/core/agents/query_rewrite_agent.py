@@ -57,13 +57,12 @@ you must:
    - **Focus on academic research-related technical concepts, tasks, domains, and methods**
 
 2. **Rewrite into search phrases**: Propose EXACTLY 4 search **query phrases** that are:
-   - each phrase should independently express the **full core intent** of the query  
-     (e.g. include task + domain + method / model in one phrase, NOT split across multiple items)
-   - medium length (about 4-12 words each), like a compact search sentence, not single words
+   - **short and concise** (about 2-6 words per phrase, NOT long sentences)
+   - **comma-separated** format: use commas to separate key terms within each phrase
+   - each phrase should cover the **core technical concepts / tasks / domains / methods** from the query
    - suitable for arXiv / academic database search
    - preferably in English (unless the query clearly targets Chinese-only content)
-   - focused on the **core technical concepts / tasks / domains / methods**
-   - provide 4 slightly different rephrasings / angles of the same full intent
+   - provide 4 slightly different rephrasings / angles covering different aspects of the same core intent
    - NOT describing the **paper type or genre** (e.g. do NOT use words like "survey", "review", "overview", "state of the art", "tutorial", "survey review", "paper", "article")
 
 ## Output JSON Schema
@@ -74,16 +73,16 @@ You MUST produce a JSON object with the following fields:
   - What core research topics were extracted from the user's input
   - How personal information was filtered out (if applicable)
   - Why these specific keywords were chosen to represent the research intent
-- "keywords": array of exactly 4 non-empty strings (each is a full query phrase, not a single aspect)
+- "keywords": array of exactly 4 non-empty strings (each is a short, comma-separated phrase with 2-6 key terms, NOT a long sentence)
 
 Example 1 (good style - simple query):
 {
   "reason": "Extracted the core research topic: LLM applications in academic writing assistance. The user wants to write a survey, but the keywords focus on the technical domain (LLM + academic writing) rather than the paper type. Generated 4 variations covering different angles: general LLM applications, LLM-based tools, AI-driven support, and LLM-powered systems, all focused on academic writing assistance.",
   "keywords": [
-    "large language models for academic writing assistance",
-    "LLM-based tools for academic paper drafting and editing",
-    "AI-driven academic writing support with large language models",
-    "LLM-powered systems for improving academic writing quality"
+    "large language models, academic writing, assistance",
+    "LLM tools, academic paper, drafting, editing",
+    "AI, academic writing, support, language models",
+    "LLM systems, academic writing, quality improvement"
   ]
 }
 
@@ -91,10 +90,10 @@ Example 2 (good style - query with personal information):
 {
   "reason": "Extracted 4 core research themes from the user's input: (1) AI/ML for digital health optimization, (2) A/B testing for health platforms, (3) NLP/LLM for healthcare efficiency, (4) predictive modeling for health outcomes. Filtered out personal information (company name 'Aescape', job title 'Founding Business Analyst', work responsibilities). Each keyword represents one research direction with its application domain, suitable for academic search.",
   "keywords": [
-    "AI and machine learning for digital health and wellness optimization",
-    "A/B testing frameworks for health platform patient engagement",
-    "NLP and large language models for healthcare delivery efficiency",
-    "predictive modeling for health outcomes and risk identification"
+    "AI, machine learning, digital health, optimization",
+    "A/B testing, health platform, patient engagement",
+    "NLP, large language models, healthcare, efficiency",
+    "predictive modeling, health outcomes, risk identification"
   ]
 }
 

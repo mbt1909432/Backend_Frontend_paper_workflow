@@ -21,11 +21,13 @@ from typing import Any, Dict, List, Optional
 from app.core.agents.query_rewrite_agent import QueryRewriteAgent
 from app.core.agents.vision_agent import VisionAgent
 from app.core.agents.methodology_extraction_agent import MethodologyExtractionAgent
+from app.core.agents.experiment_extraction_agent import ExperimentExtractionAgent
 from app.core.agents.innovation_synthesis_agent import InnovationSynthesisAgent
 from app.core.workflows.postprocess_steps import (
     SessionStepInputs,
     run_innovation_synthesis_step,
     run_methodology_extraction_step,
+    run_experiment_extraction_step,
     _load_local_env_file,
 )
 from app.config.settings import settings
@@ -50,12 +52,13 @@ class QueryToMarkdownWorkflow:
     """
     Query → Markdown 工作流
 
-    当前实现的 5 个阶段：
+    当前实现的 6 个阶段：
     - rewrite: 使用 QueryRewriteAgent 生成 4 条检索短句，落盘 rewrite.json
     - search:  对每条检索短句执行 arXiv 搜索与下载，生成 raw_pdfs/ 与 papers_manifest.json
     - ingest_pdf: 对 manifest 中 PDF 执行 PDF→PNG→OCR，生成 processed/paper_{idx}/ 目录与 pdf_processing.json
     - emit_md: 根据 OCR 文本与 metadata 生成 markdown/paper_*.md 与 summary/index.md、markdown_emit.json
-    - extract_methodology: 从生成的 Markdown 文件中提取 problem statement 与 methodology，生成对应 markdown 与 methodology_extraction.json
+    - extract_methodology_and_experiment: 从生成的 Markdown 文件中并行提取 problem statement & methodology 以及 experiments，生成对应 markdown 与 artifact JSON 文件
+    - innovation_synthesis: 基于提取的 methodology 进行创新点综合
     """
 
     def __init__(
@@ -63,14 +66,16 @@ class QueryToMarkdownWorkflow:
         query_rewrite_agent: QueryRewriteAgent,
         vision_agent: VisionAgent,
         methodology_extraction_agent: Optional[MethodologyExtractionAgent] = None,
+        experiment_extraction_agent: Optional[ExperimentExtractionAgent] = None,
         innovation_agent: Optional[InnovationSynthesisAgent] = None,
         max_concurrent_pdfs: int = 2,
         max_concurrent_pages: int = 5,
-        max_pages_per_pdf: Optional[int] = 20,
+        max_pages_per_pdf: Optional[int] = 50,
     ):
         self.query_rewrite_agent = query_rewrite_agent
         self.vision_agent = vision_agent
         self.methodology_extraction_agent = methodology_extraction_agent
+        self.experiment_extraction_agent = experiment_extraction_agent
         self.innovation_agent = innovation_agent
         self.max_concurrent_pdfs = max_concurrent_pdfs
         self.max_concurrent_pages = max_concurrent_pages
@@ -706,19 +711,71 @@ class QueryToMarkdownWorkflow:
         )
 
         # -------------------------
-        # Step 5: Problem Statement & Methodology 提取
+        # Step 5: Problem Statement & Methodology 提取 + Experiment 提取（并行执行）
         # -------------------------
         methodology_extraction_artifact_path: Optional[str] = None
         methodology_items: List[Dict[str, Any]] = []
-        if self.methodology_extraction_agent is not None:
-            logger.info("Step 5: Extract problem statements & methodologies from Markdown files")
-            methodology_extraction_artifact_path, methodology_items = await run_methodology_extraction_step(
+        experiment_extraction_artifact_path: Optional[str] = None
+        experiment_items: List[Dict[str, Any]] = []
+        
+        if self.methodology_extraction_agent is not None or self.experiment_extraction_agent is not None:
+            logger.info("Step 5: Extract problem statements & methodologies + experiments from Markdown files (parallel)")
+
+            # 准备并行任务列表
+            gather_tasks = []
+            has_methodology = self.methodology_extraction_agent is not None
+            has_experiment = self.experiment_extraction_agent is not None
+
+            if has_methodology:
+                gather_tasks.append(run_methodology_extraction_step(
                 step_inputs=step_inputs,
                 methodology_agent=self.methodology_extraction_agent,
                 max_concurrent_tasks=self.max_concurrent_pdfs,
+                ))
+            else:
+                gather_tasks.append(None)
+
+            if has_experiment:
+                gather_tasks.append(run_experiment_extraction_step(
+                    step_inputs=step_inputs,
+                    experiment_agent=self.experiment_extraction_agent,
+                    max_concurrent_tasks=self.max_concurrent_pdfs,
+                ))
+            else:
+                gather_tasks.append(None)
+
+            # 并行执行（过滤掉 None）
+            results = await asyncio.gather(
+                *[task for task in gather_tasks if task is not None],
+                return_exceptions=True,
             )
+
+            # 处理结果
+            result_idx = 0
+            if has_methodology:
+                try:
+                    result = results[result_idx]
+                    result_idx += 1
+                    if isinstance(result, Exception):
+                        logger.error("Step 5 methodology extraction failed: %s", result)
+                    else:
+                        methodology_extraction_artifact_path, methodology_items = result
+                        logger.info("Methodology artifact: %s", methodology_extraction_artifact_path)
+                except Exception as e:
+                    logger.error("Error processing methodology result: %s", e)
+
+            if has_experiment:
+                try:
+                    result = results[result_idx]
+                    if isinstance(result, Exception):
+                        logger.error("Step 5 experiment extraction failed: %s", result)
+                    else:
+                        experiment_extraction_artifact_path, experiment_items = result
+                        logger.info("Experiment artifact: %s", experiment_extraction_artifact_path)
+                except Exception as e:
+                    logger.error("Error processing experiment result: %s", e)
         else:
-            logger.info("Step 5: Skipped (methodology_extraction_agent not provided)")
+            logger.info("Step 5: Skipped (methodology_extraction_agent and experiment_extraction_agent not provided)")
 
         # -------------------------
         # Step 6: Innovation synthesis agent（3-paper requirement）
@@ -747,6 +804,9 @@ class QueryToMarkdownWorkflow:
             "markdown_emit_artifact": str(markdown_emit_artifact_path),
             "index_md": str(index_md_path),
             "methodology_extraction_artifact": methodology_extraction_artifact_path,
+            "experiment_extraction_artifact": experiment_extraction_artifact_path,
+            "methodology_items": methodology_items,
+            "experiment_items": experiment_items,
             "innovation_artifacts": innovation_artifact_paths,
             "innovation_artifact": innovation_artifact_paths[0] if innovation_artifact_paths else None,
             "status": status,
@@ -837,9 +897,18 @@ async def main() -> None:
 
         # test_query="""sci二区[领域需求]AI safety protection algorithms"""
 
-        test_query="""Cloud computing + autonomous vehicles"""
+        # test_query="""Cloud computing + autonomous vehicles"""
+#         test_query="""Adaptive Multi-Agent Embodied AI with Cross-Domain Visual Planning
+#
+#
+# Current embodied AI systems cannot integrate visual understanding, cross-domain planning, and multi-agent coordination, limiting their ability to perform complex real-world tasks that require both physical actions and digital information retrieval.
+#
+#
+# We solve the problem of fragmented embodied AI systems that cannot handle complex real-world tasks requiring visual understanding, web information, and coordinated actions. Current methods fail because they use fixed visual processing that misses temporal dynamics, make poor decisions about when to switch between physical and digital actions, and lack fault tolerance in multi-agent scenarios. Our method works in three stages: (1) Adaptive visual processing that samples video frames at 1-10fps based on motion detection and uses curriculum learning to adjust training difficulty, (2) Confidence-based cross-domain planning that calculates uncertainty scores to decide when to switch between physical actions and web queries, and (3) Fault-tolerant multi-agent coordination with heartbeat monitoring that detects agent failures in 5 seconds and reassigns tasks automatically. To implement this, we extend VideoLLaMA3 with adaptive sampling, add entropy-based confidence estimation to cross-domain planners, and build heartbeat monitoring into ROS 2 agent frameworks. We test on cooking tasks (using recipes from web), navigation with real-time map data, and warehouse coordination scenarios using AI2-THOR simulation and real robot platforms. The system needs PyTorch, ROS 2, web API access, 12GB GPU memory, and takes 2-3 days to train on video datasets with multi-agent interaction logs. Success is measured by task completion rate, domain switching accuracy, and system uptime during agent failures."""
 
-        test_username = "2025_11_30"
+
+        test_query="""logistics: A Multi-Agent Predictive QptimizationFramework"""
+        test_username = "2025_12_1_lab"
         test_session_id: Optional[str] = None  # None 时会自动生成，格式：session_{timestamp}_{uuid}
 
         _load_local_env_file()
@@ -848,6 +917,7 @@ async def main() -> None:
         openai_service = OpenAIService()
         query_agent = QueryRewriteAgent(openai_service=openai_service)
         methodology_agent = MethodologyExtractionAgent(openai_service=openai_service)
+        experiment_agent = ExperimentExtractionAgent(openai_service=openai_service)
         innovation_agent = InnovationSynthesisAgent(openai_service=openai_service)
 
         anthropic_service = AnthropicService()
@@ -865,6 +935,7 @@ async def main() -> None:
             query_rewrite_agent=query_agent,
             vision_agent=vision_agent,
             methodology_extraction_agent=methodology_agent,
+            experiment_extraction_agent=experiment_agent,
             innovation_agent=innovation_agent,
             max_concurrent_pdfs=2,
             max_concurrent_pages=5,  # 每篇论文同时处理的页面数
@@ -875,9 +946,9 @@ async def main() -> None:
             session_id=test_session_id,  # None 时自动生成，如：session_20251127_112630_748edba5
             username=test_username,
             target_paper_count=3,  # 最后需要的数量（去重后按时间排序取前 N 篇）
-            per_keyword_max_results=8,  # 每个关键词最大的搜索结果
+            per_keyword_max_results=4,  # 每个关键词最大的搜索结果
             per_keyword_recent_limit=3,  # 每个关键词只考虑最近 N 篇
-            skip_dblp_check=False,  # 设置为 True 可跳过 DBLP 检查（会下载更多论文，但使用 arXiv BibTeX）
+            skip_dblp_check=True,  # 设置为 True 可跳过 DBLP 检查（会下载更多论文，但使用 arXiv BibTeX）
         )
 
         logger.info("Query→Markdown workflow finished.")
@@ -889,6 +960,8 @@ async def main() -> None:
         logger.info("index_md: %s", result["index_md"])
         if result.get("methodology_extraction_artifact"):
             logger.info("methodology_extraction_artifact: %s", result["methodology_extraction_artifact"])
+        if result.get("experiment_extraction_artifact"):
+            logger.info("experiment_extraction_artifact: %s", result["experiment_extraction_artifact"])
         innovation_artifacts = result.get("innovation_artifacts") or []
         if innovation_artifacts:
             logger.info("innovation_artifacts: %s", innovation_artifacts)

@@ -359,7 +359,7 @@
   - 若可用论文不足 3 篇，记录 warning 并跳过
 - `max_concurrent_pdfs` (int, 默认 2): 同时处理的 PDF 数量（也用于 Methodology 提取的并发控制）
 - `max_concurrent_pages` (int, 默认 5): 每篇论文同时处理的页面数
-- `max_pages_per_pdf` (Optional[int], 默认 20): 每篇论文最多进行 OCR 的页数，`None` 表示不限制
+- `max_pages_per_pdf` (Optional[int], 默认 50): 每篇论文最多进行 OCR 的页数，`None` 表示不限制
 
 
 #### 9.4 使用示例
@@ -389,7 +389,7 @@ workflow = QueryToMarkdownWorkflow(
     innovation_agent=innovation_agent,               # Step 6
     max_concurrent_pdfs=2,
     max_concurrent_pages=5,
-    max_pages_per_pdf=20,
+    max_pages_per_pdf=50,
 )
 
 # 执行工作流

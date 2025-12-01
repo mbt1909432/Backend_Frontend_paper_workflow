@@ -56,24 +56,31 @@ Generate the output in English, adhering to this format:
 \\section{{Method}}
 
 1. **Overview**
-   Write as a single coherent paragraph (not bullet points). Start with `final_problem_statement` if available (one sentence stating the real problem), otherwise use research question and problem gap from `method_context`. Use `final_method_proposal_text` to provide concrete implementation details, data shapes, and execution flow. Summarize the three key improved modules (use their actual names from `module_blueprints.modules[].improvement.name`, NOT "Module A*", "Module B*", "Module C*"). For each module, include one sentence that highlights its motivation and role. Explain the overall pipeline architecture from `method_pipeline.architecture_diagram`. Mention that the workflow is illustrated in Figure [XXXX] and elaborated in Algorithm [XXX]. Ensure smooth transitions between module descriptions, showing how they connect and build upon each other.
+   Write as a single coherent paragraph (not bullet points). Start with `final_problem_statement` if available (one sentence stating the real problem), otherwise use research question and problem gap from `method_context`. Use `final_method_proposal_text` to provide concrete implementation details, data shapes, and execution flow. Summarize the three key improved modules (use their actual names from `module_blueprints.modules[].improvement.name`, NOT "Module A*", "Module B*", "Module C*"). **CRITICAL: When mentioning modules in the Overview paragraph, use their actual names from `module_blueprints.modules[].improvement.name`, NEVER use "A*", "B*", "C*" or "Module A*", "Module B*", "Module C*" anywhere in the text.** For each module, include one sentence that highlights its motivation and role. Explain the overall pipeline architecture from `method_pipeline.architecture_diagram`. Mention that the workflow is illustrated in Figure [XXXX] and elaborated in Algorithm [XXX]. Ensure smooth transitions between module descriptions, showing how they connect and build upon each other.
 
-2. **\\subsection{{[Actual Module Name]}}** (use the exact name from `module_blueprints.modules[0].improvement.name`, NOT "Module A*")
-   Write as a single coherent paragraph (not bullet points). Start with motivation: explain why this improved module is needed, referencing the weaknesses identified in the original module (from `module_blueprints.modules[0].weaknesses`). Describe what the original module does (from `module_blueprints.modules[0].original_role`) and how it works (from `module_blueprints.modules[0].key_mechanism`). Detail the improvements in the enhanced version (from `module_blueprints.modules[0].improvement.design_changes` and `workflow_change`). Include a clear, accessible, professional, and concise mathematical formulation that describes the method - use the formula from `module_blueprints.modules[0].improvement.math_spec` if provided, or derive one based on the method description. The mathematical expression should be intuitive and avoid code-specific parameters. Describe implementation details with concrete specifics (data formats, tensor shapes, operations) but express them through mathematical notation or clear textual descriptions, NOT code parameters. End by connecting to the next module, explaining how this module's output feeds into the subsequent one.
+2. **\\subsection{{[Actual Module Name]}}** (use the exact name from `module_blueprints.modules[0].improvement.name`, NOT "Module A*", and NEVER mention "A*" or "Module A*" in the paragraph content)
+   Write as a single coherent paragraph (not bullet points). **MUST start with motivation**: Clearly state the motivation and core rationale for this method at the beginning. Explain why this improved module is needed, referencing the weaknesses identified in the original module (from `module_blueprints.modules[0].weaknesses`). The motivation should be explicitly stated and serve as the foundation for understanding the method. Then describe what the original module does (from `module_blueprints.modules[0].original_role`) and how it works (from `module_blueprints.modules[0].key_mechanism`). Detail the improvements in the enhanced version (from `module_blueprints.modules[0].improvement.design_changes` and `workflow_change`). Include a detailed, step-by-step mathematical formulation that describes the method - use the formula from `module_blueprints.modules[0].improvement.math_spec` if provided, or derive one based on the method description. **The mathematical formulation MUST include**: (1) clear symbol definitions for all variables, (2) step-by-step derivation or computation process, (3) intuitive explanation of each step, and (4) avoid code-specific parameters. The formula should be detailed enough for reproducibility. Describe implementation details with concrete specifics (data formats, tensor shapes, operations) but express them through mathematical notation or clear textual descriptions, NOT code parameters. End by connecting to the next module, explaining how this module's output feeds into the subsequent one. **CRITICAL: When referring to this module or other modules in the paragraph, use their actual names from `module_blueprints.modules[].improvement.name`, NEVER use "A*", "B*", "C*" or "Module A*", "Module B*", "Module C*" anywhere in the text.**
 
-3. **\\subsection{{[Actual Module Name]}}** (use the exact name from `module_blueprints.modules[1].improvement.name`, NOT "Module B*")
-   Write as a single coherent paragraph (not bullet points). Start with motivation: explain why this improved module is needed, emphasizing how it builds upon the previous module. Describe what the original module does and how it works. Mention problems with the original module. Detail improvements in the enhanced version. Use information from `integration_strategy.selected_pipeline` to explain how the previous module connects to this one with specific data formats. Include a clear, accessible, professional, and concise mathematical formulation that describes the method - use the formula from `module_blueprints.modules[1].improvement.math_spec` if provided, or derive one based on the method description. The mathematical expression should be intuitive and avoid code-specific parameters. Describe implementation details with concrete specifics but express them through mathematical notation or clear textual descriptions, NOT code parameters. End by connecting to the next module.
+3. **\\subsection{{[Actual Module Name]}}** (use the exact name from `module_blueprints.modules[1].improvement.name`, NOT "Module B*", and NEVER mention "B*" or "Module B*" in the paragraph content)
+   Write as a single coherent paragraph (not bullet points). **MUST start with a transition word (e.g., "Further", "Then", "Next", "Subsequently", "Building upon this") followed by motivation**: Naturally connect to the previous subsection by using appropriate transition words, then explicitly state the motivation for this method, emphasizing how it builds upon or extends the previous module's motivation. The motivation should clearly explain why this module is needed as a progression from the first module. Describe what the original module does and how it works. Mention problems with the original module. Detail improvements in the enhanced version. Use information from `integration_strategy.selected_pipeline` to explain how the previous module connects to this one with specific data formats. Include a detailed, step-by-step mathematical formulation that describes the method - use the formula from `module_blueprints.modules[1].improvement.math_spec` if provided, or derive one based on the method description. **The mathematical formulation MUST include**: (1) clear symbol definitions for all variables, (2) step-by-step derivation or computation process, (3) intuitive explanation of each step, and (4) avoid code-specific parameters. The formula should be detailed enough for reproducibility. Describe implementation details with concrete specifics but express them through mathematical notation or clear textual descriptions, NOT code parameters. End by connecting to the next module. **CRITICAL: When referring to this module or other modules in the paragraph, use their actual names from `module_blueprints.modules[].improvement.name`, NEVER use "A*", "B*", "C*" or "Module A*", "Module B*", "Module C*" anywhere in the text.**
 
-4. **\\subsection{{[Actual Module Name]}}** (use the exact name from `module_blueprints.modules[2].improvement.name`, NOT "Module C*")
-   Write as a single coherent paragraph (not bullet points). Start with motivation: explain why this improved module is needed, emphasizing how it extends the previous module. Describe what the original module does and how it works. Mention problems with the original module. Detail improvements in the enhanced version. Explain how the previous module connects to this one with specific data formats. Include a clear, accessible, professional, and concise mathematical formulation that describes the method - use the formula from `module_blueprints.modules[2].improvement.math_spec` if provided, or derive one based on the method description. The mathematical expression should be intuitive and avoid code-specific parameters. Describe implementation details with concrete specifics but express them through mathematical notation or clear textual descriptions, NOT code parameters.
+4. **\\subsection{{[Actual Module Name]}}** (use the exact name from `module_blueprints.modules[2].improvement.name`, NOT "Module C*", and NEVER mention "C*" or "Module C*" in the paragraph content)
+   Write as a single coherent paragraph (not bullet points). **MUST start with a transition word (e.g., "Further", "Then", "Next", "Subsequently", "Finally", "Building upon this") followed by motivation**: Naturally connect to the previous subsection by using appropriate transition words, then explicitly state the motivation for this method, emphasizing how it extends or completes the previous modules' motivations. The motivation should clearly explain why this module is needed as a final step or extension. Describe what the original module does and how it works. Mention problems with the original module. Detail improvements in the enhanced version. Explain how the previous module connects to this one with specific data formats. Include a detailed, step-by-step mathematical formulation that describes the method - use the formula from `module_blueprints.modules[2].improvement.math_spec` if provided, or derive one based on the method description. **The mathematical formulation MUST include**: (1) clear symbol definitions for all variables, (2) step-by-step derivation or computation process, (3) intuitive explanation of each step, and (4) avoid code-specific parameters. The formula should be detailed enough for reproducibility. Describe implementation details with concrete specifics but express them through mathematical notation or clear textual descriptions, NOT code parameters. **CRITICAL: When referring to this module or other modules in the paragraph, use their actual names from `module_blueprints.modules[].improvement.name`, NEVER use "A*", "B*", "C*" or "Module A*", "Module B*", "Module C*" anywhere in the text.**
 
 5. **\\subsection{{Algorithm}}**
-   - Use `method_pipeline.stages` to create a comprehensive algorithm description
+   - Use `method_pipeline.stages` to create a comprehensive, detailed algorithm description
    - Wrap the algorithm in `\\begin{{algorithm}}` ... `\\end{{algorithm}}` environment
-   - Include all stages with their operations, input/output specifications, and mathematical formulations
-   - Present the algorithm as pseudocode that clearly shows the step-by-step execution flow
+   - **MUST provide detailed, step-by-step pseudocode** that includes:
+     * Clear variable definitions and data structure specifications at the beginning
+     * Explicit input/output specifications for each step with data formats and dimensions
+     * Detailed operations with mathematical formulations where applicable
+     * Step-by-step execution flow with clear numbering or indentation
+     * Intermediate variable assignments and transformations
+     * Conditional logic and loop structures clearly specified
+   - For each stage, include: (1) motivation/purpose of that stage, (2) input data format and dimensions, (3) detailed operations with formulas, (4) output data format and dimensions
    - Reference the architecture diagram and information flow from `method_pipeline.information_flow`
    - Use proper LaTeX algorithm formatting with `\\caption{{}}` and `\\label{{}}`
+   - The algorithm should be detailed enough for direct implementation and reproducibility
 
 6. **\\subsection{{Theoretical Analysis}}** (Optional, if theoretical content is substantial)
    - **Assumptions**: List key assumptions (from `theoretical_and_complexity.assumptions`)
@@ -85,15 +92,28 @@ Generate the output in English, adhering to this format:
 
 # Critical Requirements
 
-1. **Module Naming**: Always use the actual module names from `module_blueprints.modules[].improvement.name` in subsection titles. NEVER use generic labels like "Module A*", "Module B*", or "Module C*".
+1. **Module Naming - CRITICAL**: 
+   - **ALWAYS use the actual module names** from `module_blueprints.modules[].improvement.name` in subsection titles (e.g., `\subsection{{[Actual Module Name]}}`)
+   - **NEVER use generic labels** like "Module A*", "Module B*", or "Module C*" in subsection titles
+   - **NEVER mention "A*", "B*", "C*" or "Module A*", "Module B*", "Module C*" in the paragraph content** - these are only internal designations and should NOT appear anywhere in the generated text
+   - When referring to modules in paragraphs, use their actual names from `module_blueprints.modules[].improvement.name`, NOT placeholder labels
 
 2. **Paragraph Format**: Write Overview and each module subsection as single coherent paragraphs, NOT as bullet points or scattered items. Integrate all information into flowing prose.
 
 3. **Overview Structure**: The Overview section must be one continuous paragraph. Each module description within Overview should include one sentence highlighting its motivation. Ensure smooth transitions and connections between module descriptions, showing how they build upon each other.
 
-4. **Module Descriptions**: Each module subsection should be written as one continuous paragraph. Start with motivation, then integrate original role, weaknesses, improvements, and connections naturally into the flow. End each module subsection by connecting to the next module.
+4. **Module Descriptions - Motivation Requirements**: 
+   - **First module subsection**: MUST start with explicit motivation statement. Clearly state the motivation and core rationale for this method at the very beginning. The motivation should be the foundation for understanding why this method is needed.
+   - **Second module subsection**: MUST start with a transition word (e.g., "Further", "Then", "Next", "Subsequently", "Building upon this") followed by explicit motivation. The motivation should emphasize how it builds upon or extends the first module's motivation.
+   - **Third module subsection**: MUST start with a transition word (e.g., "Further", "Then", "Next", "Subsequently", "Finally", "Building upon this") followed by explicit motivation. The motivation should emphasize how it extends or completes the previous modules' motivations.
+   - Each module subsection should be written as one continuous paragraph. After stating motivation, integrate original role, weaknesses, improvements, and connections naturally into the flow. End each module subsection by connecting to the next module.
 
-5. **Mathematical Formulations**: Each module subsection MUST include a clear, accessible, professional, and concise mathematical formulation. The formula should be intuitive and describe the method conceptually. Avoid code-specific parameters (e.g., no learning_rate, batch_size, etc.). Express implementation details through mathematical notation or clear textual descriptions.
+5. **Mathematical Formulations - Detailed Requirements**: Each module subsection MUST include a detailed, step-by-step mathematical formulation that includes:
+   - **Symbol definitions**: Clearly define all variables, indices, and parameters used in the formula
+   - **Step-by-step derivation**: Show the computation process or derivation steps, not just the final formula
+   - **Intuitive explanations**: Explain what each step or term means conceptually
+   - **Reproducibility**: The formula should be detailed enough that someone can implement it directly
+   - Avoid code-specific parameters (e.g., no learning_rate, batch_size, etc.). Express implementation details through mathematical notation or clear textual descriptions.
 
 6. **Use Concrete Details**: Always include specific data formats, tensor shapes, dimensions, and step-by-step operations. Express these through mathematical notation or textual descriptions, NOT code parameters.
 
@@ -107,7 +127,16 @@ Generate the output in English, adhering to this format:
 
 11. **Use Placeholders**: For figures and algorithms, use placeholders like [XXXX] and [XXX] that can be replaced later.
 
-12. **Algorithm Format**: The Algorithm subsection must be wrapped in `\\begin{{algorithm}}` ... `\\end{{algorithm}}` environment. Do NOT include training details, hyperparameters, or optimization strategies - focus only on the method execution flow.
+12. **Algorithm Format - Detailed Requirements**: The Algorithm subsection must be wrapped in `\\begin{{algorithm}}` ... `\\end{{algorithm}}` environment. The algorithm MUST be detailed and step-by-step, including:
+    - Variable definitions and data structure specifications at the beginning
+    - Explicit input/output specifications for each step with data formats and dimensions
+    - Detailed operations with mathematical formulations
+    - Step-by-step execution flow with clear structure
+    - Intermediate variable assignments and transformations
+    - Conditional logic and loop structures clearly specified
+    - For each stage, include motivation/purpose, input/output formats, and detailed operations
+    - The algorithm should be detailed enough for direct implementation and reproducibility
+    - Do NOT include training details, hyperparameters, or optimization strategies - focus only on the method execution flow.
 
 13. **Exclude Training Details**: Do NOT include `\\subsection{{Method Pipeline}}` or `\\subsection{{Training and Optimization}}` sections. These contain experimental implementation details that should not appear in the Methods section.
 
@@ -266,10 +295,25 @@ Output the complete LaTeX Methods section wrapped in ```latex ... ``` blocks. Do
 {json_str}
 
 Remember: 
-- Use actual module names from `module_blueprints.modules[].improvement.name` in subsection titles (NOT "Module A*", "Module B*", "Module C*")
+- **CRITICAL - Module Naming**: Use actual module names from `module_blueprints.modules[].improvement.name` in subsection titles (NOT "Module A*", "Module B*", "Module C*")
+- **CRITICAL - Never Use Placeholders in Text**: NEVER mention "A*", "B*", "C*" or "Module A*", "Module B*", "Module C*" anywhere in the paragraph content. These are only internal designations and must NOT appear in the generated text. Always use the actual module names from `module_blueprints.modules[].improvement.name` when referring to modules in paragraphs.
 - Write Overview as a single coherent paragraph (not bullet points), with each module having one sentence highlighting motivation, and smooth transitions between modules
+- **CRITICAL - Motivation Requirements**:
+  * First module subsection: MUST start with explicit motivation statement at the very beginning
+  * Second module subsection: MUST start with transition word (e.g., "Further", "Then", "Next") followed by explicit motivation emphasizing how it builds upon the first module
+  * Third module subsection: MUST start with transition word (e.g., "Further", "Then", "Next", "Finally") followed by explicit motivation emphasizing how it extends previous modules
 - Write each module subsection as a single coherent paragraph (not bullet points), integrating all information into flowing prose
-- Each module subsection must include a clear, accessible, professional, and concise mathematical formulation (avoid code-specific parameters)
+- **CRITICAL - Mathematical Formulation Requirements**: Each module subsection must include a detailed, step-by-step mathematical formulation with:
+  * Clear symbol definitions for all variables
+  * Step-by-step derivation or computation process
+  * Intuitive explanation of each step
+  * Detailed enough for reproducibility
+- **CRITICAL - Algorithm Requirements**: The Algorithm subsection must be detailed and step-by-step, including:
+  * Variable definitions and data structure specifications
+  * Explicit input/output specifications with data formats and dimensions for each step
+  * Detailed operations with mathematical formulations
+  * Step-by-step execution flow with clear structure
+  * Detailed enough for direct implementation
 - Express implementation details through mathematical notation or textual descriptions, NOT code parameters
 - Extract and synthesize information from all relevant sections (module_blueprints, method_pipeline, etc.)
 - Emphasize implementation details, concrete data formats, and step-by-step operations

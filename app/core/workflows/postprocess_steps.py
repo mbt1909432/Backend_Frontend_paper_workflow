@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from dotenv import load_dotenv
 
+from app.core.agents.experiment_extraction_agent import ExperimentExtractionAgent
 from app.core.agents.innovation_synthesis_agent import InnovationSynthesisAgent
 from app.core.agents.methodology_extraction_agent import MethodologyExtractionAgent
 from app.core.agents.writing.methods_writing_agent import MethodsWritingAgent
@@ -91,6 +92,18 @@ def load_methodology_items_from_artifact(session_folder: Path) -> Tuple[List[Dic
 
     artifact_data = json.loads(artifact_path.read_text(encoding="utf-8"))
     return artifact_data.get("methodologies", []) or [], artifact_path
+
+
+def load_experiment_items_from_artifact(session_folder: Path) -> Tuple[List[Dict[str, Any]], Optional[Path]]:
+    """
+    Load experiment extraction output from an existing artifact if it exists.
+    """
+    artifact_path = session_folder / "artifact" / "experiment_extraction.json"
+    if not artifact_path.exists():
+        return [], None
+
+    artifact_data = json.loads(artifact_path.read_text(encoding="utf-8"))
+    return artifact_data.get("experiments", []) or [], artifact_path
 
 
 async def run_methodology_extraction_step(
@@ -241,6 +254,195 @@ async def run_methodology_extraction_step(
     )
     logger.info("✓ methodology_extraction.json saved at %s", artifact_path)
     return str(artifact_path), methodology_items
+
+
+async def run_experiment_extraction_step(
+    step_inputs: SessionStepInputs,
+    experiment_agent: ExperimentExtractionAgent,
+    *,
+    max_concurrent_tasks: int,
+) -> Tuple[Optional[str], List[Dict[str, Any]]]:
+    """
+    Execute experiment extraction step given a prepared context.
+    """
+    session_folder = step_inputs.session_folder
+    experiment_dir = step_inputs.generated_dir / "experiments"
+    experiment_dir.mkdir(parents=True, exist_ok=True)
+
+    async def extract_single_experiment(idx: int, md_item: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        arxiv_id = md_item.get("arxiv_id") or ""
+        title = md_item.get("title") or "Untitled"
+        markdown_path = md_item.get("markdown_path") or ""
+
+        if not markdown_path:
+            logger.warning("Skip experiment extraction for paper #%d: missing markdown_path", idx)
+            return None
+
+        md_full_path = session_folder / markdown_path
+        if not md_full_path.exists():
+            logger.warning("Skip experiment extraction for paper #%d: markdown missing: %s", idx, md_full_path)
+            return None
+
+        try:
+            md_content = md_full_path.read_text(encoding="utf-8")
+        except Exception as exc:
+            logger.exception("Failed to read markdown for paper #%d (%s): %s", idx, arxiv_id, exc)
+            return None
+
+        # 在后续使用前先清理 markdown：移除纯空行
+        # 这样既不影响正文内容，又能避免多余空行干扰后续解析或 token 计数
+        md_content = "\n".join(
+            line for line in md_content.splitlines() if line.strip()
+        )
+
+        extracted_text_marker = "## Extracted Text"
+        if extracted_text_marker in md_content:
+            parts = md_content.split(extracted_text_marker, 1)
+            paper_content = parts[1].strip() if len(parts) > 1 else md_content
+        else:
+            paper_content = md_content
+
+        if not paper_content or len(paper_content.strip()) < 100:
+            logger.warning("Skip experiment extraction for paper #%d: content too short", idx)
+            return None
+
+        try:
+            extraction_result = await experiment_agent.extract_experiments(
+                paper_title=title,
+                paper_content=paper_content,
+            )
+
+            # 记录本次调用的大模型 token 使用情况，方便排查上下文过长等问题
+            usage_stats = extraction_result.get("usage") or {}
+            if usage_stats:
+                logger.info(
+                    "😀Experiment LLM usage for paper #%d (%s): prompt_tokens=%s, completion_tokens=%s, total_tokens=%s",
+                    idx,
+                    arxiv_id,
+                    usage_stats.get("prompt_tokens"),
+                    usage_stats.get("completion_tokens"),
+                    usage_stats.get("total_tokens"),
+                )
+
+            extraction_json = extraction_result.get("json") or {}
+            experiments_text = extraction_json.get("experiments", "").strip()
+            reason = extraction_json.get("reason", "").strip()
+
+            if not experiments_text:
+                logger.warning("Experiment extraction for paper #%d returned empty experiments", idx)
+                return {
+                    "index": idx,
+                    "arxiv_id": arxiv_id,
+                    "title": title,
+                    "experiment_path": None,
+                    "reason": reason,
+                    "status": "empty",
+                    "usage": extraction_result.get("usage"),
+                    "agent_payload": extraction_json,
+                    "raw_response": extraction_result.get("raw_response"),
+                }
+
+            # 将完整 JSON 信息落盘：不仅包含实验正文，还写出 baselines/datasets/metrics 等字段。
+            def _format_list_section(items: List[str]) -> str:
+                if not items:
+                    return "_None_"
+                return "\n".join(f"- {entry}" for entry in items)
+
+            experimental_tables = extraction_json.get("experimental_tables", "").strip()
+            baselines = extraction_json.get("baselines") or []
+            datasets = extraction_json.get("datasets") or []
+            metrics = extraction_json.get("metrics") or []
+            table_details = extraction_json.get("table_details") or []
+
+            experiment_filename = f"paper_{idx:02d}_{arxiv_id}_experiments.md"
+            experiment_path = experiment_dir / experiment_filename
+
+            markdown_sections: List[str] = [
+                f"# Experiments - {title}",
+                "",
+                "## Reason",
+                reason or "_Empty_",
+                "",
+                "## Experiments",
+                experiments_text,
+                "",
+                "## Baselines",
+                _format_list_section(baselines),
+                "",
+                "## Datasets",
+                _format_list_section(datasets),
+                "",
+                "## Metrics",
+                _format_list_section(metrics),
+                "",
+                "## Experimental Tables",
+                experimental_tables or "_None_",
+                "",
+                "## Table Details",
+                (
+                    "\n\n".join(table_details)
+                    if table_details
+                    else "_None_"
+                ),
+                "",
+                "## Agent Payload (JSON)",
+                "```json",
+                json.dumps(extraction_json, ensure_ascii=False, indent=2),
+                "```",
+            ]
+            experiment_path.write_text("\n".join(markdown_sections), encoding="utf-8")
+            rel_experiment_path = experiment_path.relative_to(session_folder)
+
+            logger.info("Experiment extracted for paper #%d (%s): %s", idx, arxiv_id, experiment_path)
+
+            return {
+                "index": idx,
+                "arxiv_id": arxiv_id,
+                "title": title,
+                "experiment_path": str(rel_experiment_path),
+                "reason": reason,
+                "status": "ok",
+                "usage": extraction_result.get("usage"),
+                "agent_payload": extraction_json,
+                "raw_response": extraction_result.get("raw_response"),
+            }
+        except Exception as exc:
+            logger.exception("Failed to extract experiment for paper #%d (%s): %s", idx, arxiv_id, exc)
+            return {
+                "index": idx,
+                "arxiv_id": arxiv_id,
+                "title": title,
+                "experiment_path": None,
+                "reason": f"Extraction failed: {exc}",
+                "status": "failed",
+                "usage": None,
+                "agent_payload": None,
+                "raw_response": None,
+            }
+
+    semaphore = asyncio.Semaphore(max_concurrent_tasks)
+
+    async def sem_task(idx: int, md_item: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        async with semaphore:
+            return await extract_single_experiment(idx, md_item)
+
+    experiment_results = await asyncio.gather(
+        *[sem_task(md_item["index"], md_item) for md_item in step_inputs.markdown_items],
+        return_exceptions=False,
+    )
+    experiment_items = [item for item in experiment_results if item is not None]
+
+    artifact_path = save_artifact(
+        session_folder=session_folder,
+        stage_name="experiment_extraction",
+        artifact_data={
+            "total_papers": len(step_inputs.markdown_items),
+            "extracted_count": len([e for e in experiment_items if e.get("status") == "ok"]),
+            "experiments": experiment_items,
+        },
+    )
+    logger.info("✓ experiment_extraction.json saved at %s", artifact_path)
+    return str(artifact_path), experiment_items
 
 
 async def run_innovation_synthesis_step(
@@ -680,15 +882,24 @@ async def main_run_steps_5_and_6(
 
     openai_service = OpenAIService()
     methodology_agent = MethodologyExtractionAgent(openai_service=openai_service)
+    experiment_agent = ExperimentExtractionAgent(openai_service=openai_service)
     innovation_agent = InnovationSynthesisAgent(openai_service=openai_service)
 
-    methodology_artifact, methodology_items = await run_methodology_extraction_step(
+    (methodology_artifact, methodology_items), (experiment_artifact, experiment_items) = await asyncio.gather(
+        run_methodology_extraction_step(
         step_inputs=step_inputs,
         methodology_agent=methodology_agent,
         max_concurrent_tasks=max_concurrent_tasks,
+        ),
+        run_experiment_extraction_step(
+            step_inputs=step_inputs,
+            experiment_agent=experiment_agent,
+            max_concurrent_tasks=max_concurrent_tasks,
+        ),
     )
 
     logger.info("Methodology artifact: %s", methodology_artifact)
+    logger.info("Experiment artifact: %s", experiment_artifact)
 
     if not methodology_items:
         logger.info("No methodology items extracted; skip innovation synthesis.")
@@ -754,7 +965,7 @@ async def main_run_step_7_only(
     """
 
     # TODO: 修改为真实 session 路径，例如 Path("E:/.../session_20251128_xxx")
-    test_session_folder = Path(r"E:\pycharm_project\software_idea\academic draft agentic_workflow\app\core\workflows\output\2025_11_29\session_20251129_111308_87ffb736").resolve()
+    test_session_folder = Path(r"E:\pycharm_project\software_idea\academic draft agentic_workflow\app\core\workflows\output\2025_11_30\session_20251130_152450_2e84a1cc").resolve()
 
     _load_local_env_file()
 
@@ -778,5 +989,5 @@ async def main_run_step_7_only(
 
 if __name__ == "__main__":
     _load_local_env_file()
-    # asyncio.run(main_run_step_7_only())
-    asyncio.run(main_run_step_6_only())
+    asyncio.run(main_run_step_7_only())
+    #asyncio.run(main_run_step_6_only())
