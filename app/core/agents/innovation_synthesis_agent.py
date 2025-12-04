@@ -417,26 +417,23 @@ You MUST output ONLY a JSON object wrapped in ```json ... ``` with the following
         if not response:
             return None
 
-        match = re.search(r"```json\s*(\{.*\})\s*```", response, re.DOTALL)
-        if not match:
-            logger.warning("InnovationSynthesisAgent: missing ```json block in response")
-            logger.debug("Full response:\n%s", response)
-            return None
+        print("😀response")
+        print(response)
 
-        json_str = match.group(1).strip()
-        try:
-            # Use json_repair.loads() to handle broken/incomplete JSON
-            # It automatically checks if JSON is valid and repairs if needed
-            # json_repair preserves non-Latin characters (Chinese, Japanese, etc.) by default
-            if json_repair is not None:
-                return json_repair.loads(json_str)
-            else:
-                # Fallback to standard json.loads() if json_repair is not available
-                return json.loads(json_str)
-        except (json.JSONDecodeError, ValueError) as exc:
-            logger.warning("InnovationSynthesisAgent: failed to parse JSON block: %s", exc)
-            logger.debug("Raw JSON content:\n%s", json_str)
-            return None
+
+        repaired_result=json_repair.loads(response)
+        print(f"😀{repaired_result}")
+
+        if repaired_result:
+            return  repaired_result
+        else:
+            logger.log("error to ge method proposal")
+            return {
+                "error": "json_parse_failed",
+                "error_string": response,
+            }
+
+
 
     async def generate_innovation_plan(
         self,

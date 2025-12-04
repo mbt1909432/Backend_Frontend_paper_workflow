@@ -1627,7 +1627,7 @@ async def main_run_steps_5_and_6(
 
 async def step_3_step4(
     max_concurrent_pdfs: int = 3,
-    max_concurrent_pages: int = 4,
+    max_concurrent_pages: int = 8,
     max_pages_per_pdf: Optional[int] = None,
 ) -> None:
     """
@@ -1690,7 +1690,7 @@ async def main_run_step_6_only(
     """
 
     # TODO: 修改为真实 session 路径，例如 Path("E:/.../session_20251128_xxx")
-    test_session_folder = Path(r"E:\pycharm_project\software_idea\academic draft agentic_workflow\app\core\workflows\output\dev_tester\session_20251128_224959_6a932f9b").resolve()
+    test_session_folder = Path(r"E:\pycharm_project\software_idea\academic draft agentic_workflow\app\core\workflows\output\2025_12_4\session_20251204_173727_a37e084c").resolve()
 
     _load_local_env_file()
 
@@ -1882,14 +1882,14 @@ async def main_run_steps_5_to_8(
 if __name__ == "__main__":
     _load_local_env_file()
     # asyncio.run(main_run_step_7_only())
-    # #asyncio.run(main_run_step_6_only())
+    asyncio.run(main_run_step_6_only())
     # asyncio.run(main_run_step_8_only())
     # start=time
-    asyncio.run(step_3_step4())
+    # asyncio.run(step_3_step4())
     # asyncio.run(
     #     main_run_steps_5_to_8(
     #         session_folder=Path(
-    #             r"E:\pycharm_project\software_idea\academic draft agentic_workflow\app\core\workflows\output\2025_12_1_lab\session_20251201_230225_cbe3e486"
+    #             r"E:\pycharm_project\software_idea\academic draft agentic_workflow\app\core\workflows\output\2025_12_4\session_20251204_173727_a37e084c"
     #         )
     #     )
     # )

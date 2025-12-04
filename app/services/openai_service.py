@@ -2,6 +2,7 @@ from typing import List, Dict, Any, Optional, AsyncIterator
 from openai import AsyncOpenAI
 from app.config.settings import settings
 from app.utils.logger import logger
+import tiktoken
 
 
 class OpenAIService:
@@ -19,15 +20,24 @@ class OpenAIService:
         self.default_temperature = settings.openai_temperature
         self.default_max_tokens = settings.openai_max_tokens
     
+    def _count_tokens(self, text: str, model: Optional[str] = None) -> int:
+        """使用 tiktoken 统计 token 数（优先按模型编码，失败则回退到通用编码）"""
+        try:
+            encoding = tiktoken.encoding_for_model(model or self.default_model)
+        except Exception:
+            encoding = tiktoken.get_encoding("cl100k_base")
+        return len(encoding.encode(text))
+    
     def _format_messages_for_log(self, messages: List[Dict[str, str]]) -> str:
         """格式化消息列表用于日志输出"""
         formatted = []
         for msg in messages:
             role = msg.get("role", "unknown")
             content = msg.get("content", "")
-            # 如果内容太长，截断显示
-            if len(content) > 2000:
-                content_preview = content[:2000] + f"\n... (truncated, total length: {len(content)} chars)"
+            # 如果内容太长，截断显示（并用 tiktoken 统计 token 数）
+            if len(content) > 200:
+                total_tokens = self._count_tokens(content)
+                content_preview = content[:200] + f"\n... (truncated, total tokens: {total_tokens})"
             else:
                 content_preview = content
             formatted.append(f"  {role}: {content_preview}")
@@ -61,7 +71,7 @@ class OpenAIService:
             logger.info(f"Max Tokens: {max_tokens or self.default_max_tokens}")
             logger.info("Messages:")
             logger.info(self._format_messages_for_log(messages))
-            logger.info("=" * 80)
+            logger.info("😀" * 80)
             
             response = await self.client.chat.completions.create(
                 model=model or self.default_model,
@@ -80,11 +90,11 @@ class OpenAIService:
             # 打印 output
             logger.info("=" * 80)
             logger.info("LLM Response (Output):")
-            # 如果输出太长，截断显示
+            # 如果输出太长，截断显示（并用 tiktoken 统计 token 数）
             if len(response_text) > 2000:
-                output_preview = response_text[:2000] + f"\n... (truncated, total length: {len(response_text)} chars)"
+                total_tokens = self._count_tokens(response_text, model)
+                output_preview = response_text[:2000] + f"\n... (truncated, total tokens: {total_tokens})"
                 logger.info(output_preview)
-                logger.info(f"\nFull output length: {len(response_text)} characters")
             else:
                 logger.info(response_text)
             logger.info(f"Usage: {usage_info['total_tokens']} tokens (prompt: {usage_info['prompt_tokens']}, completion: {usage_info['completion_tokens']})")
@@ -162,9 +172,9 @@ class OpenAIService:
                     logger.info("=" * 80)
                     logger.info("LLM Response (Output) - Streaming Complete:")
                     if len(accumulated_text) > 2000:
-                        output_preview = accumulated_text[:2000] + f"\n... (truncated, total length: {len(accumulated_text)} chars)"
+                        total_tokens = self._count_tokens(accumulated_text, model)
+                        output_preview = accumulated_text[:2000] + f"\n... (truncated, total tokens: {total_tokens})"
                         logger.info(output_preview)
-                        logger.info(f"\nFull output length: {len(accumulated_text)} characters")
                     else:
                         logger.info(accumulated_text)
                     if usage_info:

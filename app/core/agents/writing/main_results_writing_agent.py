@@ -150,7 +150,9 @@ w/o Component 3 & 00.0 & 00.0 & 00.0 \\\\
 - Use the provided method name consistently as the primary row in tables and in the text (replace [YOUR METHOD]).
 - Never mention “experiment1/2/3” in the output; synthesize them into a unified story.
 - Do NOT change section/subsection titles, labels, or the LaTeX structure; only replace bracketed placeholders with grounded content.
-
+- For the Ablation Study subsection, go beyond counting variants: when evidence allows, conduct fine-grained analyses such as sensitivity to key hyperparameters, independent contributions of sub-components within each module, and other relevant dimensions that reveal why each design choice matters.
+- In the Main Results subsection, integrate and extend the comparison dimensions inspired by the retrieved related work (e.g., datasets, metrics, settings, robustness/efficiency axes), so that our method is contrasted against baselines along deeper and multi-dimensional experimental axes, and its advantages are linked to clear theoretical or methodological justifications.
+- Strengthen the Experiment overview and subsection overviews by posing deeper guiding questions that probe mechanisms, boundary conditions, and fundamental research issues (rather than only listing which module works better), and make sure these questions are explicitly connected to the subsequent experimental design and findings.
 6. Tone & Style
 - Mirror SOTA conference writing: confident, precise, non-exaggerated.
 - Use active voice, formal tone, and data-backed claims.

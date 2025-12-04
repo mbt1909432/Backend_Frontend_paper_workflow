@@ -3,6 +3,7 @@ from anthropic import AsyncAnthropic
 from app.config.settings import settings
 from app.utils.logger import logger
 import base64
+import tiktoken
 
 
 class AnthropicService:
@@ -24,6 +25,14 @@ class AnthropicService:
         self.default_max_tokens = settings.anthropic_max_tokens
         print(f"anthropic😀{client_kwargs}")
     
+    def _count_tokens(self, text: str, model: Optional[str] = None) -> int:
+        """使用 tiktoken 统计 token 数（优先按模型编码，失败则回退到通用编码）"""
+        try:
+            encoding = tiktoken.encoding_for_model(model or self.default_model)
+        except Exception:
+            encoding = tiktoken.get_encoding("cl100k_base")
+        return len(encoding.encode(text))
+    
     def _format_messages_for_log(self, messages: List[Dict[str, Any]]) -> str:
         """格式化消息列表用于日志输出"""
         formatted = []
@@ -37,10 +46,13 @@ class AnthropicService:
                 for part in content:
                     if isinstance(part, dict):
                         if part.get("type") == "text":
-                            text = part.get("text", "")
-                            if len(text) > 500:
-                                text = text[:500] + f"\n... (truncated, total length: {len(text)} chars)"
-                            content_parts.append(f"[text: {text}]")
+                            full_text = part.get("text", "")
+                            if len(full_text) > 500:
+                                total_tokens = self._count_tokens(full_text)
+                                text_preview = full_text[:500] + f"\n... (truncated, total tokens: {total_tokens})"
+                            else:
+                                text_preview = full_text
+                            content_parts.append(f"[text: {text_preview}]")
                         elif part.get("type") == "image":
                             source = part.get("source", {})
                             media_type = source.get("media_type", "unknown")
@@ -50,9 +62,12 @@ class AnthropicService:
                         content_parts.append(str(part)[:200])
                 content_str = " ".join(content_parts)
             else:
-                content_str = str(content)
-                if len(content_str) > 2000:
-                    content_str = content_str[:2000] + f"\n... (truncated, total length: {len(content_str)} chars)"
+                full_content_str = str(content)
+                if len(full_content_str) > 200:
+                    total_tokens = self._count_tokens(full_content_str)
+                    content_str = full_content_str[:200] + f"\n... (truncated, total tokens: {total_tokens})"
+                else:
+                    content_str = full_content_str
             
             formatted.append(f"  {role}: {content_str}")
         return "\n".join(formatted)
@@ -138,7 +153,7 @@ class AnthropicService:
             logger.info(f"Max Tokens: {max_tokens or self.default_max_tokens}")
             logger.info("Messages:")
             logger.info(self._format_messages_for_log(messages))
-            logger.info("=" * 80)
+            logger.info("😀" * 80)
             
             create_kwargs = {
                 "model": model or self.default_model,
@@ -168,9 +183,9 @@ class AnthropicService:
             logger.info("=" * 80)
             logger.info("Anthropic API Response (Output):")
             if len(response_text) > 2000:
-                output_preview = response_text[:2000] + f"\n... (truncated, total length: {len(response_text)} chars)"
+                total_tokens = self._count_tokens(response_text, model)
+                output_preview = response_text[:2000] + f"\n... (truncated, total tokens: {total_tokens})"
                 logger.info(output_preview)
-                logger.info(f"\nFull output length: {len(response_text)} characters")
             else:
                 logger.info(response_text)
             logger.info(f"Usage: {usage_info['total_tokens']} tokens (input: {usage_info['input_tokens']}, output: {usage_info['output_tokens']})")
@@ -260,9 +275,9 @@ class AnthropicService:
                     logger.info("=" * 80)
                     logger.info("Anthropic API Response (Output) - Streaming Complete:")
                     if len(accumulated_text) > 2000:
-                        output_preview = accumulated_text[:2000] + f"\n... (truncated, total length: {len(accumulated_text)} chars)"
+                        total_tokens = self._count_tokens(accumulated_text, model)
+                        output_preview = accumulated_text[:2000] + f"\n... (truncated, total tokens: {total_tokens})"
                         logger.info(output_preview)
-                        logger.info(f"\nFull output length: {len(accumulated_text)} characters")
                     else:
                         logger.info(accumulated_text)
                     if usage_info:

@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     openai_api_base: Optional[str] = None  # 自定义 API endpoint（用于模型转发商）
     openai_model: str = "claude-sonnet-4-20250514"
     openai_temperature: float = 0.7
-    openai_max_tokens: int = 30000
+    openai_max_tokens: int = 100000
     
     # Jina embeddings
     jina_api_key: Optional[str] = None
@@ -33,7 +33,7 @@ class Settings(BaseSettings):
     anthropic_api_base: Optional[str] = None  # 自定义 API endpoint（用于模型转发商）
     anthropic_model: str = "claude-sonnet-4-20250514"
     anthropic_temperature: float = 0.7
-    anthropic_max_tokens: int = 30000
+    anthropic_max_tokens: int = 100000
     
     # 服务器配置
     host: str = "0.0.0.0"
