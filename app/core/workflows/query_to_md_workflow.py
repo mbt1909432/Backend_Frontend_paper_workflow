@@ -13,9 +13,8 @@ import json
 import random
 import asyncio
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
-import re
 from typing import Any, Dict, List, Optional
 
 from app.core.agents.query_rewrite_agent import QueryRewriteAgent
@@ -23,15 +22,22 @@ from app.core.agents.vision_agent import VisionAgent
 from app.core.agents.methodology_extraction_agent import MethodologyExtractionAgent
 from app.core.agents.experiment_extraction_agent import ExperimentExtractionAgent
 from app.core.agents.innovation_synthesis_agent import InnovationSynthesisAgent
+from app.core.agents.writing.methods_writing_agent import MethodsWritingAgent
+from app.core.agents.writing.main_results_writing_agent import MainResultsWritingAgent
 from app.core.workflows.postprocess_steps import (
     SessionStepInputs,
+    run_pdf_ocr_step,
+    run_markdown_emit_step,
     run_innovation_synthesis_step,
     run_methodology_extraction_step,
     run_experiment_extraction_step,
+    run_methods_writing_step,
+    run_main_results_writing_step,
     _load_local_env_file,
 )
 from app.config.settings import settings
 from app.services.arxiv_service import search_and_download, ArxivPaperMetadata
+from app.services.embedding_service import EmbeddingService
 from app.services.anthropic_service import AnthropicService
 from app.services.openai_service import OpenAIService
 from app.utils.file_manager import create_session_folder, save_artifact
@@ -68,6 +74,9 @@ class QueryToMarkdownWorkflow:
         methodology_extraction_agent: Optional[MethodologyExtractionAgent] = None,
         experiment_extraction_agent: Optional[ExperimentExtractionAgent] = None,
         innovation_agent: Optional[InnovationSynthesisAgent] = None,
+        methods_writing_agent: Optional[MethodsWritingAgent] = None,
+        main_results_agent: Optional[MainResultsWritingAgent] = None,
+        embedding_service: Optional[EmbeddingService] = None,
         max_concurrent_pdfs: int = 2,
         max_concurrent_pages: int = 5,
         max_pages_per_pdf: Optional[int] = 50,
@@ -77,6 +86,9 @@ class QueryToMarkdownWorkflow:
         self.methodology_extraction_agent = methodology_extraction_agent
         self.experiment_extraction_agent = experiment_extraction_agent
         self.innovation_agent = innovation_agent
+        self.methods_writing_agent = methods_writing_agent
+        self.main_results_agent = main_results_agent
+        self.embedding_service = embedding_service or EmbeddingService()
         self.max_concurrent_pdfs = max_concurrent_pdfs
         self.max_concurrent_pages = max_concurrent_pages
         self.max_pages_per_pdf = max_pages_per_pdf
@@ -93,6 +105,7 @@ class QueryToMarkdownWorkflow:
         innovation_keywords_override: Optional[List[str]] = None,
         innovation_run_count: int = 1,
         max_pages_per_pdf: Optional[int] = None,
+        max_paper_age_years: Optional[int] = 2,
     ) -> Dict[str, Any]:
         # 执行完整流程：
         # 1) QueryRewriteAgent 生成 4 条检索短句
@@ -144,6 +157,16 @@ class QueryToMarkdownWorkflow:
 
         rewrite_json = rewrite_result.get("json") or {}
         keywords: List[str] = rewrite_json.get("keywords") or []
+        concat_query = " ".join(kw.strip() for kw in keywords if kw.strip())
+        if concat_query:
+            logger.info(
+                "Constructed concat_query (%d chars) for embedding ranking.",
+                len(concat_query),
+            )
+        else:
+            logger.warning(
+                "concat_query is empty (no rewrite keywords). Will fall back to time-based selection."
+            )
 
         # 将 rewrite 结果存为 artifact/rewrite.json（对齐文档约定，复用 file_manager.save_artifact）
         rewrite_artifact_path = save_artifact(
@@ -201,25 +224,121 @@ class QueryToMarkdownWorkflow:
                 logger.info(f"等待 {delay_seconds} 秒后处理下一个关键词...")
                 time.sleep(delay_seconds)
 
-        # 去重并按发布时间排序，保留最近 target_paper_count 篇
+        # 去重
         unique_by_id: Dict[str, ArxivPaperMetadata] = {}
         for p in all_papers:
             unique_by_id[p.arxiv_id] = p
 
         deduped_papers = list(unique_by_id.values())
-        deduped_papers.sort(key=lambda p: p.published or 0, reverse=True)
-        top_papers = deduped_papers[:target_paper_count]
+        logger.info("Deduped papers: %d -> %d", len(all_papers), len(deduped_papers))
 
-        status = "ok"
-        if len(top_papers) < target_paper_count:
-            status = "insufficient"
+        def _to_naive(dt: datetime) -> datetime:
+            return dt.replace(tzinfo=None) if dt.tzinfo else dt
+
+        # 可选的时间窗口过滤
+        cutoff_date: Optional[datetime] = None
+        filtered_by_age: List[ArxivPaperMetadata] = deduped_papers
+        if max_paper_age_years is not None and max_paper_age_years > 0:
+            cutoff_date = datetime.utcnow() - timedelta(days=365 * max_paper_age_years)
+            filtered_by_age = [
+                p
+                for p in deduped_papers
+                if p.published and _to_naive(p.published) >= cutoff_date
+            ]
+        logger.info(
+                "Age filter applied: <= %d years (cutoff=%s). %d papers remain.",
+                max_paper_age_years,
+                cutoff_date.isoformat(),
+                len(filtered_by_age),
+            )
+
+        # 如果过滤后数量不足，则补齐旧论文
+        shortlisted: List[ArxivPaperMetadata] = list(filtered_by_age)
+        if len(shortlisted) < target_paper_count:
+            logger.info(
+                "Only %d papers after age filter; padding with older ones to reach %d target.",
+                len(shortlisted),
+                target_paper_count,
+            )
+            seen_ids = {p.arxiv_id for p in shortlisted}
+            for p in deduped_papers:
+                if p.arxiv_id in seen_ids:
+                    continue
+                shortlisted.append(p)
+                seen_ids.add(p.arxiv_id)
+                if len(shortlisted) >= target_paper_count:
+                    break
+
+        def _published_ts(paper: ArxivPaperMetadata) -> float:
+            if not paper.published:
+                return 0.0
+            try:
+                return paper.published.timestamp()
+            except Exception:
+                return 0.0
+
+        ranking_strategy = "published_date"
+        embedding_model_name: Optional[str] = None
+
+        # 嵌入重排（若配置且 concat_query 可用）
+        if (
+            concat_query
+            and shortlisted
+            and self.embedding_service
+            and self.embedding_service.is_configured
+        ):
+            try:
+                ranking_strategy = "embedding"
+                embedding_model_name = self.embedding_service.model
+                paper_payloads = []
+                for paper in shortlisted:
+                    summary_snippet = (paper.summary or "")[:1500]
+                    payload = f"{paper.title}\n\n{summary_snippet}"
+                    paper_payloads.append(payload)
+
+                embeddings = self.embedding_service.embed_texts(
+                    [concat_query] + paper_payloads
+                )
+                query_embedding = embeddings[0]
+                paper_embeddings = embeddings[1:]
+                for paper, embedding in zip(shortlisted, paper_embeddings):
+                    paper.relevance_score = self.embedding_service.cosine_similarity(
+                        query_embedding,
+                        embedding,
+                    )
+                shortlisted.sort(
+                    key=lambda p: (
+                        p.relevance_score is not None,
+                        p.relevance_score or -1.0,
+                        _published_ts(p),
+                    ),
+                    reverse=True,
+                )
+                logger.info(
+                    "Embedding-based ranking applied to %d papers (model=%s).",
+                    len(shortlisted),
+                    embedding_model_name,
+                )
+            except Exception as exc:  # noqa: BLE001
+                ranking_strategy = "published_date"
+                embedding_model_name = None
+                logger.exception("Embedding ranking failed, fallback to date: %s", exc)
+
+        if ranking_strategy == "published_date":
+            shortlisted.sort(key=_published_ts, reverse=True)
+
+        top_papers = shortlisted[:target_paper_count]
+
+        status = "ok" if len(top_papers) >= target_paper_count else "insufficient"
 
         logger.info(
-            "arXiv search summary: total_raw=%d, total_deduped=%d, selected_for_ocr=%d, status=%s",
+            "arXiv search summary: total_raw=%d, total_deduped=%d, "
+            "selected_for_ocr=%d, status=%s, ranking=%s",
             len(all_papers),
             len(deduped_papers),
             len(top_papers),
             status,
+            ranking_strategy,
         )
 
         manifest_items: List[Dict[str, Any]] = [
@@ -233,7 +352,13 @@ class QueryToMarkdownWorkflow:
             "per_keyword_recent_limit": per_keyword_recent_limit,
             "total_found": len(all_papers),
             "total_deduped": len(deduped_papers),
+            "total_after_age_filter": len(filtered_by_age),
              "target_paper_count": target_paper_count,
+            "concat_query": concat_query,
+            "ranking_strategy": ranking_strategy,
+            "embedding_model": embedding_model_name,
+            "max_paper_age_years": max_paper_age_years,
+            "age_filter_cutoff": cutoff_date.isoformat() if cutoff_date else None,
             "papers": manifest_items,
             "status": status,
         }
@@ -249,458 +374,31 @@ class QueryToMarkdownWorkflow:
         # -------------------------
         # Step 3: PDF → 文本（OCR）
         # -------------------------
-        logger.info("Step 3: PDF → Text via pdf_to_pngs + VisionAgent")
-
-        processed_root = session_folder / "processed"
-        processed_root.mkdir(parents=True, exist_ok=True)
-
-        resolved_page_limit: Optional[int] = (
-            max_pages_per_pdf if max_pages_per_pdf is not None else self.max_pages_per_pdf
-        )
-        if resolved_page_limit is not None and resolved_page_limit <= 0:
-            resolved_page_limit = None
-
-        async def process_single_paper(idx: int, paper: Dict[str, Any]) -> Dict[str, Any]:
-            paper_id = paper.get("arxiv_id") or f"paper_{idx:02d}"
-            paper_status = paper.get("status", "ok")
-            result: Dict[str, Any] = {
-                "index": idx,
-                "arxiv_id": paper_id,
-                "pdf_path": paper.get("pdf_path"),
-                "status": paper_status,
-                "page_count": 0,
-                "usage": {
-                    "input_tokens": 0,
-                    "output_tokens": 0,
-                    "total_tokens": 0,
-                },
-                "error": None,
-            }
-
-            if paper_status != "ok":
-                logger.warning(
-                    "Skip PDF processing for paper %s (status=%s)",
-                    paper_id,
-                    paper_status,
-                )
-                return result
-
-            pdf_path = paper.get("pdf_path")
-            if not pdf_path or not Path(pdf_path).exists():
-                logger.error("PDF not found for paper %s: %s", paper_id, pdf_path)
-                paper["status"] = "failed"
-                result["status"] = "failed"
-                result["error"] = f"PDF not found: {pdf_path}"
-                return result
-
-            paper_dir = processed_root / f"paper_{idx:02d}"
-            images_dir = paper_dir / "images"
-            ocr_dir = paper_dir / "ocr"
-            logs_dir = paper_dir / "logs"
-            images_dir.mkdir(parents=True, exist_ok=True)
-            ocr_dir.mkdir(parents=True, exist_ok=True)
-            logs_dir.mkdir(parents=True, exist_ok=True)
-
-            logger.info(
-                "Start PDF→PNG→OCR for paper #%d (%s) into %s",
-                idx,
-                paper_id,
-                paper_dir,
-            )
-
-            try:
-                png_paths = pdf_to_pngs(
-                    pdf_path=str(pdf_path),
-                    output_dir=str(images_dir),
-                    dpi=300,
-                )
-            except Exception as e:
-                logger.exception("pdf_to_pngs failed for %s: %s", paper_id, e)
-                paper["status"] = "failed"
-                result["status"] = "failed"
-                result["error"] = f"pdf_to_pngs failed: {e}"
-                return result
-
-            if not png_paths:
-                logger.error("No PNG pages generated for %s", paper_id)
-                paper["status"] = "failed"
-                result["status"] = "failed"
-                result["error"] = "No PNG pages generated"
-                return result
-
-            logger.info("PDF %s converted to %d PNG pages", paper_id, len(png_paths))
-
-            def _page_sort_key(path: str) -> tuple[int, str]:
-                """
-                Extract numeric page index if present to keep OCR ordering consistent.
-                Falls back to lexical order to avoid crashes on unexpected filenames.
-                """
-                stem = Path(path).stem
-                match = re.search(r"_page_(\d+)", stem)
-                if match:
-                    return (int(match.group(1)), stem)
-                return (0, stem)
-
-            sorted_png_paths = sorted(png_paths, key=_page_sort_key)
-            if resolved_page_limit is not None:
-                limited_paths = sorted_png_paths[:resolved_page_limit]
-                if len(limited_paths) < len(sorted_png_paths):
-                    logger.info(
-                        "Limiting OCR for %s to first %d pages (total=%d)",
-                        paper_id,
-                        len(limited_paths),
-                        len(sorted_png_paths),
-                    )
-                sorted_png_paths = limited_paths
-
-            result["page_count"] = len(sorted_png_paths)
-            if not sorted_png_paths:
-                logger.error("No PNG pages selected for OCR for %s", paper_id)
-                paper["status"] = "failed"
-                result["status"] = "failed"
-                result["error"] = "No PNG pages selected for OCR"
-                return result
-
-            # 页面级并发处理：使用 asyncio.gather 并发处理所有页面
-            page_semaphore = asyncio.Semaphore(self.max_concurrent_pages)
-
-            async def process_single_page(page_idx: int, png_path: str) -> tuple[int, str, dict, Optional[str]]:
-                """
-                处理单页 OCR
-                返回: (page_idx, text, usage, error)
-                """
-                async with page_semaphore:
-                    try:
-                        logger.info(
-                            "OCR on paper %s page %d/%d: %s",
-                            paper_id,
-                            page_idx,
-                            len(sorted_png_paths),
-                            png_path,
-                        )
-                        ocr_prompt = (
-                            "请直接输出图片中的所有文字内容、图表、表格、公式等，"
-                            "不要添加任何描述、说明或解释。保持原有的结构和格式信息。"
-                        )
-                        ocr_result = await self.vision_agent.extract_text_from_image(
-                            image=png_path,
-                            text_prompt=ocr_prompt,
-                            temperature=0.3,
-                            max_tokens=10000,
-                            model=None,
-                        )
-                        text = ocr_result.get("response") or ""
-                        usage = ocr_result.get("usage") or {}
-                        
-                        logger.info(
-                            "OCR completed for paper %s page %d/%d",
-                            paper_id,
-                            page_idx,
-                            len(sorted_png_paths),
-                        )
-                        
-                        return (page_idx, text, usage, None)
-                    except Exception as e:
-                        logger.exception(
-                            "OCR failed on paper %s page %d: %s", paper_id, page_idx, e
-                        )
-                        return (page_idx, "", {}, f"OCR failed on page {page_idx}: {e}")
-
-            # 并发处理所有页面
-            logger.info(
-                "Starting concurrent OCR for paper %s: %d pages (max_concurrent=%d)",
-                paper_id,
-                len(sorted_png_paths),
-                self.max_concurrent_pages,
-            )
-            
-            page_results = await asyncio.gather(
-                *[
-                    process_single_page(page_idx, png_path)
-                    for page_idx, png_path in enumerate(sorted_png_paths, start=1)
-                ],
-                return_exceptions=True,
-            )
-
-            # 按页面索引排序并处理结果（确保页面顺序正确）
-            page_texts: List[str] = [""] * len(sorted_png_paths)
-            failed_pages: List[tuple[int, str]] = []
-            
-            # 过滤异常并排序（按 page_idx）
-            valid_results = []
-            for page_result in page_results:
-                if isinstance(page_result, Exception):
-                    logger.error(
-                        "Unexpected exception in page processing: %s", page_result
-                    )
-                    continue
-                valid_results.append(page_result)
-            
-            # 按 page_idx 排序，确保页面顺序正确
-            valid_results.sort(key=lambda x: x[0])
-
-            for page_idx, text, usage, error in valid_results:
-                if error:
-                    failed_pages.append((page_idx, error))
-                    result["status"] = "failed"
-                    if not result.get("error"):
-                        result["error"] = error
-                else:
-                    # 累计 usage
-                    result["usage"]["input_tokens"] += usage.get("input_tokens", 0)
-                    result["usage"]["output_tokens"] += usage.get("output_tokens", 0)
-                    result["usage"]["total_tokens"] += usage.get("total_tokens", 0)
-                    
-                    # 保存到对应位置（page_idx 从 1 开始，数组从 0 开始）
-                    page_texts[page_idx - 1] = text or ""
-                    
-                    # 保存每页 OCR 结果
-                    page_txt_path = ocr_dir / f"page_{page_idx}.txt"
-                    page_txt_path.write_text(text, encoding="utf-8")
-
-            if failed_pages:
-                logger.warning(
-                    "Paper %s: %d pages failed OCR: %s",
-                    paper_id,
-                    len(failed_pages),
-                    [f"page_{idx}" for idx, _ in failed_pages],
-                )
-                paper["status"] = "failed"
-                result["status"] = "failed"
-                if not result.get("error"):
-                    result["error"] = f"Failed pages: {[idx for idx, _ in failed_pages]}"
-
-            # 写 full.txt 与 usage 日志（即使失败也尽量写出已有内容）
-            full_txt_path = ocr_dir / "full.txt"
-            full_txt_path.write_text("\n\n".join(page_texts), encoding="utf-8")
-
-            usage_log_path = logs_dir / "usage.json"
-            usage_log_path.write_text(
-                json.dumps(
-                    {
-                        "arxiv_id": paper_id,
-                        "index": idx,
-                        "status": result["status"],
-                        "usage": result["usage"],
-                        "page_count": result["page_count"],
-                        "error": result["error"],
-                        "timestamp": datetime.utcnow().isoformat() + "Z",
-                    },
-                    ensure_ascii=False,
-                    indent=2,
+        papers_manifest, pdf_processing_results, pdf_processing_artifact_path = (
+            await run_pdf_ocr_step(
+                session_folder=session_folder,
+                vision_agent=self.vision_agent,
+                max_concurrent_pdfs=self.max_concurrent_pdfs,
+                max_concurrent_pages=self.max_concurrent_pages,
+                max_pages_per_pdf=(
+                    max_pages_per_pdf
+                    if max_pages_per_pdf is not None
+                    else self.max_pages_per_pdf
                 ),
-                encoding="utf-8",
             )
-
-            # 在 manifest 中记录 OCR 目录与 full 文本路径
-            paper["ocr_dir"] = str(ocr_dir)
-            paper["ocr_full_path"] = str(full_txt_path)
-
-            logger.info(
-                "Finished OCR for paper #%d (%s): pages=%d, status=%s, ocr_full=%s",
-                idx,
-                paper_id,
-                result["page_count"],
-                result["status"],
-                full_txt_path,
-            )
-
-            return result
-
-        # 控制并发度，对 12 篇论文做 OCR
-        semaphore = asyncio.Semaphore(self.max_concurrent_pdfs)
-
-        async def sem_task(idx: int, paper: Dict[str, Any]) -> Dict[str, Any]:
-            async with semaphore:
-                return await process_single_paper(idx, paper)
-
-        pdf_processing_results: List[Dict[str, Any]] = await asyncio.gather(
-            *[
-                sem_task(idx, paper)
-                for idx, paper in enumerate(papers_manifest["papers"], start=1)
-            ]
         )
-
-        # 写 pdf_processing.json artifact
-        pdf_processing_artifact_path = artifact_dir / "pdf_processing.json"
-        pdf_processing_artifact_path.write_text(
-            json.dumps(pdf_processing_results, ensure_ascii=False, indent=2),
-            encoding="utf-8",
-        )
-        logger.info("✓ pdf_processing.json saved at %s", pdf_processing_artifact_path)
-
-        # 重新写回更新后的 papers_manifest（包含 OCR 字段与 status 更新）
-        manifest_path.write_text(
-            json.dumps(papers_manifest, ensure_ascii=False, indent=2),
-            encoding="utf-8",
-        )
-        logger.info("✓ papers_manifest.json updated with OCR info at %s", manifest_path)
 
         # -------------------------
         # Step 4: Markdown 生成
         # -------------------------
         logger.info("Step 4: Emit Markdown files from OCR text")
 
-        markdown_dir = generated_dir / "markdown"
-        markdown_dir.mkdir(parents=True, exist_ok=True)
-
-        markdown_items: List[Dict[str, Any]] = []
-
-        for idx, paper in enumerate(papers_manifest["papers"], start=1):
-            if paper.get("status") != "ok":
-                continue
-
-            ocr_full_path = paper.get("ocr_full_path")
-            if not ocr_full_path or not Path(ocr_full_path).exists():
-                logger.warning(
-                    "Skip markdown for paper %s: missing ocr_full.txt (%s)",
-                    paper.get("arxiv_id"),
-                    ocr_full_path,
-                )
-                paper["status"] = "failed"
-                continue
-
-            try:
-                ocr_text = Path(ocr_full_path).read_text(encoding="utf-8")
-            except Exception as e:
-                logger.exception(
-                    "Failed to read OCR full text for paper %s: %s",
-                    paper.get("arxiv_id"),
-                    e,
-                )
-                paper["status"] = "failed"
-                continue
-
-            # 对 OCR 文本做一次简单清理：压缩多余空行 & 明显噪音行（例如只有 "\" 的行），避免生成的 Markdown 中出现成片空白
-            cleaned_lines: list[str] = []
-            prev_blank = False
-            for line in ocr_text.splitlines():
-                stripped = line.strip()
-
-                # 将「空行」和某些典型 OCR 噪音行统一视为空行，例如只包含 "\" 的行
-                is_blank_or_noise = stripped == "" or stripped == "\\"
-
-                if is_blank_or_noise:
-                    # 如果上一行已经是空行/噪音，则跳过当前行（保证连续空行最多 1 行）
-                    if prev_blank:
-                        continue
-                    prev_blank = True
-                    cleaned_lines.append("")  # 统一用真正的空行占位
-                else:
-                    prev_blank = False
-                    cleaned_lines.append(line.rstrip())
-
-            cleaned_ocr_text = "\n".join(cleaned_lines).strip()
-
-            title = paper.get("title") or "Untitled"
-            arxiv_id = paper.get("arxiv_id") or f"paper_{idx:02d}"
-            published = paper.get("published") or ""
-            authors = paper.get("authors") or ""
-            keyword = paper.get("keyword") or ""
-            bibtex_path = paper.get("bibtex_path") or ""
-
-            md_filename = f"paper_{idx:02d}_{arxiv_id}.md"
-            md_path = markdown_dir / md_filename
-
-            md_content_lines = [
-                f"# {title}",
-                "",
-                f"- arXiv ID: {arxiv_id}",
-                f"- Published: {published}",
-                f"- Authors: {authors}",
-                f"- Source Keyword: {keyword}",
-                f"- DBLP BibTeX: {bibtex_path}",
-                "",
-                "## Extracted Text",
-                "",
-                cleaned_ocr_text,
-            ]
-
-            md_path.write_text("\n".join(md_content_lines), encoding="utf-8")
-
-            rel_md_path = md_path.relative_to(session_folder)
-            markdown_items.append(
-                {
-                    "index": idx,
-                    "arxiv_id": arxiv_id,
-                    "title": title,
-                    "keyword": keyword,
-                    "markdown_path": str(rel_md_path),
-                    "status": paper.get("status", "ok"),
-                }
+        markdown_items, markdown_emit_artifact_path, index_md_path = (
+            await run_markdown_emit_step(
+                session_folder=session_folder,
+                papers_manifest=papers_manifest,
             )
-
-            logger.info(
-                "Markdown generated for paper #%d (%s): %s",
-                idx,
-                arxiv_id,
-                md_path,
-            )
-
-        # 写 markdown_emit.json artifact
-        markdown_emit_artifact_path = artifact_dir / "markdown_emit.json"
-        markdown_emit_artifact_path.write_text(
-            json.dumps(markdown_items, ensure_ascii=False, indent=2),
-            encoding="utf-8",
         )
-        logger.info("✓ markdown_emit.json saved at %s", markdown_emit_artifact_path)
-
-        # 生成 summary/index.md（对齐 plan）
-        index_md_path = generated_dir / "index.md"
-        index_lines: List[str] = []
-        index_lines.append(f"# Query → Markdown Summary")
-        index_lines.append("")
-        index_lines.append(f"**Original Query**: {original_query}")
-        index_lines.append("")
-        index_lines.append("## Rewrite Keywords")
-        index_lines.append("")
-        for kw in keywords:
-            index_lines.append(f"- {kw}")
-
-        index_lines.append("")
-        index_lines.append("## Papers")
-        index_lines.append("")
-        index_lines.append("| # | Title | arXiv ID | Keyword | Markdown | Status |")
-        index_lines.append("|---|-------|----------|---------|----------|--------|")
-
-        for idx, paper in enumerate(papers_manifest["papers"], start=1):
-            title = (paper.get("title") or "").replace("|", "\\|")
-            arxiv_id = paper.get("arxiv_id") or ""
-            keyword = (paper.get("keyword") or "").replace("|", "\\|")
-            status_str = paper.get("status", "ok")
-
-            md_item = next(
-                (m for m in markdown_items if m["index"] == idx),
-                None,
-            )
-            md_path_str = md_item["markdown_path"] if md_item else ""
-
-            index_lines.append(
-                f"| {idx} | {title} | {arxiv_id} | {keyword} | {md_path_str} | {status_str} |"
-            )
-
-        if status != "ok":
-            index_lines.append("")
-            index_lines.append(
-                f"> 注意：共找到 {len(deduped_papers)} 篇去重论文，少于目标 {target_paper_count} 篇，status = {status}。"
-            )
-
-        failed_papers = [
-            (i, p)
-            for i, p in enumerate(papers_manifest["papers"], start=1)
-            if p.get("status") != "ok"
-        ]
-        if failed_papers:
-            index_lines.append("")
-            index_lines.append("## Failed or Missing Entries")
-            index_lines.append("")
-            for idx, p in failed_papers:
-                index_lines.append(
-                    f"- #{idx} {p.get('title') or p.get('arxiv_id')} - status={p.get('status')}"
-                )
-
-        index_md_path.write_text("\n".join(index_lines), encoding="utf-8")
-        logger.info("✓ index.md saved at %s", index_md_path)
 
         step_inputs = SessionStepInputs(
             session_folder=session_folder,
@@ -717,40 +415,38 @@ class QueryToMarkdownWorkflow:
         methodology_items: List[Dict[str, Any]] = []
         experiment_extraction_artifact_path: Optional[str] = None
         experiment_items: List[Dict[str, Any]] = []
-        
-        if self.methodology_extraction_agent is not None or self.experiment_extraction_agent is not None:
-            logger.info("Step 5: Extract problem statements & methodologies + experiments from Markdown files (parallel)")
 
-            # 准备并行任务列表
-            gather_tasks = []
+        if self.methodology_extraction_agent is not None or self.experiment_extraction_agent is not None:
+            logger.info(
+                "Step 5: Extract problem statements & methodologies + experiments from Markdown files (parallel)"
+            )
+
             has_methodology = self.methodology_extraction_agent is not None
             has_experiment = self.experiment_extraction_agent is not None
 
+            # 准备并行任务列表（只加入真实需要执行的任务）
+            gather_tasks = []
             if has_methodology:
-                gather_tasks.append(run_methodology_extraction_step(
-                step_inputs=step_inputs,
-                methodology_agent=self.methodology_extraction_agent,
-                max_concurrent_tasks=self.max_concurrent_pdfs,
-                ))
-            else:
-                gather_tasks.append(None)
-
+                gather_tasks.append(
+                    run_methodology_extraction_step(
+                        step_inputs=step_inputs,
+                        methodology_agent=self.methodology_extraction_agent,
+                        max_concurrent_tasks=self.max_concurrent_pdfs,
+                    )
+                )
             if has_experiment:
-                gather_tasks.append(run_experiment_extraction_step(
-                    step_inputs=step_inputs,
-                    experiment_agent=self.experiment_extraction_agent,
-                    max_concurrent_tasks=self.max_concurrent_pdfs,
-                ))
-            else:
-                gather_tasks.append(None)
+                gather_tasks.append(
+                    run_experiment_extraction_step(
+                        step_inputs=step_inputs,
+                        experiment_agent=self.experiment_extraction_agent,
+                        max_concurrent_tasks=self.max_concurrent_pdfs,
+                    )
+                )
 
-            # 并行执行（过滤掉 None）
-            results = await asyncio.gather(
-                *[task for task in gather_tasks if task is not None],
-                return_exceptions=True,
-            )
+            # 并行执行
+            results = await asyncio.gather(*gather_tasks, return_exceptions=True)
 
-            # 处理结果
+            # 处理结果，顺序与任务添加顺序一致
             result_idx = 0
             if has_methodology:
                 try:
@@ -759,9 +455,15 @@ class QueryToMarkdownWorkflow:
                     if isinstance(result, Exception):
                         logger.error("Step 5 methodology extraction failed: %s", result)
                     else:
-                        methodology_extraction_artifact_path, methodology_items = result
-                        logger.info("Methodology artifact: %s", methodology_extraction_artifact_path)
-                except Exception as e:
+                        (
+                            methodology_extraction_artifact_path,
+                            methodology_items,
+                        ) = result
+                        logger.info(
+                            "Methodology artifact: %s",
+                            methodology_extraction_artifact_path,
+                        )
+                except Exception as e:  # noqa: BLE001
                     logger.error("Error processing methodology result: %s", e)
 
             if has_experiment:
@@ -770,12 +472,20 @@ class QueryToMarkdownWorkflow:
                     if isinstance(result, Exception):
                         logger.error("Step 5 experiment extraction failed: %s", result)
                     else:
-                        experiment_extraction_artifact_path, experiment_items = result
-                        logger.info("Experiment artifact: %s", experiment_extraction_artifact_path)
-                except Exception as e:
+                        (
+                            experiment_extraction_artifact_path,
+                            experiment_items,
+                        ) = result
+                        logger.info(
+                            "Experiment artifact: %s",
+                            experiment_extraction_artifact_path,
+                        )
+                except Exception as e:  # noqa: BLE001
                     logger.error("Error processing experiment result: %s", e)
         else:
-            logger.info("Step 5: Skipped (methodology_extraction_agent and experiment_extraction_agent not provided)")
+            logger.info(
+                "Step 5: Skipped (methodology_extraction_agent and experiment_extraction_agent not provided)"
+            )
 
         # -------------------------
         # Step 6: Innovation synthesis agent（3-paper requirement）
@@ -783,7 +493,9 @@ class QueryToMarkdownWorkflow:
         innovation_artifact_paths: List[str] = []
         if self.innovation_agent is not None:
             if not methodology_items:
-                logger.warning("Innovation agent skipped: methodology step produced 0 eligible entries.")
+                logger.warning(
+                    "Innovation agent skipped: methodology step produced 0 eligible entries."
+                )
             else:
                 innovation_artifact_paths = await run_innovation_synthesis_step(
                     step_inputs=step_inputs,
@@ -794,6 +506,51 @@ class QueryToMarkdownWorkflow:
                 )
         else:
             logger.info("Step 6: Skipped (innovation_agent not provided)")
+
+        # -------------------------
+        # Step 7: Methods writing (LaTeX Methods section)
+        # -------------------------
+        methods_writing_artifacts: List[str] = []
+        if self.methods_writing_agent is not None:
+            if not innovation_artifact_paths:
+                logger.info(
+                    "Step 7: Skipped (no innovation_synthesis artifacts produced in Step 6)."
+                )
+            else:
+                methods_writing_artifacts = await run_methods_writing_step(
+                    step_inputs=step_inputs,
+                    methods_writing_agent=self.methods_writing_agent,
+                    temperature=0.7,
+                    max_tokens=20000,
+                )
+        else:
+            logger.info("Step 7: Skipped (methods_writing_agent not provided)")
+
+        # -------------------------
+        # Step 8: Main Results writing (LaTeX Main Results section)
+        # -------------------------
+        main_results_writing_artifacts: List[str] = []
+        if self.main_results_agent is not None:
+            if not experiment_items:
+                logger.info(
+                    "Step 8: Skipped (no experiment_items produced in Step 5 experiment extraction)."
+                )
+            elif not innovation_artifact_paths:
+                logger.info(
+                    "Step 8: Skipped (no innovation_synthesis artifacts to pair with experiments)."
+                )
+            else:
+                main_results_writing_artifacts = (
+                    await run_main_results_writing_step(
+                        step_inputs=step_inputs,
+                        main_results_agent=self.main_results_agent,
+                        temperature=0.6,
+                        max_tokens=40000,
+                        model=None,
+                    )
+                )
+        else:
+            logger.info("Step 8: Skipped (main_results_agent not provided)")
 
         return {
             "session_id": session_id,
@@ -809,6 +566,8 @@ class QueryToMarkdownWorkflow:
             "experiment_items": experiment_items,
             "innovation_artifacts": innovation_artifact_paths,
             "innovation_artifact": innovation_artifact_paths[0] if innovation_artifact_paths else None,
+            "methods_writing_artifacts": methods_writing_artifacts,
+            "main_results_writing_artifacts": main_results_writing_artifacts,
             "status": status,
         }
 
@@ -849,9 +608,10 @@ async def _test_vision_agent(vision_agent: VisionAgent) -> bool:
     try:
         test_image_bytes = _VISION_TEST_IMAGE_PATH.read_bytes()
         result = await vision_agent.analyze_image(
+            text_prompt="如果你看得到图片 回复pong",
             images=[test_image_bytes],
             temperature=0,
-            max_tokens=1000,
+            max_tokens=10,
         )
         logger.info("Vision test succeeded. Response😀: %s", result)
         return True
@@ -907,8 +667,11 @@ async def main() -> None:
 # We solve the problem of fragmented embodied AI systems that cannot handle complex real-world tasks requiring visual understanding, web information, and coordinated actions. Current methods fail because they use fixed visual processing that misses temporal dynamics, make poor decisions about when to switch between physical and digital actions, and lack fault tolerance in multi-agent scenarios. Our method works in three stages: (1) Adaptive visual processing that samples video frames at 1-10fps based on motion detection and uses curriculum learning to adjust training difficulty, (2) Confidence-based cross-domain planning that calculates uncertainty scores to decide when to switch between physical actions and web queries, and (3) Fault-tolerant multi-agent coordination with heartbeat monitoring that detects agent failures in 5 seconds and reassigns tasks automatically. To implement this, we extend VideoLLaMA3 with adaptive sampling, add entropy-based confidence estimation to cross-domain planners, and build heartbeat monitoring into ROS 2 agent frameworks. We test on cooking tasks (using recipes from web), navigation with real-time map data, and warehouse coordination scenarios using AI2-THOR simulation and real robot platforms. The system needs PyTorch, ROS 2, web API access, 12GB GPU memory, and takes 2-3 days to train on video datasets with multi-agent interaction logs. Success is measured by task completion rate, domain switching accuracy, and system uptime during agent failures."""
 
 
-        test_query="""logistics: A Multi-Agent Predictive QptimizationFramework"""
-        test_username = "2025_12_1_lab"
+        # test_query="""logistics: A Multi-Agent Predictive QptimizationFramework"""
+        # test_query = """Autonomous driving safety"""
+        # test_query = """AI safety protection algorithms"""
+        test_query = """Data Science Applications in Social Networks and Advertising: A Causal Inference Approach"""
+        test_username = "2025_12_4"
         test_session_id: Optional[str] = None  # None 时会自动生成，格式：session_{timestamp}_{uuid}
 
         _load_local_env_file()
@@ -919,6 +682,8 @@ async def main() -> None:
         methodology_agent = MethodologyExtractionAgent(openai_service=openai_service)
         experiment_agent = ExperimentExtractionAgent(openai_service=openai_service)
         innovation_agent = InnovationSynthesisAgent(openai_service=openai_service)
+        methods_writing_agent = MethodsWritingAgent(openai_service=openai_service)
+        main_results_agent = MainResultsWritingAgent(openai_service=openai_service)
 
         anthropic_service = AnthropicService()
         vision_agent = VisionAgent(anthropic_service=anthropic_service)
@@ -935,10 +700,12 @@ async def main() -> None:
             query_rewrite_agent=query_agent,
             vision_agent=vision_agent,
             methodology_extraction_agent=methodology_agent,
-            experiment_extraction_agent=experiment_agent,
+            # experiment_extraction_agent=experiment_agent,#TODO：提取很慢 提取问题 还有reference防止提取
             innovation_agent=innovation_agent,
+            # methods_writing_agent=methods_writing_agent,
+            # main_results_agent=main_results_agent,
             max_concurrent_pdfs=2,
-            max_concurrent_pages=5,  # 每篇论文同时处理的页面数
+            max_concurrent_pages=2,  # 每篇论文同时处理的页面数
         )
 
         result = await workflow.execute(
@@ -946,9 +713,10 @@ async def main() -> None:
             session_id=test_session_id,  # None 时自动生成，如：session_20251127_112630_748edba5
             username=test_username,
             target_paper_count=3,  # 最后需要的数量（去重后按时间排序取前 N 篇）
-            per_keyword_max_results=4,  # 每个关键词最大的搜索结果
-            per_keyword_recent_limit=3,  # 每个关键词只考虑最近 N 篇
+            per_keyword_max_results=10,  # 每个关键词最大的搜索结果
+            per_keyword_recent_limit=10,  # 每个关键词只考虑最近 N 篇
             skip_dblp_check=True,  # 设置为 True 可跳过 DBLP 检查（会下载更多论文，但使用 arXiv BibTeX）
+            max_paper_age_years=3
         )
 
         logger.info("Query→Markdown workflow finished.")

@@ -5,6 +5,7 @@ from app.core.agents.vision_agent import VisionAgent
 from app.core.agents.methodology_extraction_agent import MethodologyExtractionAgent
 from app.core.agents.experiment_extraction_agent import ExperimentExtractionAgent
 from app.core.agents.writing.methods_writing_agent import MethodsWritingAgent
+from app.core.agents.writing.main_results_writing_agent import MainResultsWritingAgent
 
-__all__ = ["PaperOverviewAgent", "LaTeXPaperGeneratorAgent", "RequirementChecklistAgent", "VisionAgent", "MethodologyExtractionAgent", "ExperimentExtractionAgent", "MethodsWritingAgent"]
+__all__ = ["PaperOverviewAgent", "LaTeXPaperGeneratorAgent", "RequirementChecklistAgent", "VisionAgent", "MethodologyExtractionAgent", "ExperimentExtractionAgent", "MethodsWritingAgent", "MainResultsWritingAgent"]
 

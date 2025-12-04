@@ -425,6 +425,8 @@ class ArxivPaperMetadata:
     bibtex_path: str
     pdf_path: str
     status: str = "ok"
+    summary: Optional[str] = None
+    relevance_score: Optional[float] = None
 
     def to_manifest_dict(self) -> Dict[str, Any]:
         data = asdict(self)
@@ -570,6 +572,7 @@ async def search_and_download_async(
             bibtex_path=str(bib_path),
             pdf_path=str(pdf_path),
             status="ok",
+            summary=entry.summary,
         )
         results_meta.append(meta)
         ARXIV_LOGGER.info("  -> 论文处理完成: %s", entry.title)

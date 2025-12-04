@@ -1,5 +1,6 @@
 from typing import Dict, Any, Optional, List, Union, Tuple
 import base64
+import time
 from pathlib import Path
 from io import BytesIO
 from PIL import Image
@@ -28,7 +29,15 @@ Extract and output ONLY the actual content from images. Do NOT add any:
 - For academic content: Extract ONLY the content (text, formulas, tables, etc.) without analysis
 - Do NOT add phrases like "This image shows...", "I can see...", "The image contains..."
 - Do NOT provide summaries or interpretations
-- Output raw content only, nothing else"""
+- Output raw content only, nothing else
+
+## Special Rule: References / Bibliography
+
+- If any portion of the image corresponds to references, bibliography, citation lists, or footnotes (titles such as "References", "Bibliography", "Works Cited", "参考文献", or lines that start with bracketed numbers `[1]`, numbered lists, author-year patterns, etc.), you MUST skip those lines entirely.
+- Do NOT transcribe citation entries even if only part of the page is references—leave that portion blank and continue with any non-reference content.
+- If an image page contains ONLY references, output a single short note (≤20 Chinese characters or ≤15 English words) such as "参考文献页，内容跳过" / "Reference list skipped", then output nothing else.
+- Never paraphrase or restate the skipped reference content itself.
+"""
 
     # Anthropic API 限制：base64 编码后的图片不能超过 5MB (5242880 bytes)
     # base64 编码会增加约 33% 的大小（4/3 倍），所以原始图片应该控制在约 3.75MB
@@ -230,9 +239,16 @@ Extract and output ONLY the actual content from images. Do NOT add any:
         content = []
         
         for idx, image in enumerate(images):
+            start_time = time.perf_counter()
+            source_desc = self._describe_image_source(image)
             # 如果已经是格式化的图片块，直接使用
             if isinstance(image, dict) and image.get("type") == "image":
                 content.append(image)
+                duration_ms = (time.perf_counter() - start_time) * 1000
+                logger.info(
+                    f"VisionAgent image {idx + 1}/{len(images)} prepared in "
+                    f"{duration_ms:.2f} ms (source={source_desc})"
+                )
                 continue
             
             # 处理不同类型的图片输入
@@ -273,6 +289,11 @@ Extract and output ONLY the actual content from images. Do NOT add any:
             # 创建图片块
             image_block = self.anthropic_service.create_image_block(image_data, media_type)
             content.append(image_block)
+            duration_ms = (time.perf_counter() - start_time) * 1000
+            logger.info(
+                f"VisionAgent image {idx + 1}/{len(images)} prepared in "
+                f"{duration_ms:.2f} ms (source={source_desc})"
+            )
             
             # 如果有多张图片，添加分隔文本
             if len(images) > 1 and idx < len(images) - 1:
@@ -286,6 +307,19 @@ Extract and output ONLY the actual content from images. Do NOT add any:
                 content.append(self.anthropic_service.create_text_block(text_prompt))
         
         return content
+
+    def _describe_image_source(self, image: Union[str, Path, bytes, Dict[str, Any]]) -> str:
+        """
+        Describe the image source for logging purposes.
+        """
+        if isinstance(image, (str, Path)):
+            path = str(image)
+            return path if len(path) <= 64 else f"{path[:30]}...{path[-30:]}"
+        if isinstance(image, bytes):
+            return f"bytes({len(image)}B)"
+        if isinstance(image, dict):
+            return image.get("type", "dict")
+        return type(image).__name__
     
     async def analyze_image(
         self,
@@ -347,7 +381,16 @@ Extract and output ONLY the actual content from images. Do NOT add any:
             system=self.SYSTEM_PROMPT
         )
         
-        logger.info(f"Vision analysis completed. Response length: {len(response_text)} characters")
+        usage_summary = "Token usage unavailable"
+        if isinstance(usage, dict):
+            total = usage.get("total_tokens")
+            input_tokens = usage.get("input_tokens")
+            output_tokens = usage.get("output_tokens")
+            if total is not None:
+                usage_summary = (
+                    f"Tokens - total: {total}, input: {input_tokens}, output: {output_tokens}"
+                )
+        logger.info(f"Vision analysis completed. {usage_summary}")
         
         return {
             "response": response_text,

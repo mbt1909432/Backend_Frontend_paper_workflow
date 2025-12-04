@@ -25,7 +25,7 @@ class QueryRewriteAgent:
     """
     Query Rewrite Agent
 
-    负责将用户原始 query 重写为 4 个检索关键词，输出 JSON：
+    负责将用户原始 query 重写为 4 个 arXiv 检索关键词，输出 JSON：
     {
         "reason": "...",
         "keywords": ["k1", "k2", "k3", "k4"]
@@ -39,7 +39,7 @@ class QueryRewriteAgent:
     SYSTEM_PROMPT = """# Query Rewrite Agent
 
 You are a specialized agent that rewrites a user's free-form academic query
-into exactly 4 high-quality search **query phrases** for arXiv / academic search.
+into exactly 4 high-quality search **query phrases** optimized for arXiv search.
 
 ## Your Task
 
@@ -52,18 +52,19 @@ you must:
    - Research interests and academic topics
    
    You must:
-   - **Identify and extract the core research themes** (technical domains, methods, application scenarios)
+   - **Identify and extract the core research themes** (technical domains, methods, application scenarios, arXiv category terms)
    - **Filter out irrelevant personal information** (company names, job titles, personal background)
    - **Focus on academic research-related technical concepts, tasks, domains, and methods**
 
 2. **Rewrite into search phrases**: Propose EXACTLY 4 search **query phrases** that are:
    - **short and concise** (about 2-6 words per phrase, NOT long sentences)
    - **comma-separated** format: use commas to separate key terms within each phrase
-   - each phrase should cover the **core technical concepts / tasks / domains / methods** from the query
-   - suitable for arXiv / academic database search
+   - each phrase must mirror how researchers would search on arXiv (combine method + task + domain where possible)
+   - include arXiv-friendly vocabulary: model names, algorithm families, dataset/task names, arXiv category tags (e.g. `cs.CL`, `stat.ML`) when relevant
+   - avoid generic business/product terms; stay academic and technical
    - preferably in English (unless the query clearly targets Chinese-only content)
    - provide 4 slightly different rephrasings / angles covering different aspects of the same core intent
-   - NOT describing the **paper type or genre** (e.g. do NOT use words like "survey", "review", "overview", "state of the art", "tutorial", "survey review", "paper", "article")
+   - NEVER describe the **paper type or genre** (e.g. do NOT use words like "survey", "review", "overview", "state of the art", "tutorial", "survey review", "paper", "article")
 
 ## Output JSON Schema
 
@@ -117,7 +118,12 @@ rewrite.json
 ```json
 {
   "reason": "...",
-  "keywords": ["k1", "k2", "k3", "k4"]
+  "keywords": [
+    "arxiv search phrase 1",
+    "arxiv search phrase 2",
+    "arxiv search phrase 3",
+    "arxiv search phrase 4"
+  ]
 }
 ```
 

@@ -23,6 +23,11 @@ class Settings(BaseSettings):
     openai_temperature: float = 0.7
     openai_max_tokens: int = 30000
     
+    # Jina embeddings
+    jina_api_key: Optional[str] = None
+    jina_embedding_model: str = "jina-embeddings-v3"
+    jina_embedding_task: str = "text-matching"
+    
     # Anthropic 配置
     anthropic_api_key: Optional[str] = None
     anthropic_api_base: Optional[str] = None  # 自定义 API endpoint（用于模型转发商）

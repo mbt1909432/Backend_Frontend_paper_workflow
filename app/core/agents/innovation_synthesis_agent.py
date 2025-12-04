@@ -314,6 +314,8 @@ You MUST output ONLY a JSON object wrapped in ```json ... ``` with the following
 
 # 🔶 FINAL PROPOSAL PRIORITIES
 
+**Method proposal rule**: No concept stacking. Walk through the reasoning step by step, explaining what happens first, second, third. Describe concrete implementation actions (datasets to prepare, components to configure, experiments to run) in plain language without writing code.
+
 **CRITICAL: Write in plain, direct language. Avoid abstract jargon. Explain HOW, not just WHAT.**
 
 1. **Headline** (`final_proposal_topic`): ≤12 words, clear and specific. (e.g., "Multi-Scale Feature Fusion for Small Object Detection" - NOT "Adaptive Mechanism-Level Granularity Enhancement")
