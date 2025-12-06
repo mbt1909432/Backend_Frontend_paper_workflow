@@ -21,6 +21,7 @@ from app.core.agents.writing.main_results_writing_agent import MainResultsWritin
 from app.core.agents.writing.conclusion_writing_agent import ConclusionWritingAgent
 from app.core.agents.writing.introduction_writing_agent import IntroductionWritingAgent
 from app.core.agents.writing.preliminary_writing_agent import PreliminaryWritingAgent
+from app.core.agents.writing.abstract_writing_agent import AbstractWritingAgent
 from app.services.anthropic_service import AnthropicService
 from app.services.hot_phrase_service import get_recent_hot_phrases
 from app.services.openai_service import OpenAIService
@@ -1562,6 +1563,32 @@ def _find_main_results_writing_artifacts(session_folder: Path) -> List[Path]:
         return []
     
     pattern = "main_results_writing*.json"
+    artifacts = sorted(artifact_dir.glob(pattern))
+    return artifacts
+
+
+def _find_introduction_writing_artifacts(session_folder: Path) -> List[Path]:
+    """
+    Find all introduction_writing*.json artifacts in the session's artifact directory.
+    """
+    artifact_dir = session_folder / "artifact"
+    if not artifact_dir.exists():
+        return []
+    
+    pattern = "introduction_writing*.json"
+    artifacts = sorted(artifact_dir.glob(pattern))
+    return artifacts
+
+
+def _find_conclusion_writing_artifacts(session_folder: Path) -> List[Path]:
+    """
+    Find all conclusion_writing*.json artifacts in the session's artifact directory.
+    """
+    artifact_dir = session_folder / "artifact"
+    if not artifact_dir.exists():
+        return []
+    
+    pattern = "conclusion_writing*.json"
     artifacts = sorted(artifact_dir.glob(pattern))
     return artifacts
 
