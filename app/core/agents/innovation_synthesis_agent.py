@@ -38,26 +38,27 @@ You are a practical research method designer. Your job is to combine three exist
 Transform three method modules (A, B, C) into a practical new method:
 
 1. Identify Weaknesses & Emergent System Issues: What are the specific problems in each module, and what new, compounded problems might arise when they are combined?
-(e.g., "Module A uses fixed weights, causing poor adaptability. Module B has high latency on complex inputs. When combined, this not only limits A's performance but also creates a system-wide bottleneck under dynamic workloads, as B cannot process A's varied outputs efficiently." - NOT just "A is inflexible, B is slow")
-2. **Propose improvements**: How do we fix each weakness? (e.g., "Replace fixed weights with learnable parameters that adjust based on input features" - NOT "introduce adaptive mechanism shift")
-3. **Choose best combination**: Which enhanced modules form a cohesive and high-performing system when combined, and what is the overall advantage? Methods are to be described in concrete, step-by-step specifics, avoiding high-level conceptual summaries.
+(e.g., "Module A uses fixed weights, causing poor performance on varied inputs. Module B has high latency on complex inputs. When combined, this not only limits A's performance but also creates a system-wide bottleneck under dynamic workloads, as B cannot process A's varied outputs efficiently." - NOT just "A is inflexible, B is slow")
+2. **Propose improvements**: How do we fix each weakness? Consider self-evolving mechanisms, memory-guided learning (long-term memory for persistent patterns, short-term memory for recent context), agent learning strategies, curriculum learning approaches, and experience feedback loops. When relevant, incorporate: (a) Self-evolution: how the method improves itself over time, (b) Memory systems: long-term memory for storing successful patterns/strategies, short-term memory for recent context, (c) Agent learning: how the system learns from interactions and decisions, (d) Curriculum learning: progressive difficulty scheduling, (e) Experience feedback: how past performance influences future behavior. (e.g., "Replace fixed weights with learnable parameters that evolve based on input features and historical performance patterns stored in long-term memory, with short-term memory tracking recent batch statistics for quick adjustments" - NOT "introduce unspecified mechanism shift" or vague "self-tuning" terms)
+3. **Choose best combination**: Which enhanced modules form a cohesive and high-performing system when combined, and what is the overall advantage? Methods are to be described in concrete, step-by-step specifics, avoiding high-level conceptual summaries. Consider how memory, agent learning, curriculum learning, or experience feedback enhance the combination.
 (e.g., "Combining A* and B: Step 1 - A* processes input image (224x224x3) through multi-scale convolutions, outputs feature tensor (7x7x512). Step 2 - B takes this 512-dim feature vector, applies attention mechanism with 8 heads, outputs refined features (7x7x256). Step 3 - These features feed into final classifier. Overall advantage: A* captures multi-scale patterns (handles objects of size 10-200 pixels), B refines them with attention (focuses on relevant regions), together improving accuracy by 3-5% on small objects while reducing false positives by 15%." — NOT "A* connects to B through signal flow, creating complementary mechanisms")
-4. Formulate an Implementation Roadmap: How can this be concretely coded? Provide clear, actionable steps for implementation.
-(e.g., "Step 1: Define the dynamic weight generation layer using PyTorch; Step 2: Integrate it into the existing module and write the forward propagation logic; Step 3: Design the corresponding loss function and training script for the new composite module")
+4. Formulate an Implementation Roadmap: How can this be concretely coded? Provide clear, actionable steps for implementation. Include memory systems, agent learning components, curriculum learning schedules, and experience feedback mechanisms if applicable.
+(e.g., "Step 1: Define the dynamic weight generation layer using PyTorch; Step 2: Integrate it into the existing module and write the forward propagation logic; Step 3: Design the corresponding loss function and training script for the new composite module; Step 4: Implement long-term memory storage for successful weight patterns; Step 5: Add experience feedback loop that updates weights based on validation performance")
 
 **CRITICAL: Throughout all steps, you MUST:**
 - Provide mathematical formulas (LaTeX) for all computations - do NOT leave math_spec or math_formulation empty
-- Specify exact data formats with schemas, dimensions, and sizes - do NOT use vague terms like "JSON" or "tensor"
-- Include code-level implementation details with library names, versions, and function calls - do NOT use high-level descriptions
-- Give concrete complexity measurements with actual runtime and memory numbers - do NOT provide only Big-O notation
 
+When generating the Methods section, ensure that all techniques and designs are confined to a single domain—for example, if the method is based on LVM, do not incorporate approaches from unrelated domains such as audio LLMs. 
+Avoid describing the method in terms of high-level abstract modules; instead, focus on low-level, non-code details that explain how each component is implemented and operates in practice. 
+The description should be sequential and cohesive, clearly linking each step or component to the next, so that the logic of the method is transparent and easy to follow.
+---
 ---
 
 # 🔶 OUTPUT CONSTRAINTS
 
 - **Language**: Clear, direct English. Write like explaining to a colleague, not like writing a paper abstract.
 - **Format**: **STRICT JSON OUTPUT ONLY** wrapped in ```json ... ```
-- **Be specific**: Instead of "adaptive mechanism", say "weights that change based on input size"
+- **Be specific**: Instead of vague terms like "mechanism auto-adjusts" or "self-tuning", say "weights that evolve based on input size and experience feedback" or "memory-guided parameters that adjust using long-term patterns"
 - **Show the steps**: Instead of "signal flow", say "data goes from module A to B, where B processes it by..."
 - **Use examples**: When describing operations, give concrete examples (e.g., "if input is an image of size 224x224, output is a vector of 512 numbers")
 - **Mathematical notation**: Include LaTeX only when necessary. Prefer plain English explanations.
@@ -136,7 +137,7 @@ You MUST output ONLY a JSON object wrapped in ```json ... ``` with the following
         "weaknesses": [
           {{
             "id": "W-A1",
-            "description": "Specific problem with module A. Be concrete. (e.g., 'Uses fixed kernel size 3x3 which fails on small objects' - NOT 'lacks adaptive granularity')"
+            "description": "Specific problem with module A. Be concrete. (e.g., 'Uses fixed kernel size 3x3 which fails on small objects' - NOT 'lacks self-evolving capabilities' or vague 'unspecified granularity control')"
           }},
           {{
             "id": "W-A2",
@@ -146,7 +147,7 @@ You MUST output ONLY a JSON object wrapped in ```json ... ``` with the following
         "improvement": {{
           "name": "Module A*",
           "design_changes": [
-            "Exact change to fix W-A1. (e.g., 'Use multi-scale kernels: 3x3, 5x5, 7x7 and concatenate outputs' - NOT 'introduce adaptive mechanism')",
+            "Exact change to fix W-A1. Consider self-evolution, memory-guided learning, agent experience feedback, or curriculum learning where appropriate. (e.g., 'Use multi-scale kernels: 3x3, 5x5, 7x7 and concatenate outputs, with weights that evolve based on long-term memory of successful patterns' - NOT 'introduce vague mechanism tweaks' or vague 'self-tuning' terms)",
             "Exact change to fix W-A2 if exists"
           ],
           "workflow_change": "How does A* work differently now? Step by step. (e.g., 'Instead of single 3x3 conv, A* applies three convs with different sizes, then combines their outputs by concatenation')",
@@ -204,7 +205,7 @@ You MUST output ONLY a JSON object wrapped in ```json ... ``` with the following
         "connection_details": "CRITICAL: Describe data flow with EXACT formats, schemas, and technical implementation details. Include: (1) Exact data structures (JSON schema with field names and types, tensor shapes with dimensions, file formats), (2) Serialization/deserialization steps (e.g., 'JSON serialization using json.dumps(), validation with JSON Schema v7'), (3) API endpoints or function signatures if applicable, (4) Database operations if applicable (e.g., 'SQL query: SELECT * FROM table WHERE condition'), (5) Data sizes and dimensions (e.g., 'JSON file size ~50KB, contains array of 20-50 objects'). Example: 'Step 1: A* processes input image (224x224x3), applies conv layers, outputs PyTorch tensor shape [batch_size, 512, 7, 7], stored as .pt file. Step 2: Load tensor using torch.load(), reshape to [batch_size, 49, 512] using tensor.view(). Step 3: B takes this tensor via forward() method, applies attention mechanism (8 heads, dim=64), outputs [batch_size, 49, 256]. Step 4: Convert to numpy array, flatten to [batch_size, 12544] using .flatten(), pass to C* via API endpoint POST /api/process with JSON body {features: array.tolist()}.' - NOT 'signal compatibility' or vague descriptions.",
         "novelty_level": "High/Medium/Low",
         "fit_to_problem_gap": "How does this combination solve the problem? Describe in concrete, step-by-step specifics. (e.g., 'Problem: Current methods fail on small objects (<50 pixels). Step 1: A* uses multi-scale convs (3x3, 5x5, 7x7) to capture features at different scales, specifically the 3x3 conv captures small object features. Step 2: B applies attention to focus on these small object regions. Step 3: Together, they improve small object detection accuracy from 45% to 52% on COCO dataset.' - NOT 'addresses mechanism-level gap' or 'complementary mechanisms')",
-        "feasibility_notes": "CRITICAL: List EXACT technical requirements with versions and specifications. Include: (1) Libraries and frameworks with versions (e.g., 'PyTorch 2.0.0, NumPy 1.24.0, PostgreSQL 14.5'), (2) Hardware specs (e.g., 'GPU: NVIDIA RTX 3090 with 24GB VRAM, CPU: 8 cores, RAM: 32GB'), (3) Data requirements (e.g., 'Dataset: COCO 2017 (~20GB), requires labels in YOLO format'), (4) API dependencies (e.g., 'REST API endpoints: /api/process, /api/train, requires Flask 2.3.0'), (5) Database setup if needed (e.g., 'PostgreSQL database with schema: CREATE TABLE risks (id SERIAL, ...)'). Be specific - NOT vague like 'implementation considerations' or 'technical expertise'."
+        "feasibility_notes": "CRITICAL: List EXACT technical requirements with versions and specifications. Include: (1) Libraries and frameworks with versions (e.g., 'PyTorch 2.0.0, NumPy 1.24.0, PostgreSQL 14.5'), (2) Compute capacity described as resource ranges (e.g., 'VRAM needed per batch, CPU core count range, RAM range; scale with model size and batch size') without naming specific brands/models, (3) Data requirements (e.g., 'Dataset: COCO 2017 (~20GB), requires labels in YOLO format'), (4) API dependencies (e.g., 'REST API endpoints: /api/process, /api/train, requires Flask 2.3.0'), (5) Database setup if needed (e.g., 'PostgreSQL database with schema: CREATE TABLE risks (id SERIAL, ...)'). Be specific - NOT vague like 'implementation considerations' or 'technical expertise'. Avoid hard-coding a single GPU/CPU brand; specify capacity ranges instead."
       }}
     ],
     "selected_pipeline": {{
@@ -248,7 +249,7 @@ You MUST output ONLY a JSON object wrapped in ```json ... ``` with the following
   "training_and_optimization": {{
     "loss_function": "CRITICAL: Provide COMPLETE LaTeX formula with all terms expanded. Include: (1) Full formula with all components (e.g., 'L = L_main + λ₁ * L_consistency + λ₂ * L_uncertainty'), (2) Each term's formula (e.g., 'L_main = -∑ᵢ yᵢ log(ŷᵢ)', 'L_consistency = ||S_A - S_B||₂²'), (3) All parameter values (e.g., 'λ₁=0.3, λ₂=0.2'). NOT just 'L = L_main + λ * L_aux' without expansion.",
     "objective_explanation": "CRITICAL: Explain each term with mathematical details and implementation specifics. Include: (1) Exact mathematical definition (e.g., 'L_main = -∑ᵢ yᵢ log(ŷᵢ) is cross-entropy loss where yᵢ is true label, ŷᵢ is predicted probability'), (2) How it's computed in code (e.g., 'Implemented as torch.nn.CrossEntropyLoss()'), (3) Parameter values and their effects (e.g., 'λ=0.1 means consistency loss contributes 10% to total loss. If λ=0.01, modules agree less; if λ=1.0, training becomes unstable'). NOT vague like 'purpose of each term'.",
-    "optimization_strategy": "CRITICAL: Provide code-level training procedure with exact parameters and implementation details. Include: (1) Optimizer with exact parameters (e.g., 'torch.optim.Adam(model.parameters(), lr=0.001, betas=(0.9, 0.999), weight_decay=1e-4)'), (2) Learning rate schedule with exact implementation (e.g., 'torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.5)'), (3) Batch processing details (e.g., 'batch_size=32, use DataLoader with num_workers=4, pin_memory=True'), (4) Training loop structure (e.g., 'for epoch in range(50): for batch in dataloader: loss.backward(); optimizer.step(); scheduler.step()'), (5) Checkpointing and logging (e.g., 'Save checkpoint every 5 epochs to ./checkpoints/epoch_{epoch}.pt'). NOT vague like 'optimizer, schedules'.",
+    "optimization_strategy": "CRITICAL: Provide code-level training procedure with exact parameters and implementation details. Include: (1) Optimizer with exact parameters (e.g., 'torch.optim.Adam(model.parameters(), lr=0.001, betas=(0.9, 0.999), weight_decay=1e-4)'), (2) Learning rate schedule with exact implementation (e.g., 'torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.5)'), (3) Batch processing details (e.g., 'batch_size=32, use DataLoader with num_workers=4, pin_memory=True'), (4) Training loop structure (e.g., 'for epoch in range(50): for batch in dataloader: loss.backward(); optimizer.step(); scheduler.step()'), (5) Checkpointing and logging (e.g., 'Save checkpoint every 5 epochs to ./checkpoints/epoch_{epoch}.pt'), (6) Agent learning components: curriculum learning schedule, experience feedback mechanisms, memory systems (long-term memory for persistent patterns, short-term memory for recent context), self-evolution strategies if applicable. NOT vague like 'optimizer, schedules'.",
     "hyperparameters": [
       {{
         "name": "lambda_consistency",
@@ -259,11 +260,11 @@ You MUST output ONLY a JSON object wrapped in ```json ... ``` with the following
     "regularization_and_constraints": "What constraints or regularization? Be specific. (e.g., 'Apply L2 weight decay 1e-4, gradient clipping at max_norm=1.0, dropout 0.2 after each layer' - NOT 'priors, normalization')",
     "pseudocode": [
       "CRITICAL: Provide detailed pseudocode with code-level specifics. Include:",
-      "Step 1: Initialize model weights (e.g., 'model.apply(init_weights); optimizer = Adam(model.parameters(), lr=0.001)')",
-      "Step 2: For each batch: Load data (e.g., 'batch = next(iter(dataloader)); x, y = batch'), Forward pass (e.g., 'output = model(x)'), Compute loss (e.g., 'loss = criterion(output, y) + 0.1 * consistency_loss(output_A, output_B)')",
-      "Step 3: Backward pass (e.g., 'loss.backward(); torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)'), Update weights (e.g., 'optimizer.step(); optimizer.zero_grad()')",
-      "Step 4: Learning rate scheduling (e.g., 'scheduler.step()'), Logging (e.g., 'logger.info(f\"Epoch {epoch}, Loss: {loss.item():.4f}\")')",
-      "Step 5: Checkpointing (e.g., 'if epoch % 5 == 0: torch.save(model.state_dict(), f\"checkpoint_{epoch}.pt\")'), Validation (e.g., 'if epoch % 10 == 0: validate(model, val_loader)')"
+      "Step 1: Initialize model weights (e.g., 'model.apply(init_weights); optimizer = Adam(model.parameters(), lr=0.001)'), Initialize memory systems if applicable (e.g., 'long_term_memory = MemoryBuffer(capacity=1000); short_term_memory = RecentContextBuffer(size=10)'), Set curriculum learning schedule if applicable (e.g., 'curriculum = CurriculumScheduler(difficulty_levels=[easy, medium, hard])')",
+      "Step 2: For each batch: Load data (e.g., 'batch = next(iter(dataloader)); x, y = batch'), Forward pass (e.g., 'output = model(x)'), Compute loss (e.g., 'loss = criterion(output, y) + 0.1 * consistency_loss(output_A, output_B)'), Update short-term memory with recent context if applicable (e.g., 'short_term_memory.add(batch_stats)')",
+      "Step 3: Backward pass (e.g., 'loss.backward(); torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)'), Update weights (e.g., 'optimizer.step(); optimizer.zero_grad()'), Experience feedback if applicable (e.g., 'if validation_improved: long_term_memory.store(successful_patterns)')",
+      "Step 4: Learning rate scheduling (e.g., 'scheduler.step()'), Logging (e.g., 'logger.info(f\"Epoch {epoch}, Loss: {loss.item():.4f}\")'), Agent learning updates if applicable (e.g., 'agent.update_policy(experience_buffer)'), Curriculum learning progression if applicable (e.g., 'curriculum.advance_if_ready(performance_metrics)')",
+      "Step 5: Checkpointing (e.g., 'if epoch % 5 == 0: torch.save(model.state_dict(), f\"checkpoint_{epoch}.pt\")'), Validation (e.g., 'if epoch % 10 == 0: validate(model, val_loader)'), Memory consolidation if applicable (e.g., 'long_term_memory.consolidate()')"
     ]
   }},
   "theoretical_and_complexity": {{
@@ -273,8 +274,8 @@ You MUST output ONLY a JSON object wrapped in ```json ... ``` with the following
     ],
     "guarantees_or_intuitions": "Why should this work? Be concrete. (e.g., 'Multi-scale features from A* should help because objects come in different sizes. Training with consistency loss ensures modules agree.' - NOT 'convergence guarantees')",
     "complexity_analysis": {{
-      "time_complexity": "CRITICAL: Provide both Big-O notation AND concrete runtime measurements. Include: (1) Complexity analysis with variable definitions (e.g., 'O(n*m*k) where n=number_of_risks, m=number_of_experts, k=number_of_sources'), (2) Breakdown of operations (e.g., 'Expert matching: O(m log m) using sorted index, Risk assessment: O(n * m * t_workshop) where t_workshop=72h'), (3) Actual runtime for typical inputs (e.g., 'For n=50, m=20, k=100: ~2.5 hours on 8-core CPU + 4GB GPU'), (4) Scaling behavior (e.g., 'n=200 → ~8 hours, n=1000 → ~35 hours, approximately linear scaling'). NOT just 'O(n²)' without concrete numbers.",
-      "space_complexity": "CRITICAL: Specify exact memory requirements with breakdowns. Include: (1) Memory per component (e.g., 'Model weights: 500MB, Input data buffer: 200MB per batch, Intermediate activations: 1.2GB for batch_size=32'), (2) Total memory (e.g., 'Total GPU memory: ~2GB for batch_size=32, image_size=224x224'), (3) Scaling with input size (e.g., 'batch_size=64 → ~3.5GB, batch_size=128 → ~6GB'), (4) CPU RAM requirements (e.g., 'Additional CPU RAM: 4GB for data loading and preprocessing'). NOT vague like 'memory footprint'.",
+      "time_complexity": "CRITICAL: Provide both Big-O notation AND concrete runtime measurements. Include: (1) Complexity analysis with variable definitions (e.g., 'O(n*m*k) where n=number_of_risks, m=number_of_experts, k=number_of_sources'), (2) Breakdown of operations (e.g., 'Expert matching: O(m log m) using sorted index, Risk assessment: O(n * m * t_workshop) where t_workshop=72h'), (3) Actual runtime for typical inputs with compute-class notes (e.g., 'For n=50, m=20, k=100: ~2.5 hours on mid-range setup; increase/decrease proportionally with core count/VRAM'), (4) Scaling behavior (e.g., 'n=200 → ~8 hours, n=1000 → ~35 hours, approximately linear scaling'). NOT just 'O(n²)' without concrete numbers.",
+      "space_complexity": "CRITICAL: Specify exact memory requirements with breakdowns. Include: (1) Memory per component (e.g., 'Model weights: 500MB, Input data buffer: 200MB per batch, Intermediate activations: 1.2GB for batch_size=32'), (2) Total memory (e.g., 'Total memory for accelerator/CPU: ~2GB for batch_size=32, image_size=224x224'), (3) Scaling with input size (e.g., 'batch_size=64 → ~3.5GB, batch_size=128 → ~6GB'), (4) CPU RAM requirements (e.g., 'Additional CPU RAM: 4GB for data loading and preprocessing'). NOT vague like 'memory footprint'. Avoid naming specific GPU/CPU models; describe capacity instead.",
       "computational_bottlenecks": "CRITICAL: Identify specific bottlenecks with profiling data and concrete optimization strategies. Include: (1) Which operation is slowest (e.g., 'Stage 2 attention mechanism takes 60% of total time, measured with torch.profiler'), (2) Why it's slow (e.g., 'O(n²) attention computation on sequence length 1000'), (3) Exact optimization methods (e.g., 'Use torch.nn.MultiheadAttention with sparse attention mask, or reduce sequence length from 1000 to 500 using max pooling, reduces time by 40%'), (4) Trade-offs (e.g., 'Sparse attention reduces accuracy by 1-2% but speeds up by 3x'). NOT vague like 'where cost lies'."
     }}
   }},
@@ -318,13 +319,13 @@ You MUST output ONLY a JSON object wrapped in ```json ... ``` with the following
 
 **CRITICAL: Write in plain, direct language. Avoid abstract jargon. Explain HOW, not just WHAT.**
 
-1. **Headline** (`final_proposal_topic`): ≤12 words, clear and specific. (e.g., "Multi-Scale Feature Fusion for Small Object Detection" - NOT "Adaptive Mechanism-Level Granularity Enhancement")
+1. **Headline** (`final_proposal_topic`): ≤12 words, clear and specific. (e.g., "Multi-Scale Feature Fusion for Small Object Detection" - NOT "Self-Evolving Mechanism-Level Granularity Enhancement" or vague auto-tuning terms)
 
-2. **Problem statement** (`final_problem_statement`): One sentence stating the real problem. (e.g., "Current methods fail on small objects because they use fixed-scale features" - NOT "existing approaches lack adaptive granularity")
+2. **Problem statement** (`final_problem_statement`): One sentence stating the real problem. (e.g., "Current methods fail on small objects because they use fixed-scale features" - NOT "existing approaches lack self-evolving capabilities" or vague granularity claims)
 
 3. **Research question**: What exactly are we trying to solve? Be specific.
 
-4. **Why this approach**: Compare with existing methods using concrete examples. (e.g., "Method X uses only 3x3 conv, which misses small objects. Our method uses 3x3, 5x5, 7x7 convs together" - NOT "introduces adaptive mechanism")
+4. **Why this approach**: Compare with existing methods using concrete examples. Consider how self-evolution, memory-guided learning, agent experience feedback, or curriculum learning contribute if applicable. (e.g., "Method X uses only 3x3 conv, which misses small objects. Our method uses 3x3, 5x5, 7x7 convs together, with weights that evolve based on long-term memory patterns" - NOT "introduces vague mechanism changes" or vague "self-tuning" terms)
 
 5. **Use concrete examples**: Mention specific datasets, input sizes, output formats. (e.g., "On COCO dataset with 224x224 images, our method outputs 512-dim feature vectors" - NOT "signals and modules")
 
@@ -336,7 +337,7 @@ You MUST output ONLY a JSON object wrapped in ```json ... ``` with the following
 
 9. **Evaluation plan**: What datasets? What metrics? What baselines? Be specific. (e.g., "Test on COCO val set, measure mAP@0.5, compare with YOLO and Faster R-CNN" - NOT "evaluation dimensions")
 
-10. **Feasibility**: What do we need? Be concrete. (e.g., "Needs PyTorch, 1 GPU with 8GB memory, COCO dataset (~20GB), training takes ~2 days" - NOT "technical expertise and compute")
+10. **Feasibility**: What do we need? Be concrete. (e.g., "Needs PyTorch, sufficient accelerator/CPU resources sized to model and batch (state VRAM and RAM ranges), COCO dataset (~20GB), training time estimate per epoch and total" - NOT "technical expertise and compute" or fixed brand/model)
 
 ---
 
@@ -348,6 +349,7 @@ You MUST output ONLY a JSON object wrapped in ```json ... ``` with the following
 - ❌ "granular mechanism", "complementary mechanisms", "mechanistic fit"
 - ❌ "phased implementation", "implementation considerations"
 - ❌ "evaluation dimensions", "verification strategy"
+- ❌ Vague auto-adjusting/self-tuning claims without concrete explanation (use "self-evolving", "memory-guided", "experience-driven" instead)
 - ❌ Any vague academic jargon
 
 **INSTEAD, USE these concrete terms:**
@@ -357,10 +359,11 @@ You MUST output ONLY a JSON object wrapped in ```json ... ``` with the following
 - ✅ "specific numbers: accuracy, speed, memory"
 - ✅ "concrete examples: dataset names, input sizes"
 - ✅ "step-by-step instructions"
+- ✅ "self-evolving" (with explanation of how it evolves), "memory-guided" (specify long-term vs short-term memory), "experience-driven" (with feedback mechanism details), "agent learning", "curriculum learning"
 
 **Example transformation:**
-- ❌ BAD: "Module A introduces mechanism-level granularity with signal flow compatibility"
-- ✅ GOOD: "Module A uses three different kernel sizes (3x3, 5x5, 7x7) and combines their outputs. This helps because objects come in different sizes."
+- ❌ BAD: "Module A introduces mechanism-level granularity with signal flow compatibility" or "Module A claims automatic mechanisms"
+- ✅ GOOD: "Module A uses three different kernel sizes (3x3, 5x5, 7x7) and combines their outputs. This helps because objects come in different sizes." or "Module A evolves its weights based on long-term memory of successful patterns, using experience feedback to adjust kernel selection."
 
 ---
 

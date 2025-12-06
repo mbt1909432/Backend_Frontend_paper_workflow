@@ -18,6 +18,9 @@ from app.core.agents.innovation_synthesis_agent import InnovationSynthesisAgent
 from app.core.agents.methodology_extraction_agent import MethodologyExtractionAgent
 from app.core.agents.writing.methods_writing_agent import MethodsWritingAgent
 from app.core.agents.writing.main_results_writing_agent import MainResultsWritingAgent
+from app.core.agents.writing.conclusion_writing_agent import ConclusionWritingAgent
+from app.core.agents.writing.introduction_writing_agent import IntroductionWritingAgent
+from app.core.agents.writing.preliminary_writing_agent import PreliminaryWritingAgent
 from app.services.anthropic_service import AnthropicService
 from app.services.hot_phrase_service import get_recent_hot_phrases
 from app.services.openai_service import OpenAIService
@@ -1348,7 +1351,7 @@ async def run_main_results_writing_step(
     main_results_agent: MainResultsWritingAgent,
     *,
     temperature: float = 0.6,
-    max_tokens: int = 9000,
+    max_tokens: int = 20000,
     model: Optional[str] = None,
 ) -> List[str]:
     """
@@ -1537,6 +1540,804 @@ async def run_main_results_writing_step(
     return artifact_paths
 
 
+def _find_methods_writing_artifacts(session_folder: Path) -> List[Path]:
+    """
+    Find all methods_writing*.json artifacts in the session's artifact directory.
+    """
+    artifact_dir = session_folder / "artifact"
+    if not artifact_dir.exists():
+        return []
+    
+    pattern = "methods_writing*.json"
+    artifacts = sorted(artifact_dir.glob(pattern))
+    return artifacts
+
+
+def _find_main_results_writing_artifacts(session_folder: Path) -> List[Path]:
+    """
+    Find all main_results_writing*.json artifacts in the session's artifact directory.
+    """
+    artifact_dir = session_folder / "artifact"
+    if not artifact_dir.exists():
+        return []
+    
+    pattern = "main_results_writing*.json"
+    artifacts = sorted(artifact_dir.glob(pattern))
+    return artifacts
+
+
+def _extract_stage_suffix(artifact_stem: str, prefix: str) -> str:
+    """
+    Extract stage suffix from artifact stem.
+    Example: 'methods_writing_2' -> '_2', 'main_results_writing' -> ''
+    """
+    if artifact_stem == prefix:
+        return ""
+    suffix = artifact_stem.replace(prefix, "")
+    return suffix if suffix else ""
+
+
+async def run_conclusion_writing_step(
+    step_inputs: SessionStepInputs,
+    conclusion_agent: ConclusionWritingAgent,
+    *,
+    temperature: float = 0.7,
+    max_tokens: int = 6000,
+    model: Optional[str] = None,
+) -> List[str]:
+    """
+    Execute Step 9 (Conclusion writing) using methods_writing and main_results_writing artifacts.
+    
+    This step reads all methods_writing*.json and main_results_writing*.json artifacts,
+    matches them by suffix (e.g., innovation_synthesis -> methods_writing -> main_results_writing),
+    and generates Conclusion sections for each matching pair.
+    
+    Args:
+        step_inputs: Session inputs containing session folder and paths
+        conclusion_agent: Initialized ConclusionWritingAgent instance
+        temperature: Generation temperature (default: 0.7)
+        max_tokens: Maximum tokens for generation (default: 6000)
+        model: Model name (optional, uses service default)
+    
+    Returns:
+        List of artifact paths for the generated conclusion_writing*.json files
+    """
+    session_folder = step_inputs.session_folder
+    generated_dir = step_inputs.generated_dir
+    conclusion_dir = generated_dir / "conclusion"
+    conclusion_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Find all artifacts
+    methods_artifacts = _find_methods_writing_artifacts(session_folder)
+    main_results_artifacts = _find_main_results_writing_artifacts(session_folder)
+    innovation_artifacts = _find_innovation_synthesis_artifacts(session_folder)
+    
+    if not methods_artifacts:
+        logger.warning(
+            "Conclusion writing step skipped: no methods_writing*.json artifacts found in %s",
+            session_folder / "artifact",
+        )
+        return []
+    
+    if not main_results_artifacts:
+        logger.warning(
+            "Conclusion writing step skipped: no main_results_writing*.json artifacts found in %s",
+            session_folder / "artifact",
+        )
+        return []
+    
+    logger.info(
+        "Found %d methods_writing, %d main_results_writing, %d innovation_synthesis artifacts",
+        len(methods_artifacts),
+        len(main_results_artifacts),
+        len(innovation_artifacts),
+    )
+    
+    # Build a mapping from suffix to artifacts
+    def _get_suffix_mapping(artifacts: List[Path], prefix: str) -> Dict[str, Path]:
+        mapping: Dict[str, Path] = {}
+        for artifact in artifacts:
+            suffix = _extract_stage_suffix(artifact.stem, prefix)
+            mapping[suffix] = artifact
+        return mapping
+    
+    methods_mapping = _get_suffix_mapping(methods_artifacts, "methods_writing")
+    main_results_mapping = _get_suffix_mapping(main_results_artifacts, "main_results_writing")
+    innovation_mapping = _get_suffix_mapping(innovation_artifacts, "innovation_synthesis")
+    
+    # Find all matching suffixes
+    matching_suffixes = set(methods_mapping.keys()) & set(main_results_mapping.keys())
+    
+    if not matching_suffixes:
+        logger.warning(
+            "Conclusion writing step skipped: no matching suffixes between methods_writing and main_results_writing artifacts"
+        )
+        return []
+    
+    logger.info(
+        "Found %d matching artifact pairs, generating Conclusion sections...",
+        len(matching_suffixes),
+    )
+    
+    async def generate_single_conclusion(suffix: str, run_index: int) -> Optional[str]:
+        """Generate Conclusion section for a single matching artifact pair."""
+        try:
+            methods_artifact_path = methods_mapping[suffix]
+            main_results_artifact_path = main_results_mapping[suffix]
+            
+            # Load methods artifact
+            methods_artifact_data = json.loads(methods_artifact_path.read_text(encoding="utf-8"))
+            methods_latex_path_str = methods_artifact_data.get("latex_path")
+            if not methods_latex_path_str:
+                logger.warning(
+                    "Skip conclusion writing for suffix '%s': missing latex_path in methods artifact",
+                    suffix or "''",
+                )
+                return None
+            
+            methods_latex_path = session_folder / methods_latex_path_str
+            if not methods_latex_path.exists():
+                logger.warning(
+                    "Skip conclusion writing for suffix '%s': methods LaTeX file not found: %s",
+                    suffix or "''",
+                    methods_latex_path,
+                )
+                return None
+            
+            # Load main results artifact
+            main_results_artifact_data = json.loads(main_results_artifact_path.read_text(encoding="utf-8"))
+            main_results_latex_path_str = main_results_artifact_data.get("main_results_path")
+            if not main_results_latex_path_str:
+                logger.warning(
+                    "Skip conclusion writing for suffix '%s': missing main_results_path in main_results artifact",
+                    suffix or "''",
+                )
+                return None
+            
+            main_results_latex_path = session_folder / main_results_latex_path_str
+            if not main_results_latex_path.exists():
+                logger.warning(
+                    "Skip conclusion writing for suffix '%s': main_results LaTeX file not found: %s",
+                    suffix or "''",
+                    main_results_latex_path,
+                )
+                return None
+            
+            # Load innovation JSON if available
+            innovation_json: Optional[Dict[str, Any]] = None
+            if suffix in innovation_mapping:
+                innovation_artifact_path = innovation_mapping[suffix]
+                try:
+                    innovation_artifact_data = json.loads(innovation_artifact_path.read_text(encoding="utf-8"))
+                    innovation_json = innovation_artifact_data.get("output")
+                except Exception as exc:
+                    logger.warning(
+                        "Failed to load innovation JSON for suffix '%s': %s (will proceed without it)",
+                        suffix or "''",
+                        exc,
+                    )
+            
+            # Read LaTeX contents
+            try:
+                methods_latex_content = methods_latex_path.read_text(encoding="utf-8").strip()
+                main_results_latex_content = main_results_latex_path.read_text(encoding="utf-8").strip()
+            except Exception as exc:
+                logger.exception(
+                    "Failed to read LaTeX files for suffix '%s': %s",
+                    suffix or "''",
+                    exc,
+                )
+                return None
+            
+            if not methods_latex_content or not main_results_latex_content:
+                logger.warning(
+                    "Skip conclusion writing for suffix '%s': empty LaTeX content",
+                    suffix or "''",
+                )
+                return None
+            
+            logger.info(
+                "Conclusion writing run %d/%d: processing suffix '%s' (methods=%s, main_results=%s)",
+                run_index + 1,
+                len(matching_suffixes),
+                suffix or "''",
+                methods_artifact_path.name,
+                main_results_artifact_path.name,
+            )
+            
+            # Generate Conclusion section
+            conclusion_result = await conclusion_agent.generate_conclusion_section(
+                methods_latex_content=methods_latex_content,
+                experiment_latex_content=main_results_latex_content,
+                innovation_json=innovation_json,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                model=model,
+            )
+            
+            usage_stats = conclusion_result.get("usage") or {}
+            logger.info(
+                "Conclusion writing run %d/%d finished (prompt_tokens=%s, completion_tokens=%s, total_tokens=%s)",
+                run_index + 1,
+                len(matching_suffixes),
+                usage_stats.get("prompt_tokens"),
+                usage_stats.get("completion_tokens"),
+                usage_stats.get("total_tokens"),
+            )
+            
+            conclusion_content = conclusion_result.get("content", "").strip()
+            if not conclusion_content:
+                logger.warning(
+                    "Conclusion writing run %d/%d: empty content from agent",
+                    run_index + 1,
+                    len(matching_suffixes),
+                )
+                return None
+            
+            # Save LaTeX content to file
+            latex_filename = f"innovation_synthesis{suffix}_conclusion.tex"
+            latex_path = conclusion_dir / latex_filename
+            latex_path.write_text(conclusion_content, encoding="utf-8")
+            rel_latex_path = latex_path.relative_to(session_folder)
+            logger.info(
+                "Conclusion LaTeX saved: %s (suffix='%s')",
+                latex_path,
+                suffix or "''",
+            )
+            
+            # Save artifact
+            conclusion_artifact_path = save_artifact(
+                session_folder=session_folder,
+                stage_name=f"conclusion_writing{suffix}",
+                artifact_data={
+                    "run_index": run_index + 1,
+                    "source_methods_artifact": str(methods_artifact_path.relative_to(session_folder)),
+                    "source_main_results_artifact": str(main_results_artifact_path.relative_to(session_folder)),
+                    "source_innovation_artifact": (
+                        str(innovation_mapping[suffix].relative_to(session_folder))
+                        if suffix in innovation_mapping
+                        else None
+                    ),
+                    "latex_path": str(rel_latex_path),
+                    "latex_content": conclusion_content,
+                    "raw_response": conclusion_result.get("raw_response"),
+                    "usage": usage_stats,
+                },
+            )
+            
+            logger.info(
+                "✓ conclusion_writing%s.json saved at %s",
+                suffix or "",
+                conclusion_artifact_path,
+            )
+            
+            return str(conclusion_artifact_path)
+            
+        except Exception as exc:
+            logger.exception(
+                "Failed to generate Conclusion section for suffix '%s': %s",
+                suffix or "''",
+                exc,
+            )
+            return None
+    
+    # Process all matching pairs sequentially
+    artifact_paths: List[str] = []
+    sorted_suffixes = sorted(matching_suffixes)
+    for idx, suffix in enumerate(sorted_suffixes):
+        result = await generate_single_conclusion(suffix, idx)
+        if result:
+            artifact_paths.append(result)
+    
+    return artifact_paths
+
+
+async def run_introduction_writing_step(
+    step_inputs: SessionStepInputs,
+    introduction_agent: IntroductionWritingAgent,
+    *,
+    temperature: float = 0.7,
+    max_tokens: int = 8000,
+    model: Optional[str] = None,
+) -> List[str]:
+    """
+    Execute Step 9 (Introduction writing) using methods_writing artifacts and methodology_items.
+    
+    This step reads all methods_writing*.json artifacts, matches them with innovation_synthesis artifacts,
+    and generates Introduction sections for each matching pair.
+    
+    It uses methodology_items to build retrieved_papers (combining problem_statement + methodology).
+    
+    Args:
+        step_inputs: Session inputs containing session folder and paths
+        introduction_agent: Initialized IntroductionWritingAgent instance
+        temperature: Generation temperature (default: 0.7)
+        max_tokens: Maximum tokens for generation (default: 8000)
+        model: Model name (optional, uses service default)
+    
+    Returns:
+        List of artifact paths for the generated introduction_writing*.json files
+    """
+    session_folder = step_inputs.session_folder
+    generated_dir = step_inputs.generated_dir
+    introduction_dir = generated_dir / "introduction"
+    introduction_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Find all artifacts
+    methods_artifacts = _find_methods_writing_artifacts(session_folder)
+    innovation_artifacts = _find_innovation_synthesis_artifacts(session_folder)
+    
+    # Load methodology_items to build retrieved_papers
+    methodology_items, _ = load_methodology_items_from_artifact(session_folder)
+    
+    if not methods_artifacts:
+        logger.warning(
+            "Introduction writing step skipped: no methods_writing*.json artifacts found in %s",
+            session_folder / "artifact",
+        )
+        return []
+    
+    # Build retrieved_papers from methodology_items
+    def _build_retrieved_papers() -> List[str]:
+        """Build retrieved_papers list from methodology_items."""
+        retrieved_papers: List[str] = []
+        for item in methodology_items:
+            if item.get("status") != "ok":
+                continue
+            
+            problem_statement_path = item.get("problem_statement_path")
+            methodology_path = item.get("methodology_path")
+            
+            if not problem_statement_path and not methodology_path:
+                continue
+            
+            paper_sections: List[str] = []
+            
+            # Read problem statement if available
+            if problem_statement_path:
+                problem_file = session_folder / problem_statement_path
+                if problem_file.exists():
+                    try:
+                        problem_text = problem_file.read_text(encoding="utf-8").strip()
+                        if problem_text:
+                            paper_sections.append(problem_text)
+                    except Exception as exc:
+                        logger.warning(
+                            "Failed to read problem statement from %s: %s",
+                            problem_file,
+                            exc,
+                        )
+            
+            # Read methodology if available
+            if methodology_path:
+                methodology_file = session_folder / methodology_path
+                if methodology_file.exists():
+                    try:
+                        methodology_text = methodology_file.read_text(encoding="utf-8").strip()
+                        if methodology_text:
+                            paper_sections.append(methodology_text)
+                    except Exception as exc:
+                        logger.warning(
+                            "Failed to read methodology from %s: %s",
+                            methodology_file,
+                            exc,
+                        )
+            
+            # Combine problem statement + methodology
+            if paper_sections:
+                combined_text = "\n\n".join(paper_sections)
+                retrieved_papers.append(combined_text)
+        
+        return retrieved_papers
+    
+    retrieved_papers = _build_retrieved_papers()
+    
+    if not retrieved_papers:
+        logger.warning(
+            "Introduction writing step skipped: no valid methodology items found to build retrieved_papers"
+        )
+        return []
+    
+    logger.info(
+        "Found %d methods_writing, %d innovation_synthesis artifacts, %d retrieved papers",
+        len(methods_artifacts),
+        len(innovation_artifacts),
+        len(retrieved_papers),
+    )
+    
+    # Build a mapping from suffix to artifacts
+    def _get_suffix_mapping(artifacts: List[Path], prefix: str) -> Dict[str, Path]:
+        mapping: Dict[str, Path] = {}
+        for artifact in artifacts:
+            suffix = _extract_stage_suffix(artifact.stem, prefix)
+            mapping[suffix] = artifact
+        return mapping
+    
+    methods_mapping = _get_suffix_mapping(methods_artifacts, "methods_writing")
+    innovation_mapping = _get_suffix_mapping(innovation_artifacts, "innovation_synthesis")
+    
+    # Find all matching suffixes (methods_writing must have corresponding innovation_synthesis)
+    matching_suffixes = set(methods_mapping.keys()) & set(innovation_mapping.keys())
+    
+    if not matching_suffixes:
+        logger.warning(
+            "Introduction writing step skipped: no matching suffixes between methods_writing and innovation_synthesis artifacts"
+        )
+        return []
+    
+    logger.info(
+        "Found %d matching artifact pairs, generating Introduction sections...",
+        len(matching_suffixes),
+    )
+    
+    async def generate_single_introduction(suffix: str, run_index: int) -> Optional[str]:
+        """Generate Introduction section for a single matching artifact pair."""
+        try:
+            methods_artifact_path = methods_mapping[suffix]
+            innovation_artifact_path = innovation_mapping[suffix]
+            
+            # Load methods artifact
+            methods_artifact_data = json.loads(methods_artifact_path.read_text(encoding="utf-8"))
+            methods_latex_path_str = methods_artifact_data.get("latex_path")
+            if not methods_latex_path_str:
+                logger.warning(
+                    "Skip introduction writing for suffix '%s': missing latex_path in methods artifact",
+                    suffix or "''",
+                )
+                return None
+            
+            methods_latex_path = session_folder / methods_latex_path_str
+            if not methods_latex_path.exists():
+                logger.warning(
+                    "Skip introduction writing for suffix '%s': methods LaTeX file not found: %s",
+                    suffix or "''",
+                    methods_latex_path,
+                )
+                return None
+            
+            # Load innovation JSON
+            try:
+                innovation_artifact_data = json.loads(innovation_artifact_path.read_text(encoding="utf-8"))
+                innovation_json = innovation_artifact_data.get("output")
+            except Exception as exc:
+                logger.warning(
+                    "Failed to load innovation JSON for suffix '%s': %s",
+                    suffix or "''",
+                    exc,
+                )
+                innovation_json = None
+            
+            # Read Methods LaTeX content
+            try:
+                methods_latex_content = methods_latex_path.read_text(encoding="utf-8").strip()
+            except Exception as exc:
+                logger.exception(
+                    "Failed to read Methods LaTeX file for suffix '%s': %s",
+                    suffix or "''",
+                    exc,
+                )
+                return None
+            
+            if not methods_latex_content:
+                logger.warning(
+                    "Skip introduction writing for suffix '%s': empty Methods LaTeX content",
+                    suffix or "''",
+                )
+                return None
+            
+            logger.info(
+                "Introduction writing run %d/%d: processing suffix '%s' (methods=%s, innovation=%s)",
+                run_index + 1,
+                len(matching_suffixes),
+                suffix or "''",
+                methods_artifact_path.name,
+                innovation_artifact_path.name,
+            )
+            
+            # Generate Introduction section
+            introduction_result = await introduction_agent.generate_introduction_section(
+                retrieved_papers=retrieved_papers,
+                methods_latex_content=methods_latex_content,
+                innovation_json=innovation_json,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                model=model,
+            )
+            
+            usage_stats = introduction_result.get("usage") or {}
+            logger.info(
+                "Introduction writing run %d/%d finished (prompt_tokens=%s, completion_tokens=%s, total_tokens=%s)",
+                run_index + 1,
+                len(matching_suffixes),
+                usage_stats.get("prompt_tokens"),
+                usage_stats.get("completion_tokens"),
+                usage_stats.get("total_tokens"),
+            )
+            
+            introduction_content = introduction_result.get("content", "").strip()
+            if not introduction_content:
+                logger.warning(
+                    "Introduction writing run %d/%d: empty content from agent",
+                    run_index + 1,
+                    len(matching_suffixes),
+                )
+                return None
+            
+            # Save LaTeX content to file
+            latex_filename = f"innovation_synthesis{suffix}_introduction.tex"
+            latex_path = introduction_dir / latex_filename
+            latex_path.write_text(introduction_content, encoding="utf-8")
+            rel_latex_path = latex_path.relative_to(session_folder)
+            logger.info(
+                "Introduction LaTeX saved: %s (suffix='%s')",
+                latex_path,
+                suffix or "''",
+            )
+            
+            # Save artifact
+            introduction_artifact_path = save_artifact(
+                session_folder=session_folder,
+                stage_name=f"introduction_writing{suffix}",
+                artifact_data={
+                    "run_index": run_index + 1,
+                    "source_methods_artifact": str(methods_artifact_path.relative_to(session_folder)),
+                    "source_innovation_artifact": str(innovation_artifact_path.relative_to(session_folder)),
+                    "retrieved_papers_count": len(retrieved_papers),
+                    "latex_path": str(rel_latex_path),
+                    "latex_content": introduction_content,
+                    "raw_response": introduction_result.get("raw_response"),
+                    "usage": usage_stats,
+                },
+            )
+            
+            logger.info(
+                "✓ introduction_writing%s.json saved at %s",
+                suffix or "",
+                introduction_artifact_path,
+            )
+            
+            return str(introduction_artifact_path)
+            
+        except Exception as exc:
+            logger.exception(
+                "Failed to generate Introduction section for suffix '%s': %s",
+                suffix or "''",
+                exc,
+            )
+            return None
+    
+    # Process all matching pairs sequentially
+    artifact_paths: List[str] = []
+    sorted_suffixes = sorted(matching_suffixes)
+    for idx, suffix in enumerate(sorted_suffixes):
+        result = await generate_single_introduction(suffix, idx)
+        if result:
+            artifact_paths.append(result)
+    
+    return artifact_paths
+
+
+async def run_preliminary_writing_step(
+    step_inputs: SessionStepInputs,
+    preliminary_agent: PreliminaryWritingAgent,
+    *,
+    temperature: float = 0.7,
+    max_tokens: int = 2000,
+    model: Optional[str] = None,
+) -> List[str]:
+    """
+    Execute Step 9 (Preliminary writing) using methods_writing artifacts and innovation_synthesis artifacts.
+    
+    This step reads all methods_writing*.json artifacts, matches them with innovation_synthesis artifacts,
+    and generates Preliminary sections for each matching pair.
+    
+    Args:
+        step_inputs: Session inputs containing session folder and paths
+        preliminary_agent: Initialized PreliminaryWritingAgent instance
+        temperature: Generation temperature (default: 0.7)
+        max_tokens: Maximum tokens for generation (default: 2000)
+        model: Model name (optional, uses service default)
+    
+    Returns:
+        List of artifact paths for the generated preliminary_writing*.json files
+    """
+    session_folder = step_inputs.session_folder
+    generated_dir = step_inputs.generated_dir
+    preliminary_dir = generated_dir / "preliminary"
+    preliminary_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Find all artifacts
+    methods_artifacts = _find_methods_writing_artifacts(session_folder)
+    innovation_artifacts = _find_innovation_synthesis_artifacts(session_folder)
+    
+    if not methods_artifacts:
+        logger.warning(
+            "Preliminary writing step skipped: no methods_writing*.json artifacts found in %s",
+            session_folder / "artifact",
+        )
+        return []
+    
+    if not innovation_artifacts:
+        logger.warning(
+            "Preliminary writing step skipped: no innovation_synthesis*.json artifacts found in %s",
+            session_folder / "artifact",
+        )
+        return []
+    
+    logger.info(
+        "Found %d methods_writing, %d innovation_synthesis artifacts",
+        len(methods_artifacts),
+        len(innovation_artifacts),
+    )
+    
+    # Build a mapping from suffix to artifacts
+    def _get_suffix_mapping(artifacts: List[Path], prefix: str) -> Dict[str, Path]:
+        mapping: Dict[str, Path] = {}
+        for artifact in artifacts:
+            suffix = _extract_stage_suffix(artifact.stem, prefix)
+            mapping[suffix] = artifact
+        return mapping
+    
+    methods_mapping = _get_suffix_mapping(methods_artifacts, "methods_writing")
+    innovation_mapping = _get_suffix_mapping(innovation_artifacts, "innovation_synthesis")
+    
+    # Find all matching suffixes (methods_writing must have corresponding innovation_synthesis)
+    matching_suffixes = set(methods_mapping.keys()) & set(innovation_mapping.keys())
+    
+    if not matching_suffixes:
+        logger.warning(
+            "Preliminary writing step skipped: no matching suffixes between methods_writing and innovation_synthesis artifacts"
+        )
+        return []
+    
+    logger.info(
+        "Found %d matching artifact pairs, generating Preliminary sections...",
+        len(matching_suffixes),
+    )
+    
+    async def generate_single_preliminary(suffix: str, run_index: int) -> Optional[str]:
+        """Generate Preliminary section for a single matching artifact pair."""
+        try:
+            methods_artifact_path = methods_mapping[suffix]
+            innovation_artifact_path = innovation_mapping[suffix]
+            
+            # Load methods artifact
+            methods_artifact_data = json.loads(methods_artifact_path.read_text(encoding="utf-8"))
+            methods_latex_path_str = methods_artifact_data.get("latex_path")
+            if not methods_latex_path_str:
+                logger.warning(
+                    "Skip preliminary writing for suffix '%s': missing latex_path in methods artifact",
+                    suffix or "''",
+                )
+                return None
+            
+            methods_latex_path = session_folder / methods_latex_path_str
+            if not methods_latex_path.exists():
+                logger.warning(
+                    "Skip preliminary writing for suffix '%s': methods LaTeX file not found: %s",
+                    suffix or "''",
+                    methods_latex_path,
+                )
+                return None
+            
+            # Load innovation JSON
+            try:
+                innovation_artifact_data = json.loads(innovation_artifact_path.read_text(encoding="utf-8"))
+                innovation_json = innovation_artifact_data.get("output")
+            except Exception as exc:
+                logger.warning(
+                    "Failed to load innovation JSON for suffix '%s': %s",
+                    suffix or "''",
+                    exc,
+                )
+                innovation_json = None
+            
+            # Read Methods LaTeX content
+            try:
+                methods_latex_content = methods_latex_path.read_text(encoding="utf-8").strip()
+            except Exception as exc:
+                logger.exception(
+                    "Failed to read Methods LaTeX file for suffix '%s': %s",
+                    suffix or "''",
+                    exc,
+                )
+                return None
+            
+            if not methods_latex_content:
+                logger.warning(
+                    "Skip preliminary writing for suffix '%s': empty Methods LaTeX content",
+                    suffix or "''",
+                )
+                return None
+            
+            logger.info(
+                "Preliminary writing run %d/%d: processing suffix '%s' (methods=%s, innovation=%s)",
+                run_index + 1,
+                len(matching_suffixes),
+                suffix or "''",
+                methods_artifact_path.name,
+                innovation_artifact_path.name,
+            )
+            
+            # Generate Preliminary section
+            preliminary_result = await preliminary_agent.generate_preliminary_section(
+                innovation_json=innovation_json,
+                methods_latex_content=methods_latex_content,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                model=model,
+            )
+            
+            usage_stats = preliminary_result.get("usage") or {}
+            logger.info(
+                "Preliminary writing run %d/%d finished (prompt_tokens=%s, completion_tokens=%s, total_tokens=%s)",
+                run_index + 1,
+                len(matching_suffixes),
+                usage_stats.get("prompt_tokens"),
+                usage_stats.get("completion_tokens"),
+                usage_stats.get("total_tokens"),
+            )
+            
+            preliminary_content = preliminary_result.get("content", "").strip()
+            if not preliminary_content:
+                logger.warning(
+                    "Preliminary writing run %d/%d: empty content from agent",
+                    run_index + 1,
+                    len(matching_suffixes),
+                )
+                return None
+            
+            # Save LaTeX content to file
+            latex_filename = f"innovation_synthesis{suffix}_preliminary.tex"
+            latex_path = preliminary_dir / latex_filename
+            latex_path.write_text(preliminary_content, encoding="utf-8")
+            rel_latex_path = latex_path.relative_to(session_folder)
+            logger.info(
+                "Preliminary LaTeX saved: %s (suffix='%s')",
+                latex_path,
+                suffix or "''",
+            )
+            
+            # Save artifact
+            preliminary_artifact_path = save_artifact(
+                session_folder=session_folder,
+                stage_name=f"preliminary_writing{suffix}",
+                artifact_data={
+                    "run_index": run_index + 1,
+                    "source_methods_artifact": str(methods_artifact_path.relative_to(session_folder)),
+                    "source_innovation_artifact": str(innovation_artifact_path.relative_to(session_folder)),
+                    "latex_path": str(rel_latex_path),
+                    "latex_content": preliminary_content,
+                    "raw_response": preliminary_result.get("raw_response"),
+                    "usage": usage_stats,
+                },
+            )
+            
+            logger.info(
+                "✓ preliminary_writing%s.json saved at %s",
+                suffix or "",
+                preliminary_artifact_path,
+            )
+            
+            return str(preliminary_artifact_path)
+            
+        except Exception as exc:
+            logger.exception(
+                "Failed to generate Preliminary section for suffix '%s': %s",
+                suffix or "''",
+                exc,
+            )
+            return None
+    
+    # Process all matching pairs sequentially
+    artifact_paths: List[str] = []
+    sorted_suffixes = sorted(matching_suffixes)
+    for idx, suffix in enumerate(sorted_suffixes):
+        result = await generate_single_preliminary(suffix, idx)
+        if result:
+            artifact_paths.append(result)
+    
+    return artifact_paths
 
 
 def _load_local_env_file(env_filename: Optional[str] = None) -> Optional[Path]:
@@ -1727,7 +2528,7 @@ async def main_run_step_7_only(
     """
 
     # TODO: 修改为真实 session 路径，例如 Path("E:/.../session_20251128_xxx")
-    test_session_folder = Path(r"E:\pycharm_project\software_idea\academic draft agentic_workflow\app\core\workflows\output\2025_11_30\session_20251130_152450_2e84a1cc").resolve()
+    test_session_folder = Path(r"E:\pycharm_project\software_idea\academic draft agentic_workflow\app\core\workflows\output\2025_12_5\session_20251205_175558_006f8492").resolve()
 
     _load_local_env_file()
 
@@ -1759,7 +2560,7 @@ async def main_run_step_8_only(
     """
 
     # TODO: 修改为真实 session 路径，例如 Path("E:/.../session_20251128_xxx")
-    test_session_folder = Path(r"E:\pycharm_project\software_idea\academic draft agentic_workflow\app\core\workflows\output\2025_12_1_lab\session_20251201_224836_766f3490").resolve()
+    test_session_folder = Path(r"E:\pycharm_project\software_idea\academic draft agentic_workflow\app\core\workflows\output\2025_12_5\session_20251205_175558_006f8492").resolve()
 
     _load_local_env_file()
 
@@ -1780,6 +2581,72 @@ async def main_run_step_8_only(
         logger.info("Main results writing artifacts: %s", main_results_artifacts)
     else:
         logger.info("Main results writing skipped or failed.")
+
+
+async def main_run_step_9_only(
+    introduction_temperature: float = 0.7,
+    introduction_max_tokens: int = 8000,
+    conclusion_temperature: float = 0.7,
+    conclusion_max_tokens: int = 6000,
+    preliminary_temperature: float = 0.7,
+    preliminary_max_tokens: int = 2000,
+    model: Optional[str] = None,
+) -> None:
+    """
+    测试入口：复用已有 methods_writing*.json + main_results_writing*.json，运行 Step 9（Introduction + Conclusion + Preliminary Writing）。
+    """
+
+    # TODO: 修改为真实 session 路径，例如 Path("E:/.../session_20251128_xxx")
+    test_session_folder = Path(r"E:\pycharm_project\software_idea\academic draft agentic_workflow\app\core\workflows\output\2025_12_5\session_20251205_175558_006f8492").resolve()
+
+    _load_local_env_file()
+
+    step_inputs = load_step_inputs_from_session(test_session_folder)
+
+    openai_service = OpenAIService()
+    introduction_agent = IntroductionWritingAgent(openai_service=openai_service)
+    conclusion_agent = ConclusionWritingAgent(openai_service=openai_service)
+    preliminary_agent = PreliminaryWritingAgent(openai_service=openai_service)
+
+    # Run Introduction, Conclusion, and Preliminary writing in parallel
+    introduction_artifacts, conclusion_artifacts, preliminary_artifacts = await asyncio.gather(
+        run_introduction_writing_step(
+            step_inputs=step_inputs,
+            introduction_agent=introduction_agent,
+            temperature=introduction_temperature,
+            max_tokens=introduction_max_tokens,
+            model=model,
+        ),
+        run_conclusion_writing_step(
+            step_inputs=step_inputs,
+            conclusion_agent=conclusion_agent,
+            temperature=conclusion_temperature,
+            max_tokens=conclusion_max_tokens,
+            model=model,
+        ),
+        run_preliminary_writing_step(
+            step_inputs=step_inputs,
+            preliminary_agent=preliminary_agent,
+            temperature=preliminary_temperature,
+            max_tokens=preliminary_max_tokens,
+            model=model,
+        ),
+    )
+
+    if introduction_artifacts:
+        logger.info("Introduction writing artifacts: %s", introduction_artifacts)
+    else:
+        logger.info("Introduction writing skipped or failed.")
+
+    if conclusion_artifacts:
+        logger.info("Conclusion writing artifacts: %s", conclusion_artifacts)
+    else:
+        logger.info("Conclusion writing skipped or failed.")
+
+    if preliminary_artifacts:
+        logger.info("Preliminary writing artifacts: %s", preliminary_artifacts)
+    else:
+        logger.info("Preliminary writing skipped or failed.")
 
 
 async def main_run_steps_5_to_8(
@@ -1882,14 +2749,15 @@ async def main_run_steps_5_to_8(
 if __name__ == "__main__":
     _load_local_env_file()
     # asyncio.run(main_run_step_7_only())
-    asyncio.run(main_run_step_6_only())
+    # asyncio.run(main_run_step_6_only())
     # asyncio.run(main_run_step_8_only())
+    asyncio.run(main_run_step_9_only())
     # start=time
     # asyncio.run(step_3_step4())
     # asyncio.run(
     #     main_run_steps_5_to_8(
     #         session_folder=Path(
-    #             r"E:\pycharm_project\software_idea\academic draft agentic_workflow\app\core\workflows\output\2025_12_4\session_20251204_173727_a37e084c"
+    #             r"E:\pycharm_project\software_idea\academic draft agentic_workflow\app\core\workflows\output\2025_12_5\session_20251205_175558_006f8492"
     #         )
     #     )
     # )

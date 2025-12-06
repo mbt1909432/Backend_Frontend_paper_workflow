@@ -670,8 +670,15 @@ async def main() -> None:
         # test_query="""logistics: A Multi-Agent Predictive QptimizationFramework"""
         # test_query = """Autonomous driving safety"""
         # test_query = """AI safety protection algorithms"""
-        test_query = """Data Science Applications in Social Networks and Advertising: A Causal Inference Approach"""
-        test_username = "2025_12_4"
+        # test_query = """手术机器人"""
+        test_query="""Adaptive Multi-Agent Embodied AI with Cross-Domain Visual Planning
+
+
+Current embodied AI systems cannot integrate visual understanding, cross-domain planning, and multi-agent coordination, limiting their ability to perform complex real-world tasks that require both physical actions and digital information retrieval.
+
+
+We solve the problem of fragmented embodied AI systems that cannot handle complex real-world tasks requiring visual understanding, web information, and coordinated actions. Current methods fail because they use fixed visual processing that misses temporal dynamics, make poor decisions about when to switch between physical and digital actions, and lack fault tolerance in multi-agent scenarios. Our method works in three stages: (1) Adaptive visual processing that samples video frames at 1-10fps based on motion detection and uses curriculum learning to adjust training difficulty, (2) Confidence-based cross-domain planning that calculates uncertainty scores to decide when to switch between physical actions and web queries, and (3) Fault-tolerant multi-agent coordination with heartbeat monitoring that detects agent failures in 5 seconds and reassigns tasks automatically. To implement this, we extend VideoLLaMA3 with adaptive sampling, add entropy-based confidence estimation to cross-domain planners, and build heartbeat monitoring into ROS 2 agent frameworks. We test on cooking tasks (using recipes from web), navigation with real-time map data, and warehouse coordination scenarios using AI2-THOR simulation and real robot platforms. The system needs PyTorch, ROS 2, web API access, 12GB GPU memory, and takes 2-3 days to train on video datasets with multi-agent interaction logs. Success is measured by task completion rate, domain switching accuracy, and system uptime during agent failures."""
+        test_username = "2025_12_5"
         test_session_id: Optional[str] = None  # None 时会自动生成，格式：session_{timestamp}_{uuid}
 
         _load_local_env_file()
@@ -704,8 +711,8 @@ async def main() -> None:
             innovation_agent=innovation_agent,
             # methods_writing_agent=methods_writing_agent,
             # main_results_agent=main_results_agent,
-            max_concurrent_pdfs=2,
-            max_concurrent_pages=2,  # 每篇论文同时处理的页面数
+            max_concurrent_pdfs=3,
+            max_concurrent_pages=4,  # 每篇论文同时处理的页面数
         )
 
         result = await workflow.execute(
